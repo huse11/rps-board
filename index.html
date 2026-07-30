@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>板块RPS监测看板</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+            font-size: 12px;
+            background: #f0f2f5;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .card {
+            background: #fff;
+            border-radius: 10px;
+            padding: 12px 10px;
+            margin-bottom: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .card-title {
+            font-size: 15px;
+            font-weight: 700;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #e5e7eb;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .card-title .badge {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #e5e7eb;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+        }
+        th {
+            background: #1e293b;
+            color: #fff;
+            padding: 6px 3px;
+            font-weight: 600;
+            text-align: center;
+            white-space: nowrap;
+            font-size: 10px;
+        }
+        td {
+            padding: 5px 3px;
+            text-align: center;
+            border-bottom: 1px solid #f1f3f5;
+            white-space: nowrap;
+        }
+        tr.status-in td { background: #ecfdf5; }
+        tr.status-out td { background: #fef2f2; }
+        tr.status-keep td { background: #ffffff; }
+        .rps-val { font-weight: 700; color: #1e40af; }
+        .rank-up { color: #16a34a; }
+        .rank-down { color: #dc2626; }
+        .rank-flat { color: #6b7280; }
+        .tag-green { color: #16a34a; font-weight: 600; }
+        .tag-red { color: #dc2626; font-weight: 600; }
+        .tag-blue { color: #2563eb; font-weight: 600; }
+        .tag-seed {
+            display: inline-block;
+            background: #fef3c7;
+            color: #92400e;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 1px 6px;
+            border-radius: 3px;
+        }
+        .header-bar {
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            color: #fff;
+            padding: 16px 14px;
+            border-radius: 0 0 16px 16px;
+            margin-bottom: 12px;
+        }
+        .header-bar h1 { font-size: 20px; font-weight: 800; margin: 0; }
+        .header-bar .sub { font-size: 12px; opacity: 0.8; margin-top: 4px; }
+        .stats-row {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .stats-row .stat-box {
+            flex: 1;
+            background: #fff;
+            border-radius: 8px;
+            padding: 8px 6px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+        }
+        .stats-row .stat-box .num {
+            font-size: 18px;
+            font-weight: 800;
+            color: #1e293b;
+        }
+        .stats-row .stat-box .label {
+            font-size: 10px;
+            color: #64748b;
+            margin-top: 2px;
+        }
+        .empty-msg {
+            text-align: center;
+            color: #94a3b8;
+            padding: 12px;
+            font-size: 12px;
+        }
+        .section-toggle {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 10px;
+        }
+        .section-toggle button {
+            flex: 1;
+            padding: 8px 4px;
+            border: none;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            background: #e2e8f0;
+            color: #475569;
+            transition: all 0.2s;
+        }
+        .section-toggle button.active {
+            background: #1e293b;
+            color: #fff;
+        }
+        .section-content { display: none; }
+        .section-content.active { display: block; }
+        .legend {
+            display: flex;
+            gap: 12px;
+            font-size: 11px;
+            color: #64748b;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+        }
+        .legend span { display: flex; align-items: center; gap: 4px; }
+        .legend .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+        .dot-green { background: #ecfdf5; border: 1px solid #86efac; }
+        .dot-red { background: #fef2f2; border: 1px solid #fca5a5; }
+    </style>
+</head>
+<body>
+
+<!-- 顶部 -->
+<div class="header-bar">
+    <h1>板块 RPS 监测看板</h1>
+    <div class="sub" id="updateInfo">数据加载中...</div>
+</div>
+
+<!-- 统计概览 -->
+<div class="stats-row" style="padding: 0 4px;">
+    <div class="stat-box">
+        <div class="num" id="totalInd">--</div>
+        <div class="label">行业总数</div>
+    </div>
+    <div class="stat-box">
+        <div class="num" id="inCount5">--</div>
+        <div class="label">RPS5入选</div>
+    </div>
+    <div class="stat-box">
+        <div class="num" id="inCount10">--</div>
+        <div class="label">RPS10入选</div>
+    </div>
+    <div class="stat-box">
+        <div class="num" id="inCount20">--</div>
+        <div class="label">RPS20入选</div>
+    </div>
+</div>
+
+<!-- 图例 -->
+<div class="legend" style="padding: 0 6px;">
+    <span><span class="dot dot-green"></span> 当日调入</span>
+    <span><span class="dot" style="background:#fff;border:1px solid #d1d5db;"></span> 持续在榜</span>
+    <span><span class="dot dot-red"></span> 调出</span>
+</div>
+
+<!-- 切换标签 -->
+<div class="section-toggle" style="padding: 0 4px;">
+    <button class="active" data-section="rps5">RPS5</button>
+    <button data-section="rps10">RPS10</button>
+    <button data-section="rps20">RPS20</button>
+</div>
+
+<!-- RPS5 -->
+<div class="section-content active" id="sec-rps5">
+    <div class="card">
+        <div class="card-title">
+            <span>RPS5 档位（阈值≥90）</span>
+            <span class="badge" id="rps5-count">--</span>
+        </div>
+        <h4 style="margin:0 0 6px 0;color:#16a34a;font-size:12px;">入选板块</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS5</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                </tr></thead>
+                <tbody id="rps5-in-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
+            </table>
+        </div>
+        <h4 style="margin:12px 0 6px 0;color:#dc2626;font-size:12px;">调出板块</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS5</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                </tr></thead>
+                <tbody id="rps5-out-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- RPS10 -->
+<div class="section-content" id="sec-rps10">
+    <div class="card">
+        <div class="card-title">
+            <span>RPS10 档位（阈值≥90）</span>
+            <span class="badge" id="rps10-count">--</span>
+        </div>
+        <h4 style="margin:0 0 6px 0;color:#16a34a;font-size:12px;">入选板块</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS10</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                </tr></thead>
+                <tbody id="rps10-in-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
+            </table>
+        </div>
+        <h4 style="margin:12px 0 6px 0;color:#dc2626;font-size:12px;">调出板块</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS10</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                </tr></thead>
+                <tbody id="rps10-out-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- RPS20 -->
+<div class="section-content" id="sec-rps20">
+    <div class="card">
+        <div class="card-title">
+            <span>RPS20 档位（阈值≥90）</span>
+            <span class="badge" id="rps20-count">--</span>
+        </div>
+        <h4 style="margin:0 0 6px 0;color:#16a34a;font-size:12px;">入选板块</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS20</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                </tr></thead>
+                <tbody id="rps20-in-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
+            </table>
+        </div>
+        <h4 style="margin:12px 0 6px 0;color:#dc2626;font-size:12px;">调出板块</h4>
+        <div style="overflow-x:auto;">
+            <table>
+                <thead><tr>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS20</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                </tr></thead>
+                <tbody id="rps20-out-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<div style="text-align:center;color:#94a3b8;font-size:10px;padding:12px 0 24px;">
+    数据来源：Tushare Pro | 每日收盘后更新 | RPS = 百分位排名
+</div>
+
+<script>
+// 状态: 在榜、调入、调出
+// 排序规则: 调入 > 在榜 > 调出（同一板块内按RPS降序）
+
+// 切换标签
+document.querySelectorAll('.section-toggle button').forEach(btn => {
+    btn.addEventListener('click', function() {
+        document.querySelectorAll('.section-toggle button').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById('sec-' + this.dataset.section).classList.add('active');
+    });
+});
+
+function fmtRankChange(change) {
+    if (change === undefined || change === null || change === '') return '--';
+    const n = Number(change);
+    if (isNaN(n)) return '--';
+    if (n > 0) return `<span class="rank-up">↑${n}</span>`;
+    if (n < 0) return `<span class="rank-down">↓${Math.abs(n)}</span>`;
+    return `<span class="rank-flat">→</span>`;
+}
+
+function fmtStatus(status) {
+    if (status === '调入') return '<span class="tag-green">调入</span>';
+    if (status === '调出') return '<span class="tag-red">调出</span>';
+    return '<span class="tag-blue">在榜</span>';
+}
+
+function statusClass(status) {
+    if (status === '调入') return 'status-in';
+    if (status === '调出') return 'status-out';
+    return 'status-keep';
+}
+
+function fmtStage(continuous) {
+    if (continuous === 1 || continuous === '1') return '<span class="tag-seed">种子</span>';
+    return '';
+}
+
+function calcRank(rpsVal, total) {
+    if (!rpsVal || isNaN(rpsVal) || !total) return '--';
+    // RPS百分位转排名: rank = (1 - rps/100) * total + 1
+    const rank = Math.round((1 - rpsVal / 100) * (total - 1) + 1);
+    return rank;
+}
+
+function loadData() {
+    fetch('/static/rps_data.json')
+        .then(r => r.json())
+        .then(data => {
+            // 更新头部
+            document.getElementById('updateInfo').innerHTML =
+                `更新日期：${data.update_date} | 上一交易日：${data.prev_date || '--'}`;
+
+            // 更新统计
+            document.getElementById('totalInd').textContent = data.total_industries || '--';
+            document.getElementById('inCount5').textContent = data.rps5?.in_list?.length || 0;
+            document.getElementById('inCount10').textContent = data.rps10?.in_list?.length || 0;
+            document.getElementById('inCount20').textContent = data.rps20?.in_list?.length || 0;
+
+            const total = data.total_industries || 0;
+
+            // 填充表格数据
+            fillSection('rps5', data.rps5, data.threshold || 90, total);
+            fillSection('rps10', data.rps10, data.threshold || 90, total);
+            fillSection('rps20', data.rps20, data.threshold || 90, total);
+        })
+        .catch(err => {
+            document.getElementById('updateInfo').innerHTML = '⚠️ 加载数据失败，请先运行 rps_calc.py';
+            console.error(err);
+        });
+}
+
+function fillSection(sectionId, sectionData, threshold, total) {
+    if (!sectionData) return;
+
+    const inList = sectionData.in_list || [];
+    const outList = sectionData.out_list || [];
+    const inCount = inList.length;
+    const outCount = outList.length;
+
+    // 更新档位计数
+    const badge = document.getElementById(sectionId + '-count');
+    if (badge) badge.textContent = inCount + ' 个入选 | ' + outCount + ' 个调出';
+
+    // 填充入选表
+    fillTable(sectionId + '-in-body', inList, sectionId.toUpperCase(), total, 'in');
+
+    // 填充调出表
+    fillTable(sectionId + '-out-body', outList, sectionId.toUpperCase(), total, 'out');
+}
+
+function fillTable(bodyId, items, rpsKey, total, listType) {
+    const tbody = document.getElementById(bodyId);
+    if (!tbody) return;
+
+    if (!items || items.length === 0) {
+        const placeholder = listType === 'in' ? '暂无入选板块' : '暂无调出板块';
+        tbody.innerHTML = '<tr><td colspan="9" class="empty-msg">' + placeholder + '</td></tr>';
+        return;
+    }
+
+    // 排序：调入 > 在榜 > 调出（同类按RPS降序）
+    const statusOrder = { '调入': 0, '在榜': 1, '调出': 2 };
+    const sorted = [...items].sort((a, b) => {
+        const orderA = statusOrder[a.status] || 99;
+        const orderB = statusOrder[b.status] || 99;
+        if (orderA !== orderB) return orderA - orderB;
+        return (b[rpsKey] || 0) - (a[rpsKey] || 0);
+    });
+
+    let html = '';
+    sorted.forEach((item, idx) => {
+        const rpsVal = item[rpsKey];
+        const rank = calcRank(rpsVal, total);
+        const rankChange = item.rank_change || item.rank_change === 0 ? item.rank_change : '--';
+        const continuous = item.continuous || item.continuous === 0 ? item.continuous : '--';
+        const days60 = item.days_60 || item.days_60 === 0 ? item.days_60 : '--';
+        const stockCount = item.stock_count || item.stock_count === 0 ? item.stock_count : '--';
+        const rps50Above = item.rps50_above_90 || item.rps50_above_90 === 0 ? item.rps50_above_90 : '--';
+        const ratioStr = (stockCount !== '--' && rps50Above !== '--') ? rps50Above + '/' + stockCount : '--';
+
+        // 阶段与状态联动: 连续==1 → 种子+调入; 连续>=2 → 空白+在榜
+        const stage = fmtStage(continuous);
+        let displayStatus = item.status;
+        if (listType === 'in') {
+            displayStatus = continuous === 1 ? '调入' : '在榜';
+        }
+
+        html += '<tr class="' + statusClass(displayStatus) + '">';
+        html += '<td>' + fmtStatus(displayStatus) + '</td>';
+        html += '<td style="text-align:left;padding-left:6px;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (item.name || '--') + '</td>';
+        html += '<td>' + stage + '</td>';
+        html += '<td class="rps-val">' + (rpsVal ? rpsVal.toFixed(1) : '--') + '</td>';
+        html += '<td>' + rank + '</td>';
+        html += '<td>' + fmtRankChange(rankChange) + '</td>';
+        html += '<td>' + continuous + '</td>';
+        html += '<td>' + days60 + '</td>';
+        html += '<td>' + ratioStr + '</td>';
+        html += '</tr>';
+    });
+    tbody.innerHTML = html;
+}
+
+// 加载数据
+loadData();
+</script>
+</body>
+</html>

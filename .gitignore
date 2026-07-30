@@ -1,0 +1,22 @@
+# 生成的数据文件（运行后产生，不纳入版本管理）
+static/rps_data.json
+static/last_result.json
+static/rps_history.json
+
+# 每日缓存的K线数据（体积大）
+static/daily_cache/
+
+# Python缓存
+__pycache__/
+*.pyc
+*.pyo
+.env
+
+# IDE
+.vscode/
+.idea/
+
+# 验证脚本
+verify.py
+check_*.py
+run_debug.py
