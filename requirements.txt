@@ -1,4 +1,4 @@
-tushare>=1.11.0
+tushare>=1.0.0
 pandas>=1.3.0
 numpy>=1.21.0
 fastapi>=0.95.0
