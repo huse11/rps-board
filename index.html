@@ -331,7 +331,7 @@ function calcRank(rpsVal, total) {
 }
 
 function loadData() {
-    fetch('static/rps_data.json')
+    fetch('/static/rps_data.json')
         .then(r => r.json())
         .then(data => {
             // 更新头部
