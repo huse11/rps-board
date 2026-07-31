@@ -392,7 +392,12 @@ def calc_stock_rps50_by_industry(daily_map, industry_df, trade_days):
         print("  ⚠️ 交易日不足50，跳过RPS50计算")
         return {}
 
-    recent_50 = trade_days[-50:]
+    # 使用实际有数据的交易日（应对个别日期获取失败）
+    available = [d for d in trade_days if d in daily_map]
+    if len(available) < 50:
+        print(f"  ⚠️ 有效交易日{len(available)}不足50，跳过RPS50计算")
+        return {}
+    recent_50 = available[-50:]
     print(f"  [4d] 个股RPS50计算（{len(recent_50)}个交易日, {len(industry_df)}只股票）...")
 
     # 收集每只股票的每日涨跌幅
@@ -448,13 +453,17 @@ def calc_industry_rps50_60day_count(daily_map, industry_df, trade_days):
         print("  ⚠️ 交易日不足60，跳过行业RPS50天数统计")
         return {}
 
-    print(f"  [4e] 行业RPS50逐日回溯（{len(trade_days)}个交易日）...")
+    # 使用实际有数据的交易日（应对个别日期获取失败）
+    available = [d for d in trade_days if d in daily_map]
+    if len(available) < 50:
+        print(f"  ⚠️ 有效交易日{len(available)}不足50，跳过行业RPS50天数统计")
+        return {}
+
+    print(f"  [4e] 行业RPS50逐日回溯（{len(available)}个有效交易日）...")
 
     # 1. 计算每日行业收益率
     ind_records = []
-    for date in trade_days:
-        if date not in daily_map:
-            continue
+    for date in available:
         df_day = daily_map[date]
         merged = df_day.merge(industry_df[["ts_code", "industry"]], on="ts_code", how="inner")
         if len(merged) == 0:
@@ -475,8 +484,8 @@ def calc_industry_rps50_60day_count(daily_map, industry_df, trade_days):
     start_idx = 49  # index 49 = 第50个交易日
     daily_rps50 = {}  # {date: {industry: rps50_value}}
 
-    for i, date in enumerate(trade_days[start_idx:], start_idx):
-        lookback = trade_days[max(0, i - 49):i + 1]
+    for i, date in enumerate(available[start_idx:], start_idx):
+        lookback = available[max(0, i - 49):i + 1]
 
         day_scores = {}
         for ind in industries:
@@ -501,22 +510,23 @@ def calc_industry_rps50_60day_count(daily_map, industry_df, trade_days):
         }
 
         if (i - start_idx + 1) % 10 == 0:
-            print(f"    [{i-start_idx+1}/{len(trade_days)-start_idx}] {date} RPS50计算完成")
+            print(f"    [{i-start_idx+1}/{len(available)-start_idx}] {date} RPS50计算完成")
 
-    # 3. 统计近60个交易日中 RPS50 ≥ 90 的天数
-    # 使用所有有数据的交易日（从trade_days[0]到trade_days[-1]）
+    # 3. 统计最近60个交易日中 RPS50 ≥ 90 的天数
+    # 60日窗口 = 最近60个有效交易日（若不足60则用全部）
+    window = available[-60:]
     count_results = {}
-    all_dates = sorted(daily_rps50.keys())
+    window_dates = [d for d in window if d in daily_rps50]
 
     for ind in industries:
         count_90 = 0
-        for date in all_dates:
+        for date in window_dates:
             rps50 = daily_rps50[date].get(ind)
             if rps50 is not None and rps50 >= 90:
                 count_90 += 1
         count_results[ind] = count_90
 
-    print(f"    完成: {len(count_results)}个行业统计")
+    print(f"    完成: {len(count_results)}个行业统计（窗口{len(window_dates)}天）")
     return count_results
 
 
