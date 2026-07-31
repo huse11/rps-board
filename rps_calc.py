@@ -266,11 +266,14 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         # 转 DataFrame 计算 RPS
         df_day_rps = pd.DataFrame(day_scores).T
         df_day_rps.index.name = "industry"
+        # 欧奈尔体系RPS: RPS = (1 - (排名-1)/全部板块总数) * 100，第1名=100
+        total_ind = len(df_day_rps) if len(df_day_rps) > 0 else 1
         for period, col in [(5, "RPS5"), (10, "RPS10"), (20, "RPS20")]:
             chg_col = f"chg{period}"
             if chg_col in df_day_rps.columns and df_day_rps[chg_col].notna().sum() > 0:
-                df_day_rps[col] = df_day_rps[chg_col].rank(pct=True, ascending=True) * 100
-                df_day_rps[f"rank{period}"] = df_day_rps[col].rank(ascending=False)
+                # 涨幅从高到低排名，涨幅最高 → 排名1
+                df_day_rps[f"rank{period}"] = df_day_rps[chg_col].rank(ascending=False)
+                df_day_rps[col] = (1 - (df_day_rps[f"rank{period}"] - 1) / total_ind) * 100
 
         # 存储该日历史
         daily_rps_history[date] = {
