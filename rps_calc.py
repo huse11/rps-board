@@ -18,6 +18,8 @@ TUSHARE_TOKENS = [
     "3af69fb7165cd116e06a00ba666afbd71af530aca5bdc2d4b9d6ce08",
     "83e45faa47e13283017fc3db27f36d4bfd033827b566fb227d77d9d7",
     "d204a0e1d3a2d6f94e5843ba56b0afd1ae02a8658d81e985e1db2055",
+    "ce54958918a51905315e6ab2b009dedca3ae849af3aa7732125b0642",
+    "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
 RPS_THRESHOLD = 90
 STATIC_DIR = Path(__file__).parent / "static"
