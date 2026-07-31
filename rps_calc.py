@@ -280,15 +280,15 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         # 存储该日历史
         daily_rps_history[date] = {
             ind: {
-                "chg5": float(df_day_rps.loc[ind, "chg5"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "chg5"]) else None,
-                "chg10": float(df_day_rps.loc[ind, "chg10"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "chg10"]) else None,
-                "chg20": float(df_day_rps.loc[ind, "chg20"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "chg20"]) else None,
-                "RPS5": float(df_day_rps.loc[ind, "RPS5"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "RPS5"]) else None,
-                "RPS10": float(df_day_rps.loc[ind, "RPS10"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "RPS10"]) else None,
-                "RPS20": float(df_day_rps.loc[ind, "RPS20"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "RPS20"]) else None,
-                "rank5": int(df_day_rps.loc[ind, "rank5"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "rank5"]) else None,
-                "rank10": int(df_day_rps.loc[ind, "rank10"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "rank10"]) else None,
-                "rank20": int(df_day_rps.loc[ind, "rank20"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "rank20"]) else None,
+                "chg5": _safe_get(df_day_rps, ind, "chg5"),
+                "chg10": _safe_get(df_day_rps, ind, "chg10"),
+                "chg20": _safe_get(df_day_rps, ind, "chg20"),
+                "RPS5": _safe_get(df_day_rps, ind, "RPS5"),
+                "RPS10": _safe_get(df_day_rps, ind, "RPS10"),
+                "RPS20": _safe_get(df_day_rps, ind, "RPS20"),
+                "rank5": _safe_get_int(df_day_rps, ind, "rank5"),
+                "rank10": _safe_get_int(df_day_rps, ind, "rank10"),
+                "rank20": _safe_get_int(df_day_rps, ind, "rank20"),
             }
             for ind in industries if ind in df_day_rps.index
         }
@@ -351,6 +351,24 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
 
     df_result = pd.DataFrame(result_list)
     return df_result, daily_rps_history
+
+
+def _safe_get(df, ind, col):
+    """安全取值：列不存在或值为NaN时返回None，避免KeyError"""
+    if col in df.columns and ind in df.index:
+        val = df.loc[ind, col]
+        if pd.notna(val):
+            return float(val)
+    return None
+
+
+def _safe_get_int(df, ind, col):
+    """安全取整数值：列不存在或值为NaN时返回None，避免KeyError"""
+    if col in df.columns and ind in df.index:
+        val = df.loc[ind, col]
+        if pd.notna(val):
+            return int(val)
+    return None
 
 
 def calc_consecutive(rps_history, trade_days, industry, rps_col, today):
