@@ -34,6 +34,8 @@ jobs:
       - name: 计算 RPS
         run: |
           mkdir -p static
+          # 从上次部署的 gh-pages 分支下载上次名单，用于对比调入/调出/在榜
+          curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/last_result.json" -o static/last_result.json && echo "✅ 已获取上次名单" || echo "ℹ️ 首次运行，无历史名单"
           python rps_calc.py
 
       - name: 清理缓存文件（只在gh-pages保留看板必需的文件）
