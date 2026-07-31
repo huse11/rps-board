@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
     <title>板块RPS监测看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -331,7 +334,8 @@ function calcRank(rpsVal, total) {
 }
 
 function loadData() {
-    fetch('static/rps_data.json')
+    // 加时间戳参数，避免浏览器缓存旧数据
+    fetch('static/rps_data.json?t=' + Date.now(), { cache: 'no-store' })
         .then(r => r.json())
         .then(data => {
             // 更新头部
