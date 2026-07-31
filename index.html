@@ -326,12 +326,12 @@ function fmtStage(continuous) {
     return '';
 }
 
-function fmtRps(val) {
+function fmtChg(val) {
     if (val === undefined || val === null || val === '' || isNaN(Number(val))) return '--';
     const n = Number(val);
-    if (n >= 90) return `<span class="tag-red">${n.toFixed(1)}</span>`;
-    if (n >= 70) return `<span class="tag-blue">${n.toFixed(1)}</span>`;
-    return n.toFixed(1);
+    const sign = n > 0 ? '+' : '';
+    const cls = n > 0 ? 'tag-green' : (n < 0 ? 'tag-red' : 'rank-flat');
+    return `<span class="${cls}">${sign}${n.toFixed(2)}%</span>`;
 }
 
 function calcRank(rpsVal, total) {
@@ -410,6 +410,7 @@ function fillTable(bodyId, items, rpsKey, chgKey, total, listType) {
     let html = '';
     sorted.forEach((item, idx) => {
         const rpsVal = item[rpsKey];
+        const chgVal = item[chgKey];
         const rank = calcRank(rpsVal, total);
         const rankChange = item.rank_change || item.rank_change === 0 ? item.rank_change : '--';
         const continuous = item.continuous || item.continuous === 0 ? item.continuous : '--';
@@ -429,7 +430,7 @@ function fillTable(bodyId, items, rpsKey, chgKey, total, listType) {
         html += '<td>' + fmtStatus(displayStatus) + '</td>';
         html += '<td style="text-align:left;padding-left:6px;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (item.name || '--') + '</td>';
         html += '<td>' + stage + '</td>';
-        html += '<td class="rps-val">' + fmtRps(rpsVal) + '</td>';
+        html += '<td class="rps-val">' + fmtChg(chgVal) + '</td>';
         html += '<td>' + rank + '</td>';
         html += '<td>' + fmtRankChange(rankChange) + '</td>';
         html += '<td>' + continuous + '</td>';
