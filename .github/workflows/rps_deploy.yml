@@ -2,8 +2,8 @@ name: 更新 RPS 看板
 
 on:
   schedule:
-    # 每天 UTC 12:00 ≈ 北京时间 20:00（收盘后）
-    - cron: '0 12 * * 1-5'
+    # 每天 UTC 08:00 ≈ 北京时间 16:00（A股收盘后抓取）
+    - cron: '0 8 * * 1-5'
   # 也可以手动触发
   workflow_dispatch:
   # 推送到 main 时触发（调试用）
