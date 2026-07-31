@@ -275,6 +275,9 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         # 存储该日历史
         daily_rps_history[date] = {
             ind: {
+                "chg5": float(df_day_rps.loc[ind, "chg5"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "chg5"]) else None,
+                "chg10": float(df_day_rps.loc[ind, "chg10"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "chg10"]) else None,
+                "chg20": float(df_day_rps.loc[ind, "chg20"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "chg20"]) else None,
                 "RPS5": float(df_day_rps.loc[ind, "RPS5"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "RPS5"]) else None,
                 "RPS10": float(df_day_rps.loc[ind, "RPS10"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "RPS10"]) else None,
                 "RPS20": float(df_day_rps.loc[ind, "RPS20"]) if ind in df_day_rps.index and pd.notna(df_day_rps.loc[ind, "RPS20"]) else None,
@@ -306,6 +309,9 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         rps5 = t_rps.get("RPS5")
         rps10 = t_rps.get("RPS10")
         rps20 = t_rps.get("RPS20")
+        chg5 = t_rps.get("chg5")
+        chg10 = t_rps.get("chg10")
+        chg20 = t_rps.get("chg20")
         rank5 = t_rps.get("rank5")
         rank10 = t_rps.get("rank10")
         rank20 = t_rps.get("rank20")
@@ -331,6 +337,7 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         result_list.append({
             "industry": ind,
             "RPS5": rps5, "RPS10": rps10, "RPS20": rps20,
+            "chg5": chg5, "chg10": chg10, "chg20": chg20,
             "rank5": rank5, "rank10": rank10, "rank20": rank20,
             "rank_chg5": rank_chg5, "rank_chg10": rank_chg10, "rank_chg20": rank_chg20,
             "consecutive5": con5, "consecutive10": con10, "consecutive20": con20,
@@ -529,6 +536,9 @@ def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col,
                 "name": ind,
                 "status": status_val,
                 rps_col: round(row[rps_col], 1) if pd.notna(row.get(rps_col)) else None,
+                "chg5": round(row["chg5"], 2) if pd.notna(row.get("chg5")) else None,
+                "chg10": round(row["chg10"], 2) if pd.notna(row.get("chg10")) else None,
+                "chg20": round(row["chg20"], 2) if pd.notna(row.get("chg20")) else None,
                 "rank": int(row[rank_col]) if pd.notna(row.get(rank_col)) else None,
                 "rank_change": int(row[rank_chg_col]) if pd.notna(row.get(rank_chg_col)) else 0,
                 "continuous": int(row[consec_col]) if pd.notna(row.get(consec_col)) else 0,

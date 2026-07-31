@@ -209,7 +209,7 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr>
-                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS5</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
                 </tr></thead>
                 <tbody id="rps5-in-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
             </table>
@@ -218,7 +218,7 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr>
-                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS5</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
                 </tr></thead>
                 <tbody id="rps5-out-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
             </table>
@@ -237,7 +237,7 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr>
-                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS10</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
                 </tr></thead>
                 <tbody id="rps10-in-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
             </table>
@@ -246,7 +246,7 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr>
-                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS10</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
                 </tr></thead>
                 <tbody id="rps10-out-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
             </table>
@@ -265,7 +265,7 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr>
-                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS20</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
                 </tr></thead>
                 <tbody id="rps20-in-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
             </table>
@@ -274,7 +274,7 @@
         <div style="overflow-x:auto;">
             <table>
                 <thead><tr>
-                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS20</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
+                    <th>状态</th><th>板块名称</th><th>阶段</th><th>RPS</th><th>排名</th><th>排名变化</th><th>连续</th><th>60日</th><th>RPS50≥90</th>
                 </tr></thead>
                 <tbody id="rps20-out-body"><tr><td colspan="9" class="empty-msg">暂无数据</td></tr></tbody>
             </table>
@@ -326,6 +326,14 @@ function fmtStage(continuous) {
     return '';
 }
 
+function fmtChg(val) {
+    if (val === undefined || val === null || val === '' || isNaN(Number(val))) return '--';
+    const n = Number(val);
+    const sign = n > 0 ? '+' : '';
+    const cls = n > 0 ? 'tag-green' : (n < 0 ? 'tag-red' : 'rank-flat');
+    return `<span class="${cls}">${sign}${n.toFixed(2)}%</span>`;
+}
+
 function calcRank(rpsVal, total) {
     if (!rpsVal || isNaN(rpsVal) || !total) return '--';
     // RPS百分位转排名: rank = (1 - rps/100) * total + 1
@@ -350,10 +358,10 @@ function loadData() {
 
             const total = data.total_industries || 0;
 
-            // 填充表格数据
-            fillSection('rps5', data.rps5, data.threshold || 90, total);
-            fillSection('rps10', data.rps10, data.threshold || 90, total);
-            fillSection('rps20', data.rps20, data.threshold || 90, total);
+            // 填充表格数据 (rpsKey: 百分位列, chgKey: 真实涨幅列)
+            fillSection('rps5', data.rps5, data.threshold || 90, total, 'RPS5', 'chg5');
+            fillSection('rps10', data.rps10, data.threshold || 90, total, 'RPS10', 'chg10');
+            fillSection('rps20', data.rps20, data.threshold || 90, total, 'RPS20', 'chg20');
         })
         .catch(err => {
             document.getElementById('updateInfo').innerHTML = '⚠️ 加载数据失败，请先运行 rps_calc.py';
@@ -361,7 +369,7 @@ function loadData() {
         });
 }
 
-function fillSection(sectionId, sectionData, threshold, total) {
+function fillSection(sectionId, sectionData, threshold, total, rpsKey, chgKey) {
     if (!sectionData) return;
 
     const inList = sectionData.in_list || [];
@@ -374,13 +382,13 @@ function fillSection(sectionId, sectionData, threshold, total) {
     if (badge) badge.textContent = inCount + ' 个入选 | ' + outCount + ' 个调出';
 
     // 填充入选表
-    fillTable(sectionId + '-in-body', inList, sectionId.toUpperCase(), total, 'in');
+    fillTable(sectionId + '-in-body', inList, rpsKey, chgKey, total, 'in');
 
     // 填充调出表
-    fillTable(sectionId + '-out-body', outList, sectionId.toUpperCase(), total, 'out');
+    fillTable(sectionId + '-out-body', outList, rpsKey, chgKey, total, 'out');
 }
 
-function fillTable(bodyId, items, rpsKey, total, listType) {
+function fillTable(bodyId, items, rpsKey, chgKey, total, listType) {
     const tbody = document.getElementById(bodyId);
     if (!tbody) return;
 
@@ -402,6 +410,7 @@ function fillTable(bodyId, items, rpsKey, total, listType) {
     let html = '';
     sorted.forEach((item, idx) => {
         const rpsVal = item[rpsKey];
+        const chgVal = item[chgKey];
         const rank = calcRank(rpsVal, total);
         const rankChange = item.rank_change || item.rank_change === 0 ? item.rank_change : '--';
         const continuous = item.continuous || item.continuous === 0 ? item.continuous : '--';
@@ -421,7 +430,7 @@ function fillTable(bodyId, items, rpsKey, total, listType) {
         html += '<td>' + fmtStatus(displayStatus) + '</td>';
         html += '<td style="text-align:left;padding-left:6px;max-width:100px;overflow:hidden;text-overflow:ellipsis;">' + (item.name || '--') + '</td>';
         html += '<td>' + stage + '</td>';
-        html += '<td class="rps-val">' + (rpsVal ? rpsVal.toFixed(1) : '--') + '</td>';
+        html += '<td class="rps-val">' + fmtChg(chgVal) + '</td>';
         html += '<td>' + rank + '</td>';
         html += '<td>' + fmtRankChange(rankChange) + '</td>';
         html += '<td>' + continuous + '</td>';
