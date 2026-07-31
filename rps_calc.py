@@ -184,7 +184,22 @@ def fetch_daily_batch(trade_days):
                 df.to_json(cache_path, orient="records", force_ascii=False)
             print(f"  [{i+1}/{total}] {date}: {len(df) if df is not None else 0}条")
         except Exception as e:
-            print(f"  [{i+1}/{total}] {date}: {str(e)[:60]}")
+            # 失败后重试2次（间隔3秒），应对临时限频
+            retried = False
+            for attempt in range(2):
+                time.sleep(3)
+                try:
+                    df = pool.call_any("daily", trade_date=date)
+                    if df is not None and len(df) > 0:
+                        daily_map[date] = df
+                        df.to_json(cache_path, orient="records", force_ascii=False)
+                        print(f"  [{i+1}/{total}] {date}: 重试成功 {len(df)}条")
+                        retried = True
+                        break
+                except Exception as e2:
+                    print(f"  [{i+1}/{total}] {date}: 重试{attempt+1}失败 {str(e2)[:50]}")
+            if not retried:
+                print(f"  [{i+1}/{total}] {date}: {str(e)[:60]}")
         time.sleep(0.5)
     return daily_map
 
@@ -224,10 +239,12 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
 
     # 逐日计算滚动 RPS
     daily_rps_history = {}
-    for i, date in enumerate(trade_days[19:], 19):  # 从第20天开始(需要20日数据)
-        # 获取截至该日的前20个交易日
-        date_idx = trade_days.index(date)
-        lookback = trade_days[max(0, date_idx-19):date_idx+1]
+    # 实际有数据的交易日（应对个别日期获取失败）
+    available_days = [d for d in trade_days if d in daily_map]
+    for i, date in enumerate(available_days[19:], 19):  # 从第20天开始(需要20日数据)
+        # 获取截至该日、实际有数据的前20个交易日
+        date_idx = available_days.index(date)
+        lookback = available_days[max(0, date_idx-19):date_idx+1]
         
         day_scores = {}
         for ind in industries:
@@ -271,8 +288,8 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         if (i - 19 + 1) % 10 == 0:
             print(f"    [{i-19+1}/{len(trade_days)-19}] {date} - {len(industries)}个行业")
 
-    today = trade_days[-1]
-    prev_day = trade_days[-2] if len(trade_days) >= 2 else None
+    today = available_days[-1]
+    prev_day = available_days[-2] if len(available_days) >= 2 else None
 
     # 获取当日 RPS 数据
     today_rps = daily_rps_history.get(today, {})
@@ -589,8 +606,9 @@ def main():
     res10 = split_in_out(df_rps, RPS_THRESHOLD, "RPS10", "rank10", "rank_chg10", "consecutive10", stock_rps50, industry_rps50_60day, last_data["rps10_names"])
     res20 = split_in_out(df_rps, RPS_THRESHOLD, "RPS20", "rank20", "rank_chg20", "consecutive20", stock_rps50, industry_rps50_60day, last_data["rps20_names"])
 
-    latest_date = trade_days[-1]
-    prev_date = trade_days[-2] if len(trade_days) >= 2 else ""
+    available_days = [d for d in trade_days if d in daily_map]
+    latest_date = available_days[-1]
+    prev_date = available_days[-2] if len(available_days) >= 2 else ""
 
     # 保存历史快照
     with open(RPS_HISTORY_FILE, "w", encoding="utf-8") as f:
