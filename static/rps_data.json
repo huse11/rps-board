@@ -16,8 +16,8 @@
         "rank_change": 0,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 21,
+        "rps50_above_90": 4
       },
       {
         "name": "酒店餐饮",
@@ -30,8 +30,8 @@
         "rank_change": 0,
         "continuous": 4,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 8,
+        "rps50_above_90": 1
       },
       {
         "name": "陶瓷",
@@ -43,9 +43,9 @@
         "rank": 3,
         "rank_change": 6,
         "continuous": 3,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 8,
+        "stock_count": 5,
+        "rps50_above_90": 2
       },
       {
         "name": "互联网",
@@ -58,8 +58,8 @@
         "rank_change": 24,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 77,
+        "rps50_above_90": 7
       },
       {
         "name": "软饮料",
@@ -71,9 +71,9 @@
         "rank": 5,
         "rank_change": -2,
         "continuous": 4,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 1,
+        "stock_count": 9,
+        "rps50_above_90": 3
       },
       {
         "name": "文教休闲",
@@ -86,8 +86,8 @@
         "rank_change": 18,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 50,
+        "rps50_above_90": 5
       },
       {
         "name": "白酒",
@@ -99,9 +99,9 @@
         "rank": 7,
         "rank_change": -2,
         "continuous": 2,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 1,
+        "stock_count": 19,
+        "rps50_above_90": 4
       },
       {
         "name": "影视音像",
@@ -114,8 +114,8 @@
         "rank_change": 29,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 34,
+        "rps50_above_90": 1
       },
       {
         "name": "软件服务",
@@ -128,8 +128,8 @@
         "rank_change": 57,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 274,
+        "rps50_above_90": 15
       },
       {
         "name": "汽车整车",
@@ -142,8 +142,8 @@
         "rank_change": -6,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 22,
+        "rps50_above_90": 4
       },
       {
         "name": "商品城",
@@ -156,7 +156,7 @@
         "rank_change": -5,
         "continuous": 2,
         "days_60": 0,
-        "stock_count": 0,
+        "stock_count": 4,
         "rps50_above_90": 0
       },
       {
@@ -170,24 +170,24 @@
         "rank_change": -5,
         "continuous": 4,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 19,
+        "rps50_above_90": 5
       }
     ],
     "out_list": [],
     "current_names": [
-      "乳制品",
-      "软件服务",
       "酒店餐饮",
-      "汽车整车",
-      "陶瓷",
-      "白酒",
-      "软饮料",
-      "文教休闲",
-      "日用化工",
-      "互联网",
       "影视音像",
-      "商品城"
+      "文教休闲",
+      "软饮料",
+      "陶瓷",
+      "软件服务",
+      "日用化工",
+      "汽车整车",
+      "商品城",
+      "白酒",
+      "乳制品",
+      "互联网"
     ]
   },
   "rps10": {
@@ -203,8 +203,8 @@
         "rank_change": 1,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 10,
+        "rps50_above_90": 2
       },
       {
         "name": "汽车整车",
@@ -217,8 +217,8 @@
         "rank_change": 1,
         "continuous": 4,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 22,
+        "rps50_above_90": 4
       },
       {
         "name": "白酒",
@@ -230,9 +230,9 @@
         "rank": 3,
         "rank_change": 3,
         "continuous": 2,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 1,
+        "stock_count": 19,
+        "rps50_above_90": 4
       },
       {
         "name": "软饮料",
@@ -244,9 +244,9 @@
         "rank": 4,
         "rank_change": 22,
         "continuous": 1,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 1,
+        "stock_count": 9,
+        "rps50_above_90": 3
       },
       {
         "name": "石油开采",
@@ -259,8 +259,8 @@
         "rank_change": -4,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 20,
+        "rps50_above_90": 1
       },
       {
         "name": "酒店餐饮",
@@ -273,8 +273,8 @@
         "rank_change": 6,
         "continuous": 5,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 8,
+        "rps50_above_90": 1
       },
       {
         "name": "铅锌",
@@ -287,7 +287,7 @@
         "rank_change": 23,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
+        "stock_count": 14,
         "rps50_above_90": 0
       },
       {
@@ -301,7 +301,7 @@
         "rank_change": 1,
         "continuous": 4,
         "days_60": 0,
-        "stock_count": 0,
+        "stock_count": 4,
         "rps50_above_90": 0
       },
       {
@@ -315,8 +315,8 @@
         "rank_change": 25,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 50,
+        "rps50_above_90": 5
       },
       {
         "name": "新型电力",
@@ -329,8 +329,8 @@
         "rank_change": -6,
         "continuous": 8,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 30,
+        "rps50_above_90": 4
       },
       {
         "name": "焦炭加工",
@@ -343,8 +343,8 @@
         "rank_change": 12,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 7,
+        "rps50_above_90": 1
       },
       {
         "name": "互联网",
@@ -357,24 +357,24 @@
         "rank_change": 52,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 77,
+        "rps50_above_90": 7
       }
     ],
     "out_list": [],
     "current_names": [
       "新型电力",
-      "焦炭加工",
-      "互联网",
-      "铅锌",
-      "汽车整车",
       "酒店餐饮",
+      "文教休闲",
       "石油开采",
       "软饮料",
-      "文教休闲",
+      "焦炭加工",
+      "汽车整车",
+      "商品城",
       "白酒",
+      "铅锌",
       "黄金",
-      "商品城"
+      "互联网"
     ]
   },
   "rps20": {
@@ -390,8 +390,8 @@
         "rank_change": 0,
         "continuous": 10,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 20,
+        "rps50_above_90": 1
       },
       {
         "name": "白酒",
@@ -403,9 +403,9 @@
         "rank": 2,
         "rank_change": 1,
         "continuous": 2,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 1,
+        "stock_count": 19,
+        "rps50_above_90": 4
       },
       {
         "name": "银行",
@@ -417,9 +417,9 @@
         "rank": 3,
         "rank_change": -1,
         "continuous": 11,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 10,
+        "stock_count": 42,
+        "rps50_above_90": 35
       },
       {
         "name": "乳制品",
@@ -432,8 +432,8 @@
         "rank_change": 4,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 21,
+        "rps50_above_90": 4
       },
       {
         "name": "港口",
@@ -445,9 +445,9 @@
         "rank": 5,
         "rank_change": -1,
         "continuous": 11,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 8,
+        "stock_count": 15,
+        "rps50_above_90": 3
       },
       {
         "name": "商品城",
@@ -460,7 +460,7 @@
         "rank_change": 1,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
+        "stock_count": 4,
         "rps50_above_90": 0
       },
       {
@@ -474,8 +474,8 @@
         "rank_change": 17,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 28,
+        "rps50_above_90": 9
       },
       {
         "name": "铁路",
@@ -487,9 +487,9 @@
         "rank": 8,
         "rank_change": -3,
         "continuous": 10,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 2,
+        "stock_count": 7,
+        "rps50_above_90": 2
       },
       {
         "name": "煤炭开采",
@@ -501,9 +501,9 @@
         "rank": 9,
         "rank_change": 1,
         "continuous": 8,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 10,
+        "stock_count": 25,
+        "rps50_above_90": 12
       },
       {
         "name": "超市连锁",
@@ -515,9 +515,9 @@
         "rank": 10,
         "rank_change": 11,
         "continuous": 1,
-        "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "days_60": 3,
+        "stock_count": 8,
+        "rps50_above_90": 1
       },
       {
         "name": "普钢",
@@ -530,8 +530,8 @@
         "rank_change": 4,
         "continuous": 1,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 26,
+        "rps50_above_90": 7
       },
       {
         "name": "啤酒",
@@ -544,24 +544,24 @@
         "rank_change": 0,
         "continuous": 3,
         "days_60": 0,
-        "stock_count": 0,
-        "rps50_above_90": 0
+        "stock_count": 7,
+        "rps50_above_90": 1
       }
     ],
     "out_list": [],
     "current_names": [
-      "乳制品",
-      "出版业",
-      "普钢",
-      "超市连锁",
-      "啤酒",
-      "石油开采",
       "港口",
+      "石油开采",
+      "超市连锁",
+      "普钢",
+      "出版业",
+      "啤酒",
       "银行",
       "煤炭开采",
-      "铁路",
+      "商品城",
       "白酒",
-      "商品城"
+      "铁路",
+      "乳制品"
     ]
   }
 }
