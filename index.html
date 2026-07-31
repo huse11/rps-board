@@ -398,13 +398,16 @@ function fillTable(bodyId, items, rpsKey, chgKey, total, listType) {
         return;
     }
 
-    // 排序：调入 > 在榜 > 调出（同类按RPS降序）
-    const statusOrder = { '调入': 0, '在榜': 1, '调出': 2 };
+    // 排序：按排名从小到大（排名1最强，排在最前）
     const sorted = [...items].sort((a, b) => {
-        const orderA = statusOrder[a.status] || 99;
-        const orderB = statusOrder[b.status] || 99;
-        if (orderA !== orderB) return orderA - orderB;
-        return (b[rpsKey] || 0) - (a[rpsKey] || 0);
+        const rankA = calcRank(a[rpsKey], total);
+        const rankB = calcRank(b[rpsKey], total);
+        const validA = typeof rankA === 'number';
+        const validB = typeof rankB === 'number';
+        if (validA && validB) return rankA - rankB;
+        if (validA) return -1;
+        if (validB) return 1;
+        return 0;
     });
 
     let html = '';
