@@ -660,6 +660,7 @@ def main():
     output = {
         "update_date": latest_date,
         "prev_date": prev_date,
+        "expected_trade_date": trade_days[-1],
         "total_industries": len(df_rps),
         "threshold": RPS_THRESHOLD,
         "rps5": res5,
