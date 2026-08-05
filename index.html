@@ -347,14 +347,8 @@ function loadData() {
         .then(r => r.json())
         .then(data => {
             // 更新头部
-            const upd = String(data.update_date || '');
-            const exp = String(data.expected_trade_date || '');
-            let warnHtml = '';
-            if (exp && upd < exp) {
-                warnHtml = ` <span style="color:#dc2626;font-weight:bold;background:#fee2e2;padding:2px 8px;border-radius:6px;">⚠️ 未更新到最新交易日(${exp})</span>`;
-            }
             document.getElementById('updateInfo').innerHTML =
-                `更新日期：${data.update_date} | 上一交易日：${data.prev_date || '--'}${warnHtml}`;
+                `更新日期：${data.update_date} | 上一交易日：${data.prev_date || '--'}`;
 
             // 更新统计
             document.getElementById('totalInd').textContent = data.total_industries || '--';
