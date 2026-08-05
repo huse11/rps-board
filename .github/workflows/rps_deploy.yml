@@ -16,6 +16,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # 串行锁：同一时间只允许一个run执行，防止多个cron/push并发部署到gh-pages产生冲突
+    concurrency:
+      group: rps-deploy
+      cancel-in-progress: false
     permissions:
       contents: write
       pages: write
