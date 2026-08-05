@@ -2,9 +2,11 @@ name: 更新 RPS 看板
 
 on:
   schedule:
-    # 每天 UTC 10:10 ≈ 北京时间 18:10（A股15:00收盘后）
-    # 注意：避开整点(10:00)，GitHub在整点高负载时会跳过或延迟 schedule 任务
-    - cron: '10 10 * * 1-5'
+    # 多重保险：GitHub 的 schedule 触发不可靠（高负载时会跳过/延迟，实测延迟过7小时甚至不触发）
+    # 多设几个时间点，任意一个触发即可；rps_calc.py 幂等保证同一天只真正计算一次
+    - cron: '10 10 * * 1-5'   # 北京时间 18:10
+    - cron: '10 11 * * 1-5'   # 北京时间 19:10
+    - cron: '10 12 * * 1-5'   # 北京时间 20:10
   # 也可以手动触发
   workflow_dispatch:
   # 推送到 main 时触发（调试用）
@@ -37,6 +39,8 @@ jobs:
           mkdir -p static
           # 从上次部署的 gh-pages 分支下载上次名单，用于对比调入/调出/在榜
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/last_result.json" -o static/last_result.json && echo "✅ 已获取上次名单" || echo "ℹ️ 首次运行，无历史名单"
+          # 下载当前数据文件，供幂等判断（当天已更新则跳过计算，保护last_result对比基准）
+          curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/rps_data.json" -o static/rps_data.json && echo "✅ 已获取当前数据" || echo "ℹ️ 首次运行，无现有数据"
           python rps_calc.py
 
       - name: 数据新鲜度检查（数据过期即失败，触发通知）
