@@ -20,3 +20,20 @@ __pycache__/
 verify.py
 check_*.py
 run_debug.py
+
+# 调试/临时文件（含token的脚本严禁提交）
+_*.html
+_*.json
+_*.txt
+push_api2.py
+dispatch.py
+fix_api.py
+restore_last.py
+pages.json
+jobs.json
+jobs2.json
+jobs_detail.json
+runs.json
+dispatch.json
+logs.zip
+rps-board.zip
