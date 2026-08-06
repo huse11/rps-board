@@ -1,0 +1,56 @@
+name: 每日自检补跑
+
+on:
+  schedule:
+    # 北京时间 09:00（UTC 01:00）自检：昨晚数据若未更新则自动补跑
+    # 即使主流程的3个定时点都被GitHub跳过，这里也能兜底恢复
+    - cron: '0 1 * * 1-5'
+  # 也可手动触发
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  check-and-recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 下载数据并检查新鲜度
+        run: |
+          mkdir -p static
+          if ! curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/rps_data.json" -o static/rps_data.json; then
+            echo "❌ 线上无数据文件，需要补跑"
+            echo "NEED_UPDATE=1" >> $GITHUB_ENV
+            exit 0
+          fi
+          python - <<'EOF'
+          import json, os
+          from datetime import datetime, timedelta
+          try:
+              data = json.load(open('static/rps_data.json'))
+              ud = str(data.get('update_date', ''))
+          except Exception:
+              ud = ''
+          # 最近工作日（节假日会误判为过期，但主流程幂等，误触发无害）
+          last = datetime.now()
+          while last.weekday() >= 5:
+              last -= timedelta(days=1)
+          expected = last.strftime('%Y%m%d')
+          need = '1' if (not ud or ud < expected) else '0'
+          print(f"update_date={ud} 最近交易日≈{expected} 需要补跑={need}")
+          with open(os.environ['GITHUB_ENV'], 'a') as f:
+              f.write(f"NEED_UPDATE={need}\n")
+          EOF
+
+      - name: 数据过期则触发补跑
+        if: env.NEED_UPDATE == '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "⚠️ 数据未更新到最近交易日，自动触发补跑..."
+          curl -s -X POST -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/huse11/rps-board/actions/workflows/rps_deploy.yml/dispatches" \
+            -d '{"ref":"main"}'
+          echo "✅ 补跑已触发"

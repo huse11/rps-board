@@ -2,8 +2,11 @@ name: 更新 RPS 看板
 
 on:
   schedule:
-    # 每天 UTC 10:00 ≈ 北京时间 18:00（A股15:00收盘后）
-    - cron: '0 10 * * 1-5'
+    # 多重保险：GitHub 的 schedule 触发不可靠（高负载时会跳过/延迟，实测延迟过7小时甚至不触发）
+    # 多设几个时间点，任意一个触发即可；rps_calc.py 幂等保证同一天只真正计算一次
+    - cron: '10 10 * * 1-5'   # 北京时间 18:10
+    - cron: '10 11 * * 1-5'   # 北京时间 19:10
+    - cron: '10 12 * * 1-5'   # 北京时间 20:10
   # 也可以手动触发
   workflow_dispatch:
   # 推送到 main 时触发（调试用）
@@ -13,6 +16,10 @@ on:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    # 串行锁：同一时间只允许一个run执行，防止多个cron/push并发部署到gh-pages产生冲突
+    concurrency:
+      group: rps-deploy
+      cancel-in-progress: false
     permissions:
       contents: write
       pages: write
@@ -36,7 +43,26 @@ jobs:
           mkdir -p static
           # 从上次部署的 gh-pages 分支下载上次名单，用于对比调入/调出/在榜
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/last_result.json" -o static/last_result.json && echo "✅ 已获取上次名单" || echo "ℹ️ 首次运行，无历史名单"
+          # 下载当前数据文件，供幂等判断（当天已更新则跳过计算，保护last_result对比基准）
+          curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/rps_data.json" -o static/rps_data.json && echo "✅ 已获取当前数据" || echo "ℹ️ 首次运行，无现有数据"
           python rps_calc.py
+
+      - name: 数据新鲜度检查（数据过期即失败，触发通知）
+        run: |
+          python - <<'EOF'
+          import json, sys
+          try:
+              data = json.load(open('static/rps_data.json'))
+          except Exception as e:
+              print(f"❌ 未生成数据文件: {e}")
+              sys.exit(1)
+          ud = str(data.get('update_date', ''))
+          ex = str(data.get('expected_trade_date', ''))
+          if not ud or (ex and ud < ex):
+              print(f"❌ 数据过期: update_date={ud}, 预期交易日={ex}")
+              sys.exit(1)
+          print(f"✅ 数据新鲜: update_date={ud}")
+          EOF
 
       - name: 清理缓存文件（只在gh-pages保留看板必需的文件）
         run: |
@@ -48,3 +74,15 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .
+
+      - name: 失败通知（Server酱微信推送）
+        if: failure() && (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch')
+        run: |
+          KEY="${{ secrets.SERVERCHAN_SENDKEY }}"
+          if [ -z "$KEY" ]; then
+            echo "⚠️ 未配置 SERVERCHAN_SENDKEY，跳过微信通知（在仓库 Settings→Secrets and variables→Actions 添加）"
+            exit 0
+          fi
+          curl -s -X POST "https://sctapi.ftqq.com/${KEY}.send" \
+            --data-urlencode "title=RPS看板更新失败" \
+            --data-urlencode "desp=定时更新失败或数据过期，请到 https://github.com/huse11/rps-board/actions 查看日志。时间：$(date '+%m-%d %H:%M')" || true

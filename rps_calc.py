@@ -604,6 +604,19 @@ def main():
     trade_days = get_trade_days(n=60)
     print(f"  {len(trade_days)} 个交易日")
 
+    # 幂等保险：当天数据已生成则跳过计算（防止多个cron重复触发时破坏last_result对比基准）
+    latest_td = trade_days[-1]
+    if DATA_FILE.exists():
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                exist = json.load(f)
+            if str(exist.get("update_date", "")) == latest_td:
+                print(f"  ⏭️ 数据已是最新交易日 {latest_td}，跳过计算（保持last_result对比基准）")
+                return
+        except Exception:
+            pass
+    print(f"  最新交易日: {latest_td}")
+
     print("\n[2/5] 股票行业...")
     industry_df = get_stock_industry()
     print(f"  {len(industry_df)}只, {industry_df['industry'].nunique()}个行业")
@@ -660,6 +673,7 @@ def main():
     output = {
         "update_date": latest_date,
         "prev_date": prev_date,
+        "expected_trade_date": trade_days[-1],
         "total_industries": len(df_rps),
         "threshold": RPS_THRESHOLD,
         "rps5": res5,
