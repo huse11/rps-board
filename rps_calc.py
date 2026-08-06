@@ -22,6 +22,7 @@ TUSHARE_TOKENS = [
     "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
 RPS_THRESHOLD = 90
+SCHEMA_VERSION = 2  # 数据格式版本: v2=含成分股stocks（幂等判断用，升级需+1）
 STATIC_DIR = Path(__file__).parent / "static"
 DATA_FILE = STATIC_DIR / "rps_data.json"
 LAST_RESULT_FILE = STATIC_DIR / "last_result.json"
@@ -691,15 +692,17 @@ def main():
     trade_days = get_trade_days(n=60)
     print(f"  {len(trade_days)} 个交易日")
 
-    # 幂等保险：当天数据已生成则跳过计算（防止多个cron重复触发时破坏last_result对比基准）
+    # 幂等保险：当天数据已生成且版本匹配则跳过计算（防止多个cron重复触发时破坏last_result对比基准）
     latest_td = trade_days[-1]
     if DATA_FILE.exists():
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 exist = json.load(f)
-            if str(exist.get("update_date", "")) == latest_td:
-                print(f"  ⏭️ 数据已是最新交易日 {latest_td}，跳过计算（保持last_result对比基准）")
+            if (str(exist.get("update_date", "")) == latest_td
+                    and int(exist.get("schema_version", 0)) >= SCHEMA_VERSION):
+                print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且版本匹配，跳过计算（保持last_result对比基准）")
                 return
+            print(f"  🔄 数据版本旧(schema={exist.get('schema_version', 0)} < {SCHEMA_VERSION})，重新计算...")
         except Exception:
             pass
     print(f"  最新交易日: {latest_td}")
@@ -769,6 +772,7 @@ def main():
         json.dump(rps_history, f, ensure_ascii=False, default=str)
 
     output = {
+        "schema_version": SCHEMA_VERSION,
         "update_date": latest_date,
         "prev_date": prev_date,
         "expected_trade_date": trade_days[-1],
