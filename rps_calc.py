@@ -595,6 +595,93 @@ def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col,
     }
 
 
+def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
+    """
+    为行业板块构建成分股列表（含最近交易日行情）
+    字段: 代码/名称/涨幅/现价/连涨天/涨跌/买价/卖价/总量/现量/涨速/换手/今开/最高/最低/昨收/量比/细分行业
+    实时字段(买价/卖价/现量/涨速) Tushare免费版无实时行情，返回None，前端显示--
+    """
+    result = {ind: [] for ind in target_industries}
+    members = industry_df[industry_df["industry"].isin(target_industries)]
+    if members.empty:
+        return result
+    if latest_date not in daily_map:
+        return result
+
+    def fround(v, nd=2):
+        return round(float(v), nd) if v is not None and not pd.isna(v) else None
+
+    df_latest = daily_map[latest_date]
+    latest_idx = {r["ts_code"]: r for _, r in df_latest.iterrows()}
+
+    # 换手率/量比（daily_basic，全市场一次调用）
+    basic_idx = {}
+    try:
+        df_basic = pool.call_any("daily_basic", trade_date=latest_date)
+        if df_basic is not None and len(df_basic) > 0:
+            basic_idx = {r["ts_code"]: r for _, r in df_basic.iterrows()}
+        print(f"  ✅ daily_basic: {len(basic_idx)}条")
+    except Exception as e:
+        print(f"  ⚠️ daily_basic失败(换手率/量比将为空): {str(e)[:60]}")
+
+    # 连涨天数：最近21个有效交易日逐股统计
+    avail = sorted(daily_map.keys())
+    recent = avail[-21:]
+    target_codes = set(members["ts_code"])
+    chg_by_code = {c: [] for c in target_codes}
+    for date in recent:
+        df = daily_map[date]
+        sub = df[df["ts_code"].isin(target_codes)][["ts_code", "pct_chg"]]
+        for _, r in sub.iterrows():
+            c = r["ts_code"]
+            v = r.get("pct_chg")
+            if v is not None and not pd.isna(v):
+                chg_by_code[c].append(float(v))
+
+    def consec_up(chgs):
+        n = 0
+        for v in reversed(chgs):
+            if v > 0:
+                n += 1
+            else:
+                break
+        return n
+
+    # 组装成分股（按涨幅降序）
+    for ind in target_industries:
+        grp = members[members["industry"] == ind]
+        stocks = []
+        for _, m in grp.iterrows():
+            code = m["ts_code"]
+            lr = latest_idx.get(code)
+            if lr is None:
+                continue
+            br = basic_idx.get(code)
+            stocks.append({
+                "ts_code": code,
+                "name": str(m["name"]),
+                "industry": ind,
+                "pct_chg": fround(lr.get("pct_chg")),
+                "price": fround(lr.get("close")),
+                "consec_up": consec_up(chg_by_code.get(code, [])),
+                "change": fround(lr.get("close") - lr.get("pre_close")),
+                "vol": int(lr["vol"]) if pd.notna(lr.get("vol")) else None,
+                "turnover": fround(br.get("turnover_rate")) if br is not None else None,
+                "open": fround(lr.get("open")),
+                "high": fround(lr.get("high")),
+                "low": fround(lr.get("low")),
+                "pre_close": fround(lr.get("pre_close")),
+                "vol_ratio": fround(br.get("volume_ratio")) if br is not None else None,
+                "bid": None, "ask": None, "vol_now": None, "speed": None,
+            })
+        stocks.sort(key=lambda s: s["pct_chg"] if s["pct_chg"] is not None else -9999, reverse=True)
+        result[ind] = stocks
+
+    total = sum(len(v) for v in result.values())
+    print(f"  ✅ 成分股: {len(result)}个板块, {total}只股票")
+    return result
+
+
 def main():
     print("=" * 55)
     print("  A股板块 RPS 引擎 v3.0（全量历史回溯）")
@@ -665,6 +752,17 @@ def main():
     available_days = [d for d in trade_days if d in daily_map]
     latest_date = available_days[-1]
     prev_date = available_days[-2] if len(available_days) >= 2 else ""
+
+    # ===== 板块成分股（点击弹窗展示）=====
+    print("\n  [5b] 构建板块成分股...")
+    all_ind_names = set()
+    for res in (res5, res10, res20):
+        for rec in res["in_list"] + res["out_list"]:
+            all_ind_names.add(rec["name"])
+    stocks_by_ind = build_sector_stocks(industry_df, daily_map, latest_date, all_ind_names)
+    for res in (res5, res10, res20):
+        for rec in res["in_list"] + res["out_list"]:
+            rec["stocks"] = stocks_by_ind.get(rec["name"], [])
 
     # 保存历史快照
     with open(RPS_HISTORY_FILE, "w", encoding="utf-8") as f:
