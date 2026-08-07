@@ -22,6 +22,7 @@ check_*.py
 run_debug.py
 
 # 调试/临时文件（含token的脚本严禁提交）
+_*.py
 _*.html
 _*.json
 _*.txt
