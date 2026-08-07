@@ -10,6 +10,7 @@ import numpy as np
 import json
 import os
 import re
+import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -856,6 +857,7 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
 
 
 def main():
+    force = "--force" in sys.argv  # push触发时强制重算（跳过幂等）
     print("=" * 55)
     print("  A股板块 RPS 引擎 v3.0（全量历史回溯）")
     print("=" * 55)
@@ -871,7 +873,8 @@ def main():
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 exist = json.load(f)
             if (str(exist.get("update_date", "")) == latest_td
-                    and int(exist.get("schema_version", 0)) >= SCHEMA_VERSION):
+                    and int(exist.get("schema_version", 0)) >= SCHEMA_VERSION
+                    and not force):
                 print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且版本匹配，跳过计算（保持last_result对比基准）")
                 return
             print(f"  🔄 数据版本旧(schema={exist.get('schema_version', 0)} < {SCHEMA_VERSION})，重新计算...")

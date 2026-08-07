@@ -45,7 +45,8 @@ jobs:
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/last_result.json" -o static/last_result.json && echo "✅ 已获取上次名单" || echo "ℹ️ 首次运行，无历史名单"
           # 下载当前数据文件，供幂等判断（当天已更新则跳过计算，保护last_result对比基准）
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/rps_data.json" -o static/rps_data.json && echo "✅ 已获取当前数据" || echo "ℹ️ 首次运行，无现有数据"
-          python rps_calc.py
+          # push 触发时强制重算（新代码需重新生成数据）
+          python rps_calc.py ${{ github.event_name == 'push' && '--force' || '' }}
 
       - name: 数据新鲜度检查（数据过期即失败，触发通知）
         run: |
