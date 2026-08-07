@@ -644,24 +644,17 @@ def fetch_realtime_quotes(codes, latest_date):
 
     filled = set()
     # ---- 1. 东方财富（涨速/现量/买一/卖一）----
+    # 域名池: 标准push2 → 延迟行情(push2delay, 稳定可用) → 数字子域
+    EM_DOMAINS = (["push2.eastmoney.com", "push2delay.eastmoney.com"]
+                  + [f"{n}.push2.eastmoney.com" for n in range(1, 6)])
     try:
         secids = [em_secid(c) for c in codes]
-        for i in range(0, len(secids), 50):
-            chunk = secids[i:i + 50]
-            url = ("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=" + ",".join(chunk)
-                   + "&fields=f2,f12,f13,f14,f22,f30,f31,f32,f124")
-            for attempt in range(2):
-                try:
-                    d = get_json(url)
-                    break
-                except Exception:
-                    time.sleep(1 + attempt * 2)
-                    d = None
-            if d is None:
-                continue
+
+        def parse_em(d):
             diff = (d.get("data") or {}).get("diff", [])
             if isinstance(diff, dict):
                 diff = [diff]
+            got = 0
             for item in diff:
                 code = str(item.get("f12"))
                 mkt = {0: "SZ", 1: "SH", 83: "BJ"}.get(item.get("f13"))
@@ -674,17 +667,55 @@ def fetch_realtime_quotes(codes, latest_date):
                     continue  # 快照交易日与数据交易日不一致，丢弃
                 bid, ask = item.get("f31"), item.get("f32")
                 vol_now, speed = item.get("f30"), item.get("f22")
-                if bid is None or bid == "-" or float(bid) <= 0:
+                if bid in (None, "-") or float(bid) <= 0:
                     bid = None
-                if ask is None or ask == "-" or float(ask) <= 0:
+                if ask in (None, "-") or float(ask) <= 0:
                     ask = None
-                if vol_now is None or vol_now == "-" or float(vol_now) <= 0:
+                if vol_now in (None, "-"):
                     vol_now = None
-                if speed is None or speed == "-" or float(speed) == 0:
-                    speed = None
+                else:
+                    vol_now = abs(float(vol_now))  # 现量为手数，取绝对值
+                if speed in (None, "-"):
+                    speed = None  # 涨速收盘后为0也保留
                 result[ts_code].update({"bid": bid, "ask": ask, "vol_now": vol_now, "speed": speed})
                 filled.add(ts_code)
-            time.sleep(0.4)
+                got += 1
+            return got
+
+        # 主循环: 每批20只, 域名池轮换直到成功
+        for i in range(0, len(secids), 20):
+            chunk = secids[i:i + 20]
+            d = None
+            for dom in EM_DOMAINS:
+                url = ("https://" + dom + "/api/qt/ulist.np/get?fltt=2&secids=" + ",".join(chunk)
+                       + "&fields=f2,f12,f13,f22,f30,f31,f32,f124")
+                try:
+                    d = get_json(url)
+                    if (d.get("data") or {}).get("diff"):
+                        break
+                except Exception:
+                    d = None
+                time.sleep(0.2)
+            if d is not None:
+                parse_em(d)
+            time.sleep(0.15)
+
+        # 补偿: 对未填充的按10只小批重试（优先稳定域名）
+        missing_em = [c for c in codes if c not in filled]
+        if missing_em:
+            miss_secids = [em_secid(c) for c in missing_em]
+            for i in range(0, len(miss_secids), 10):
+                chunk = miss_secids[i:i + 10]
+                for dom in reversed(EM_DOMAINS):
+                    url = ("https://" + dom + "/api/qt/ulist.np/get?fltt=2&secids=" + ",".join(chunk)
+                           + "&fields=f2,f12,f13,f22,f30,f31,f32,f124")
+                    try:
+                        d = get_json(url)
+                        if d is not None and parse_em(d) > 0:
+                            break
+                    except Exception:
+                        pass
+                    time.sleep(0.15)
         print(f"  ✅ 东财快照: {len(filled)}只")
     except Exception as e:
         print(f"  ⚠️ 东财快照失败: {str(e)[:80]}")
@@ -696,13 +727,14 @@ def fetch_realtime_quotes(codes, latest_date):
             filled_tx = 0
             for i in range(0, len(missing), 100):
                 chunk = missing[i:i + 100]
-                codes_q = ",".join(("sh" if c.endswith(".SH") else "sz") + c.split(".")[0] for c in chunk)
+                codes_q = ",".join(("sh" if c.endswith(".SH") else "bj" if c.endswith(".BJ") else "sz")
+                                   + c.split(".")[0] for c in chunk)
                 url = "https://qt.gtimg.cn/q=" + codes_q
                 req = urllib.request.Request(url, headers={"User-Agent": ua["User-Agent"]})
                 with urllib.request.urlopen(req, timeout=10) as r:
                     raw = r.read().decode("gbk", errors="ignore")
-                for m in re.finditer(r'v_(sh|sz)(\d+)="([^"]*)"', raw):
-                    mkt = "SH" if m.group(1) == "sh" else "SZ"
+                for m in re.finditer(r'v_(sh|sz|bj)(\d+)="([^"]*)"', raw):
+                    mkt = "SH" if m.group(1) == "sh" else ("BJ" if m.group(1) == "bj" else "SZ")
                     code = m.group(2) + "." + mkt
                     if code not in result:
                         continue
