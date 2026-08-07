@@ -10,7 +10,6 @@ import numpy as np
 import json
 import os
 import re
-import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -857,7 +856,6 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
 
 
 def main():
-    force = "--force" in sys.argv  # push触发时强制重算（跳过幂等）
     print("=" * 55)
     print("  A股板块 RPS 引擎 v3.0（全量历史回溯）")
     print("=" * 55)
@@ -866,20 +864,27 @@ def main():
     trade_days = get_trade_days(n=60)
     print(f"  {len(trade_days)} 个交易日")
 
-    # 幂等保险：当天数据已生成且版本匹配则跳过计算（防止多个cron重复触发时破坏last_result对比基准）
+    # 幂等保险：当天数据已生成且当天已完整计算过则跳过计算
+    # （防止多个cron/手动触发重复刷新，覆盖last_result对比基准导致调入/调出错乱）
     latest_td = trade_days[-1]
+    skip = False
     if DATA_FILE.exists():
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 exist = json.load(f)
+            last_date = ""
+            if os.path.exists(LAST_RESULT_FILE):
+                with open(LAST_RESULT_FILE, "r", encoding="utf-8") as f:
+                    last_date = str(json.load(f).get("date", ""))
             if (str(exist.get("update_date", "")) == latest_td
                     and int(exist.get("schema_version", 0)) >= SCHEMA_VERSION
-                    and not force):
-                print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且版本匹配，跳过计算（保持last_result对比基准）")
-                return
-            print(f"  🔄 数据版本旧(schema={exist.get('schema_version', 0)} < {SCHEMA_VERSION})，重新计算...")
+                    and last_date == latest_td):
+                skip = True
         except Exception:
             pass
+    if skip:
+        print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且当天已完整计算，跳过计算（保持调入/调出对比基准）")
+        return
     print(f"  最新交易日: {latest_td}")
 
     print("\n[2/5] 股票行业...")
@@ -961,6 +966,7 @@ def main():
         json.dump(output, f, ensure_ascii=False, indent=2, default=str)
 
     save_last = {
+        "date": latest_date,
         "rps5_names": list(res5["current_names"]),
         "rps10_names": list(res10["current_names"]),
         "rps20_names": list(res20["current_names"]),
