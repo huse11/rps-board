@@ -577,8 +577,8 @@ function stockRowHtml(s) {
         '<td>' + dash(s.bid) + '</td>' +
         '<td>' + dash(s.ask) + '</td>' +
         '<td>' + fmtStockVol(s.vol) + '</td>' +
-        '<td>' + dash(s.vol_now) + '</td>' +
-        '<td>' + dash(s.speed) + '</td>' +
+        '<td>' + fmtStockVol(s.vol_now) + '</td>' +
+        '<td>' + fmtStockPct(s.speed) + '</td>' +
         '<td>' + fmtStockPct(s.turnover) + '</td>' +
         '<td>' + fmtStockNum(s.open) + '</td>' +
         '<td>' + fmtStockNum(s.high) + '</td>' +
