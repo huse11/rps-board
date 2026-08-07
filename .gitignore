@@ -27,6 +27,7 @@ _*.html
 _*.json
 _*.txt
 push_api2.py
+push_main.py
 dispatch.py
 fix_api.py
 restore_last.py
