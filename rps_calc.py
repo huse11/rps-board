@@ -656,11 +656,14 @@ def fetch_realtime_quotes(codes, latest_date):
                 diff = [diff]
             got = 0
             for item in diff:
-                code = str(item.get("f12"))
+                symbol = str(item.get("f12"))
                 mkt = {0: "SZ", 1: "SH", 83: "BJ"}.get(item.get("f13"))
                 if not mkt:
                     continue
-                ts_code = code + "." + mkt
+                # 东财北交所 f13=0(同深市), 按代码前缀识别: 4/8/920开头为北交所
+                if mkt == "SZ" and symbol.startswith(("4", "8", "920")):
+                    mkt = "BJ"
+                ts_code = symbol + "." + mkt
                 if ts_code not in result:
                     continue
                 if bj_date(item.get("f124")) != latest_date:
