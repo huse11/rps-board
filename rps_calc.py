@@ -9,6 +9,7 @@ import pandas as pd
 import numpy as np
 import json
 import os
+import re
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -596,11 +597,140 @@ def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col,
     }
 
 
+def calc_expected_trade_date(trade_days):
+    """
+    期望数据交易日 = 最近一个已收盘的交易日（北京时区15:00后视为已收盘）
+    解决 cron 延迟/每日补跑时误用未来交易日导致的新鲜度误报
+    """
+    now_bj = datetime.utcnow() + timedelta(hours=8)
+    today = now_bj.strftime("%Y%m%d")
+    hour_bj = now_bj.hour
+    for d in reversed(sorted(trade_days)):
+        if d < today:
+            return d
+        if d == today and hour_bj >= 15:
+            return d
+    return sorted(trade_days)[-1]
+
+
+def fetch_realtime_quotes(codes, latest_date):
+    """
+    获取个股实时快照: 买价(bid)/卖价(ask)/现量(vol_now)/涨速(speed)
+    优先东方财富 ulist(批量, 含涨速/现量), 失败降级腾讯 qt.gtimg.cn(仅买/卖价)
+    仅当快照交易日 == latest_date 时才填充, 否则保持 None(避免跨日数据错配)
+    返回 {ts_code: {"bid":..,"ask":..,"vol_now":..,"speed":..}}
+    """
+    import urllib.request
+    result = {c: {"bid": None, "ask": None, "vol_now": None, "speed": None} for c in codes}
+    if not codes:
+        return result
+    ua = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
+          "Referer": "https://quote.eastmoney.com/"}
+
+    def get_json(url):
+        req = urllib.request.Request(url, headers=ua)
+        with urllib.request.urlopen(req, timeout=10) as r:
+            return json.loads(r.read().decode("utf-8"))
+
+    def em_secid(ts_code):
+        symbol, mkt = ts_code.split(".")
+        return ("1." if mkt == "SH" else "0.") + symbol
+
+    def bj_date(ts):
+        """东财f124时间戳(UTC秒) → 北京时间YYYYMMDD"""
+        if not ts:
+            return ""
+        return (datetime.utcfromtimestamp(float(ts)) + timedelta(hours=8)).strftime("%Y%m%d")
+
+    filled = set()
+    # ---- 1. 东方财富（涨速/现量/买一/卖一）----
+    try:
+        secids = [em_secid(c) for c in codes]
+        for i in range(0, len(secids), 50):
+            chunk = secids[i:i + 50]
+            url = ("https://push2.eastmoney.com/api/qt/ulist.np/get?fltt=2&secids=" + ",".join(chunk)
+                   + "&fields=f2,f12,f13,f14,f22,f30,f31,f32,f124")
+            for attempt in range(2):
+                try:
+                    d = get_json(url)
+                    break
+                except Exception:
+                    time.sleep(1 + attempt * 2)
+                    d = None
+            if d is None:
+                continue
+            diff = (d.get("data") or {}).get("diff", [])
+            if isinstance(diff, dict):
+                diff = [diff]
+            for item in diff:
+                code = str(item.get("f12"))
+                mkt = {0: "SZ", 1: "SH", 83: "BJ"}.get(item.get("f13"))
+                if not mkt:
+                    continue
+                ts_code = code + "." + mkt
+                if ts_code not in result:
+                    continue
+                if bj_date(item.get("f124")) != latest_date:
+                    continue  # 快照交易日与数据交易日不一致，丢弃
+                bid, ask = item.get("f31"), item.get("f32")
+                vol_now, speed = item.get("f30"), item.get("f22")
+                if bid is None or bid == "-" or float(bid) <= 0:
+                    bid = None
+                if ask is None or ask == "-" or float(ask) <= 0:
+                    ask = None
+                if vol_now is None or vol_now == "-" or float(vol_now) <= 0:
+                    vol_now = None
+                if speed is None or speed == "-" or float(speed) == 0:
+                    speed = None
+                result[ts_code].update({"bid": bid, "ask": ask, "vol_now": vol_now, "speed": speed})
+                filled.add(ts_code)
+            time.sleep(0.4)
+        print(f"  ✅ 东财快照: {len(filled)}只")
+    except Exception as e:
+        print(f"  ⚠️ 东财快照失败: {str(e)[:80]}")
+
+    # ---- 2. 腾讯降级（仅买一/卖一，分批防URL超长）----
+    missing = [c for c in codes if c not in filled]
+    if missing:
+        try:
+            filled_tx = 0
+            for i in range(0, len(missing), 100):
+                chunk = missing[i:i + 100]
+                codes_q = ",".join(("sh" if c.endswith(".SH") else "sz") + c.split(".")[0] for c in chunk)
+                url = "https://qt.gtimg.cn/q=" + codes_q
+                req = urllib.request.Request(url, headers={"User-Agent": ua["User-Agent"]})
+                with urllib.request.urlopen(req, timeout=10) as r:
+                    raw = r.read().decode("gbk", errors="ignore")
+                for m in re.finditer(r'v_(sh|sz)(\d+)="([^"]*)"', raw):
+                    mkt = "SH" if m.group(1) == "sh" else "SZ"
+                    code = m.group(2) + "." + mkt
+                    if code not in result:
+                        continue
+                    parts = m.group(3).split("~")
+                    if len(parts) < 31 or not parts[30]:
+                        continue
+                    if parts[30][:8] != latest_date:
+                        continue
+                    if parts[9] and float(parts[9]) > 0:
+                        result[code]["bid"] = float(parts[9])
+                        filled_tx += 1
+                    if parts[19] and float(parts[19]) > 0:
+                        result[code]["ask"] = float(parts[19])
+                time.sleep(0.3)
+            print(f"  ✅ 腾讯快照(买/卖价): {filled_tx}只")
+        except Exception as e:
+            print(f"  ⚠️ 腾讯快照失败: {str(e)[:80]}")
+
+    n_filled = sum(1 for v in result.values() if v["bid"] is not None or v["speed"] is not None)
+    print(f"  ✅ 实时快照填充: {n_filled}/{len(codes)}只（交易日 {latest_date}）")
+    return result
+
+
 def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
     """
     为行业板块构建成分股列表（含最近交易日行情）
     字段: 代码/名称/涨幅/现价/连涨天/涨跌/买价/卖价/总量/现量/涨速/换手/今开/最高/最低/昨收/量比/细分行业
-    实时字段(买价/卖价/现量/涨速) Tushare免费版无实时行情，返回None，前端显示--
+    买价/卖价/现量/涨速 来自东方财富/腾讯实时快照（Tushare免费版无实时行情）
     """
     result = {ind: [] for ind in target_industries}
     members = industry_df[industry_df["industry"].isin(target_industries)]
@@ -639,6 +769,9 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
             if v is not None and not pd.isna(v):
                 chg_by_code[c].append(float(v))
 
+    # 实时快照（买价/卖价/现量/涨速，东财优先腾讯降级）
+    rt_map = fetch_realtime_quotes(list(target_codes), latest_date)
+
     def consec_up(chgs):
         n = 0
         for v in reversed(chgs):
@@ -658,6 +791,7 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
             if lr is None:
                 continue
             br = basic_idx.get(code)
+            rt = rt_map.get(code, {})
             stocks.append({
                 "ts_code": code,
                 "name": str(m["name"]),
@@ -673,7 +807,10 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
                 "low": fround(lr.get("low")),
                 "pre_close": fround(lr.get("pre_close")),
                 "vol_ratio": fround(br.get("volume_ratio")) if br is not None else None,
-                "bid": None, "ask": None, "vol_now": None, "speed": None,
+                "bid": rt.get("bid"),
+                "ask": rt.get("ask"),
+                "vol_now": rt.get("vol_now"),
+                "speed": rt.get("speed"),
             })
         stocks.sort(key=lambda s: s["pct_chg"] if s["pct_chg"] is not None else -9999, reverse=True)
         result[ind] = stocks
@@ -775,7 +912,7 @@ def main():
         "schema_version": SCHEMA_VERSION,
         "update_date": latest_date,
         "prev_date": prev_date,
-        "expected_trade_date": trade_days[-1],
+        "expected_trade_date": calc_expected_trade_date(trade_days),
         "total_industries": len(df_rps),
         "threshold": RPS_THRESHOLD,
         "rps5": res5,
