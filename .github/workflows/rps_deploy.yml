@@ -65,9 +65,13 @@ jobs:
           print(f"✅ 数据新鲜: update_date={ud}")
           EOF
 
+      - name: 单元测试（防止四列数据为空等回归）
+        run: |
+          python -m unittest discover -s tests -v
+
       - name: 清理缓存文件（只在gh-pages保留看板必需的文件）
         run: |
-          rm -rf static/daily_cache static/rps_history.json __pycache__ .github
+          rm -rf static/daily_cache static/rps_history.json __pycache__ .github tests
           rm -f rps_calc.py web_server.py requirements.txt .gitignore
 
       - name: 部署到 GitHub Pages
