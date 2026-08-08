@@ -613,6 +613,59 @@ def calc_expected_trade_date(trade_days):
     return sorted(trade_days)[-1]
 
 
+# ================== 实时快照纯函数（可单元测试）==================
+def em_secid(ts_code):
+    """ts_code(如 600000.SH) → 东方财富secid(1.=沪 0.=深/北)"""
+    symbol, mkt = ts_code.split(".")
+    return ("1." if mkt == "SH" else "0.") + symbol
+
+
+def tx_prefix(ts_code):
+    """ts_code → 腾讯行情前缀(sh/sz/bj)"""
+    symbol, mkt = ts_code.split(".")
+    return "sh" if mkt == "SH" else ("bj" if mkt == "BJ" else "sz")
+
+
+def em_mkt_from_f13(f13, symbol):
+    """
+    东财f13(0=深/北 1=沪 83=北) + 代码前缀 → 市场后缀(SH/SZ/BJ)
+    回归保护: 东财北交所 f13=0(同深市), 需按代码前缀(4/8/920)识别为北交所
+    """
+    mkt = {0: "SZ", 1: "SH", 83: "BJ"}.get(f13)
+    if not mkt:
+        return None
+    if mkt == "SZ" and str(symbol).startswith(("4", "8", "920")):
+        mkt = "BJ"
+    return mkt
+
+
+def bj_date(ts):
+    """东财f124时间戳(UTC秒) → 北京时间YYYYMMDD"""
+    if not ts:
+        return ""
+    return (datetime.utcfromtimestamp(float(ts)) + timedelta(hours=8)).strftime("%Y%m%d")
+
+
+def normalize_rt_fields(bid, ask, vol_now, speed):
+    """
+    四列字段归一化（回归保护: 避免四列意外变空/语义错误）
+    - 买卖价: 无效值/<=0 → None（涨停无卖一、跌停无买一属正常）
+    - 现量: 东财带方向符号, 取绝对值(手数)
+    - 涨速: 收盘后为0也保留(0是正常值, 不是缺失)
+    """
+    if bid in (None, "-") or float(bid) <= 0:
+        bid = None
+    if ask in (None, "-") or float(ask) <= 0:
+        ask = None
+    if vol_now in (None, "-"):
+        vol_now = None
+    else:
+        vol_now = abs(float(vol_now))
+    if speed in (None, "-"):
+        speed = None
+    return bid, ask, vol_now, speed
+
+
 def fetch_realtime_quotes(codes, latest_date):
     """
     获取个股实时快照: 买价(bid)/卖价(ask)/现量(vol_now)/涨速(speed)
@@ -632,16 +685,6 @@ def fetch_realtime_quotes(codes, latest_date):
         with urllib.request.urlopen(req, timeout=10) as r:
             return json.loads(r.read().decode("utf-8"))
 
-    def em_secid(ts_code):
-        symbol, mkt = ts_code.split(".")
-        return ("1." if mkt == "SH" else "0.") + symbol
-
-    def bj_date(ts):
-        """东财f124时间戳(UTC秒) → 北京时间YYYYMMDD"""
-        if not ts:
-            return ""
-        return (datetime.utcfromtimestamp(float(ts)) + timedelta(hours=8)).strftime("%Y%m%d")
-
     filled = set()
     # ---- 1. 东方财富（涨速/现量/买一/卖一）----
     # 域名池: 标准push2 → 延迟行情(push2delay, 稳定可用) → 数字子域
@@ -657,29 +700,16 @@ def fetch_realtime_quotes(codes, latest_date):
             got = 0
             for item in diff:
                 symbol = str(item.get("f12"))
-                mkt = {0: "SZ", 1: "SH", 83: "BJ"}.get(item.get("f13"))
+                mkt = em_mkt_from_f13(item.get("f13"), symbol)
                 if not mkt:
                     continue
-                # 东财北交所 f13=0(同深市), 按代码前缀识别: 4/8/920开头为北交所
-                if mkt == "SZ" and symbol.startswith(("4", "8", "920")):
-                    mkt = "BJ"
                 ts_code = symbol + "." + mkt
                 if ts_code not in result:
                     continue
                 if bj_date(item.get("f124")) != latest_date:
                     continue  # 快照交易日与数据交易日不一致，丢弃
-                bid, ask = item.get("f31"), item.get("f32")
-                vol_now, speed = item.get("f30"), item.get("f22")
-                if bid in (None, "-") or float(bid) <= 0:
-                    bid = None
-                if ask in (None, "-") or float(ask) <= 0:
-                    ask = None
-                if vol_now in (None, "-"):
-                    vol_now = None
-                else:
-                    vol_now = abs(float(vol_now))  # 现量为手数，取绝对值
-                if speed in (None, "-"):
-                    speed = None  # 涨速收盘后为0也保留
+                bid, ask, vol_now, speed = normalize_rt_fields(
+                    item.get("f31"), item.get("f32"), item.get("f30"), item.get("f22"))
                 result[ts_code].update({"bid": bid, "ask": ask, "vol_now": vol_now, "speed": speed})
                 filled.add(ts_code)
                 got += 1
@@ -730,8 +760,7 @@ def fetch_realtime_quotes(codes, latest_date):
             filled_tx = 0
             for i in range(0, len(missing), 100):
                 chunk = missing[i:i + 100]
-                codes_q = ",".join(("sh" if c.endswith(".SH") else "bj" if c.endswith(".BJ") else "sz")
-                                   + c.split(".")[0] for c in chunk)
+                codes_q = ",".join(tx_prefix(c) + c.split(".")[0] for c in chunk)
                 url = "https://qt.gtimg.cn/q=" + codes_q
                 req = urllib.request.Request(url, headers={"User-Agent": ua["User-Agent"]})
                 with urllib.request.urlopen(req, timeout=10) as r:
