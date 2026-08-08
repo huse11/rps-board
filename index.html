@@ -8,6 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>板块RPS监测看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="render.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -546,48 +547,7 @@ function findSectorStocks(name) {
     return [];
 }
 
-function fmtStockNum(v) {
-    if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
-    const n = Number(v);
-    return n > 0 ? '<span class="pos">' + n + '</span>' : n < 0 ? '<span class="neg">' + n + '</span>' : n;
-}
-
-function fmtStockPct(v) {
-    if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
-    const n = Number(v);
-    return n > 0 ? '<span class="pos">+' + n.toFixed(2) + '</span>' : n < 0 ? '<span class="neg">' + n.toFixed(2) + '</span>' : n.toFixed(2);
-}
-
-function fmtStockVol(v) {
-    if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
-    const n = Number(v);
-    if (n >= 10000) return (n / 10000).toFixed(1) + '万';
-    return n;
-}
-
-function stockRowHtml(s) {
-    const dash = (v) => (v === null || v === undefined || v === '' ? '--' : v);
-    return '<tr>' +
-        '<td>' + dash(s.ts_code) + '</td>' +
-        '<td style="text-align:left;">' + dash(s.name) + '</td>' +
-        '<td>' + fmtStockPct(s.pct_chg) + '</td>' +
-        '<td>' + fmtStockNum(s.price) + '</td>' +
-        '<td>' + (s.consec_up || 0) + '</td>' +
-        '<td>' + fmtStockPct(s.change) + '</td>' +
-        '<td>' + dash(s.bid) + '</td>' +
-        '<td>' + dash(s.ask) + '</td>' +
-        '<td>' + fmtStockVol(s.vol) + '</td>' +
-        '<td>' + fmtStockVol(s.vol_now) + '</td>' +
-        '<td>' + fmtStockPct(s.speed) + '</td>' +
-        '<td>' + fmtStockPct(s.turnover) + '</td>' +
-        '<td>' + fmtStockNum(s.open) + '</td>' +
-        '<td>' + fmtStockNum(s.high) + '</td>' +
-        '<td>' + fmtStockNum(s.low) + '</td>' +
-        '<td>' + fmtStockNum(s.pre_close) + '</td>' +
-        '<td>' + fmtStockNum(s.vol_ratio) + '</td>' +
-        '<td style="text-align:left;">' + dash(s.industry) + '</td>' +
-        '</tr>';
-}
+// 渲染函数（fmtStockNum/fmtStockPct/fmtStockVol/stockRowHtml）已抽取到 render.js，由 <script src="render.js"> 加载
 
 function openStockModal(name) {
     const stocks = findSectorStocks(name);
