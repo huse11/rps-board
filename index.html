@@ -278,7 +278,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <h1>板块 RPS 监测看板</h1>
         <button id="recBtn" onclick="openRecommendModal()" style="background:#f59e0b;color:#1e293b;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-            ⭐ 每日推荐股票
+            ⭐ 每日优选股票
         </button>
     </div>
     <div class="sub" id="updateInfo">数据加载中...</div>
@@ -432,7 +432,7 @@
 <div class="modal-mask" id="recModal" onclick="closeRecModal(event)">
     <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <span id="recTitle">每日推荐股票</span>
+            <span id="recTitle">每日优选股票</span>
             <button class="modal-close" onclick="closeRecModal()">×</button>
         </div>
         <div class="modal-body">
@@ -695,17 +695,18 @@ function loadRecommendations() {
     fetch('static/recommendations.json?t=' + Date.now(), { cache: 'no-store' })
         .then(r => r.json())
         .then(data => {
-            const stocks = data.stocks || [];
+            // 只展示"优选"标签(总分≥80的中线标的), 短线备选(70~80分)不显示
+            const stocks = (data.stocks || []).filter(s => s.tag === '优选');
             const upd = data.update_date || '--';
             document.getElementById('recTitle').textContent =
-                '每日推荐股票（' + stocks.length + '只）| 更新：' + upd;
+                '每日优选股票（' + stocks.length + '只）| 更新：' + upd;
             if (!stocks.length) {
-                tbody.innerHTML = '<tr><td colspan="15" class="empty-msg">今日暂无符合条件(≥' + (data.threshold || 70) + '分)的推荐股票</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="15" class="empty-msg">今日暂无优选(≥' + (data.excellent_threshold || 80) + '分)股票</td></tr>';
                 return;
             }
             let html = '';
             stocks.forEach((s, idx) => {
-                const rowCls = s.score_total >= (data.excellent_threshold || 80) ? 'row-excellent' : 'row-short';
+                const rowCls = 'row-excellent';
                 html += '<tr class="' + rowCls + '">' +
                     '<td>' + (s.ts_code || '--') + '</td>' +
                     '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
