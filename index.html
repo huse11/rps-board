@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>板块RPS监测看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="render.js"></script>
+    <script src="render.js?v=3"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -227,7 +227,7 @@
         .pos { color: #dc2626; }
         .neg { color: #16a34a; }
         /* 推荐股票弹窗表格(同样冻结前两列: 代码/名称) */
-        .rec-table { font-size: 10px; min-width: 1180px; }
+        .rec-table { font-size: 10px; min-width: 760px; }
         .rec-table th { position: sticky; top: 0; z-index: 1; }
         .rec-table th:nth-child(1),
         .rec-table td:nth-child(1) {
@@ -243,30 +243,39 @@
         }
         .rec-table th:nth-child(1), .rec-table th:nth-child(2) { z-index: 3; background: #1e293b; }
         .rec-table td:nth-child(1), .rec-table td:nth-child(2) { background: #fff; }
-        .rec-table tr.row-excellent td { background: #fef3c7; }
+        /* 分数梯度行高亮: 90+金 / 80-89绿 / 70-79蓝 / <70默认 */
+        .rec-table tr.row-super td { background: #fef3c7; }
+        .rec-table tr.row-super td:nth-child(1),
+        .rec-table tr.row-super td:nth-child(2) { background: #fde68a; }
+        .rec-table tr.row-excellent td { background: #ecfdf5; }
         .rec-table tr.row-excellent td:nth-child(1),
-        .rec-table tr.row-excellent td:nth-child(2) { background: #fde68a; }
-        .rec-table tr.row-short td { background: #fff; }
+        .rec-table tr.row-excellent td:nth-child(2) { background: #d1fae5; }
+        .rec-table tr.row-good td { background: #eff6ff; }
+        .rec-table tr.row-good td:nth-child(1),
+        .rec-table tr.row-good td:nth-child(2) { background: #dbeafe; }
         .rec-table .score-high { color: #dc2626; font-weight: 700; }
         .rec-table .score-mid { color: #f59e0b; font-weight: 600; }
-        /* 果断买入(红) / 短线试错(黄) 双标签 */
-        .tag-excellent {
-            display: inline-block; background: #dc2626; color: #fff;
+        /* 推荐理由标签(板块共振/技术达标) */
+        .tag-rec {
+            display: inline-block; background: #1e293b; color: #fff;
             font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
+            margin: 1px 2px 1px 0;
         }
-        .tag-short {
-            display: inline-block; background: #f59e0b; color: #fff;
-            font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 3px;
-        }
-        /* 体系标签 A突破(蓝) / B回踩(紫) */
-        .sys-a { color: #2563eb; font-weight: 700; }
-        .sys-b { color: #7c3aed; font-weight: 700; }
+        .tag-rec.sector { background: #b91c1c; }
+        .tag-rec.tech { background: #2563eb; }
+        /* 详情展开行 */
+        .rec-detail-row td { background: #f8fafc !important; border-top: 1px dashed #cbd5e1; }
+        .rec-detail-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 14px; padding: 6px 8px; font-size: 11px; text-align: left; }
+        .rec-detail-box .dl { line-height: 1.7; }
+        .rec-detail-box .dl .k { color: #64748b; }
+        .rec-detail-box .dl .v { font-weight: 600; color: #1e293b; }
+        .rec-toggle-btn { cursor: pointer; color: #2563eb; font-weight: 700; user-select: none; }
         .rec-disclaimer {
             background: #fef3c7; border-left: 3px solid #f59e0b;
             padding: 8px 10px; font-size: 11px; color: #92400e;
             margin: 8px; line-height: 1.5; border-radius: 4px;
         }
-        /* 大盘状态横幅 */
+        /* 大盘状态卡片 */
         .market-banner {
             margin: 8px; padding: 10px 12px; border-radius: 6px;
             font-size: 12px; line-height: 1.6;
@@ -278,17 +287,24 @@
         .market-banner .mb-item { display: flex; gap: 4px; align-items: center; }
         .market-banner .mb-item .k { color: inherit; opacity: 0.7; }
         .market-banner .mb-item .v { font-weight: 600; }
-        /* 切换按钮: 仅果断买入 / 全部 */
-        .rec-toggle {
-            display: flex; gap: 6px; margin: 0 8px 8px;
+        .market-banner .mb-index { margin-top: 4px; font-size: 11px; opacity: 0.85; }
+        /* 筛选工具栏: 板块 / 行业 / 市值 */
+        .rec-filter {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+            margin: 0 8px 8px; padding: 8px; background: #f1f5f9;
+            border-radius: 6px; font-size: 11px;
         }
-        .rec-toggle button {
-            flex: 1; padding: 6px 4px; border: 1px solid #e5e7eb;
-            border-radius: 6px; font-size: 11px; font-weight: 600;
-            cursor: pointer; background: #fff; color: #475569;
-            transition: all 0.2s;
+        .rec-filter select {
+            padding: 4px 6px; border: 1px solid #cbd5e1; border-radius: 4px;
+            font-size: 11px; background: #fff; color: #1e293b; max-width: 150px;
         }
-        .rec-toggle button.active { background: #1e293b; color: #fff; border-color: #1e293b; }
+        .rec-filter .rf-btn {
+            padding: 4px 10px; border: 1px solid #cbd5e1; border-radius: 4px;
+            font-size: 11px; font-weight: 600; cursor: pointer;
+            background: #fff; color: #475569;
+        }
+        .rec-filter .rf-btn:hover { background: #e2e8f0; }
+        .rec-filter .rf-count { color: #64748b; margin-left: auto; }
         .sector-link {
             color: #1d4ed8;
             text-decoration: underline;
@@ -305,7 +321,7 @@
     <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;">
         <h1>板块 RPS 监测看板</h1>
         <button id="recBtn" onclick="openRecommendModal()" style="background:#dc2626;color:#fff;border:none;padding:8px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 2px 6px rgba(0,0,0,0.2);">
-            ⭐ 每日果断买入
+            ⭐ 每日推荐股票
         </button>
     </div>
     <div class="sub" id="updateInfo">数据加载中...</div>
@@ -459,7 +475,7 @@
 <div class="modal-mask" id="recModal" onclick="closeRecModal(event)">
     <div class="modal" onclick="event.stopPropagation()">
         <div class="modal-header">
-            <span id="recTitle">每日果断买入推荐</span>
+            <span id="recTitle">每日推荐股票</span>
             <button class="modal-close" onclick="closeRecModal()">×</button>
         </div>
         <div class="modal-body">
@@ -467,21 +483,36 @@
                 ⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股牟利。严禁杠杆借贷炒股。
             </div>
             <div id="marketBanner"></div>
-            <div class="rec-toggle" id="recToggle">
-                <button data-mode="decisive" class="active" onclick="switchRecMode('decisive')">仅果断买入</button>
-                <button data-mode="all" onclick="switchRecMode('all')">全部(含短线试错)</button>
+            <!-- 筛选工具栏: 板块/行业/市值 二次过滤 -->
+            <div class="rec-filter" id="recFilter">
+                <select id="recFilterSector" onchange="setRecFilter()">
+                    <option value="">全部热点板块</option>
+                </select>
+                <select id="recFilterIndustry" onchange="setRecFilter()">
+                    <option value="">全部行业</option>
+                </select>
+                <select id="recFilterMktcap" onchange="setRecFilter()">
+                    <option value="">全部市值</option>
+                    <option value="small">小市值 &lt;50亿</option>
+                    <option value="mid">中市值 50-200亿</option>
+                    <option value="large">大市值 &gt;200亿</option>
+                </select>
+                <button class="rf-btn" onclick="resetRecFilters()">重置</button>
+                <span class="rf-count" id="recFilterCount"></span>
             </div>
             <div style="overflow-x:auto;">
                 <table class="rec-table">
                     <thead><tr>
-                        <th>代码</th><th>名称</th><th>标签</th><th>体系</th><th>总分</th>
-                        <th>大盘</th><th>资金面</th><th>技术面</th><th>基本面</th><th>板块</th>
-                        <th>所属板块</th><th>现价</th><th>涨幅%</th><th>换手%</th>
-                        <th>量比</th><th>PE</th><th>流通市值(亿)</th>
-                        <th>执行窗口</th><th>持仓周期</th><th>止损/止盈</th>
+                        <th>代码</th><th>名称</th>
+                        <th>核心热点板块</th><th>推荐理由标签</th><th>总分</th>
+                        <th>现价</th><th>涨幅%</th><th></th>
                     </tr></thead>
-                    <tbody id="recTableBody"><tr><td colspan="19" class="empty-msg">加载中...</td></tr></tbody>
+                    <tbody id="recTableBody"><tr><td colspan="8" class="empty-msg">加载中...</td></tr></tbody>
                 </table>
+            </div>
+            <!-- 底部固定区: 风险提示 -->
+            <div class="rec-disclaimer" id="recFooter" style="margin-top:8px;">
+                ⚠️ 以上推荐仅为量化漏斗筛选结果(五层: 大盘/候选池/基本面/资金/技术共振), 不构成投资建议; 市场有风险, 入市需谨慎。
             </div>
         </div>
     </div>
@@ -688,10 +719,11 @@ function closeStockModal(e) {
     document.getElementById('stockModal').classList.remove('show');
 }
 
-// ===== 每日推荐股票弹窗 (果断买入五维共振) =====
+// ===== 每日推荐股票弹窗 (五层漏斗筛选 + 综合评分, schema v3) =====
 let _recLoaded = false;  // 仅首次打开时拉取, 避免重复请求
-let _recData = null;      // 缓存最近一次数据(供切换模式复用)
-let _recMode = 'decisive'; // 'decisive'(仅果断买入) / 'all'(全部)
+let _recData = null;      // 缓存最近一次数据(供筛选/展开复用)
+let _recFilter = { sector: '', industry: '', mktcap: '' }; // 二次过滤: 板块/行业/市值
+let _recOpenDetail = {};  // 展开详情行状态 {ts_code: true/false}
 
 function openRecommendModal() {
     document.getElementById('recModal').classList.add('show');
@@ -718,19 +750,7 @@ function fmtScore(v) {
     return '<span class="' + cls + '">' + n + '</span>';
 }
 
-function fmtTag(tag) {
-    if (tag === '果断买入') return '<span class="tag-excellent">果断买入</span>';
-    if (tag === '短线试错') return '<span class="tag-short">短线试错</span>';
-    return '--';
-}
-
-function fmtSystem(sys) {
-    if (sys === 'A突破') return '<span class="sys-a">A突破</span>';
-    if (sys === 'B回踩') return '<span class="sys-b">B回踩</span>';
-    return '--';
-}
-
-// 大盘状态横幅
+// 大盘环境状态卡片 (v3: indexes/advance_ratio/limit_down_count/reason/note)
 function renderMarketBanner(data) {
     const el = document.getElementById('marketBanner');
     const m = data.market_status;
@@ -738,88 +758,176 @@ function renderMarketBanner(data) {
     const safe = m.is_safe !== false;
     const cls = safe ? 'safe' : 'danger';
     const titleIcon = safe ? '✅' : '⚠️';
-    const title = safe ? '大盘环境安全 (可标记果断买入)' : '大盘否决! 准入分提至 ' + (data.strict_threshold || 90) + ' (不得标果断买入)';
-    const veto = m.veto_reason ? ('<div style="margin-top:4px;font-weight:700;">否决原因：' + m.veto_reason + '</div>') : '';
+    const title = safe ? '大盘环境合格, 继续选股' : '大盘环境不满足, 暂无推荐';
+    const reason = m.reason ? ('<div style="margin-top:4px;font-weight:700;">原因：' + m.reason + '</div>') : '';
     const note = m.note ? ('<div style="margin-top:4px;font-size:11px;opacity:0.75;">ℹ️ ' + m.note + '</div>') : '';
-    const fmtV = (v, suffix) => (v === null || v === undefined) ? '--' : (v + (suffix || ''));
+    // 指数 vs 20日线状态行
+    let idxHtml = '';
+    if (m.indexes && m.indexes.length) {
+        idxHtml = '<div class="mb-index">' + m.indexes.map(i => {
+            const st = (i.above === true) ? '站上' : (i.above === false ? '跌破' : '无数据');
+            return i.name + ' ' + fmtOrDash(i.close) + '/' + fmtOrDash(i.ma) + '(' + st + '20日线)';
+        }).join(' | ') + '</div>';
+    }
+    const fmtV = (v, suffix) => (v === null || v === undefined || v === '') ? '--' : (v + (suffix || ''));
     el.innerHTML = '<div class="market-banner ' + cls + '">' +
         '<div class="mb-title">' + titleIcon + ' ' + title + '</div>' +
+        idxHtml +
         '<div class="mb-row">' +
-            '<span class="mb-item"><span class="k">站上60日线:</span><span class="v">' + (m.index_above_ma60 === null || m.index_above_ma60 === undefined ? '--' : (m.index_above_ma60 ? '是' : '否')) + '</span></span>' +
-            '<span class="mb-item"><span class="k">涨跌比:</span><span class="v">' + fmtV(m.advance_decline_ratio) + '</span></span>' +
-            '<span class="mb-item"><span class="k">总成交额:</span><span class="v">' + fmtV(m.total_amount_yi, '亿') + '</span></span>' +
+            '<span class="mb-item"><span class="k">规则:</span><span class="v">' + (m.rule || '--') + '</span></span>' +
+            '<span class="mb-item"><span class="k">上涨占比:</span><span class="v">' + fmtV(m.advance_ratio) + '</span></span>' +
             '<span class="mb-item"><span class="k">跌停:</span><span class="v">' + fmtV(m.limit_down_count, '家') + '</span></span>' +
-        '</div>' + veto + note +
+        '</div>' + reason + note +
     '</div>';
 }
 
-// 切换"仅果断买入" / "全部"
-function switchRecMode(mode) {
-    if (mode === _recMode) return;
-    _recMode = mode;
-    document.querySelectorAll('#recToggle button').forEach(b => {
-        b.classList.toggle('active', b.dataset.mode === mode);
+// 推荐理由标签: 板块名(红) + 技术达标指标(蓝)
+function fmtRecTags(s) {
+    const parts = [];
+    (s.sectors || []).forEach(nm => parts.push('<span class="tag-rec sector">' + nm + '</span>'));
+    ((s.technical && s.technical.hits) || []).slice(0, 3).forEach(h => parts.push('<span class="tag-rec tech">' + h + '</span>'));
+    return parts.join('') || '--';
+}
+
+// 分数梯度行高亮
+function recRowClass(total) {
+    if (total >= 90) return 'row-super';
+    if (total >= 80) return 'row-excellent';
+    if (total >= 70) return 'row-good';
+    return '';
+}
+
+// 详情展开内容: 板块共振/基本面/资金面/技术达标
+function recDetailHtml(s) {
+    const cap = s.capital || {};
+    const tech = s.technical || {};
+    const fund = s.fundamental || {};
+    const yi = v => (v === null || v === undefined || v === '' || isNaN(Number(v))) ? '--' : (Number(v) / 1e8).toFixed(1) + '亿';
+    const mflow = cap.net_inflow_3d;
+    const mflowTxt = (mflow === null || mflow === undefined || mflow === '' || isNaN(Number(mflow)))
+        ? '--'
+        : ((Number(mflow) >= 0 ? '+' : '') + (Number(mflow) / 1e8).toFixed(2) + '亿');
+    const np = (fund.net_profit === null || fund.net_profit === undefined || fund.net_profit === '' || isNaN(Number(fund.net_profit)))
+        ? '--'
+        : (Number(fund.net_profit) / 1e8).toFixed(2) + '亿';
+    return '<div class="rec-detail-box">' +
+        '<div class="dl"><span class="k">板块共振:</span> <span class="v">' + (s.sector_count || 1) + ' 档 (' + ((s.sectors || []).join('/') || '--') + ')</span></div>' +
+        '<div class="dl"><span class="k">基本面:</span> <span class="v">PE ' + fmtOrDash(s.pe_ttm, 1) + ' | 流通 ' + fmtOrDash(s.circ_mv, 1) + '亿 | 净利润 ' + np + '</span></div>' +
+        '<div class="dl"><span class="k">资产负债率:</span> <span class="v">' + fmtOrDash(fund.debt_to_assets, 1) + '%</span></div>' +
+        '<div class="dl"><span class="k">资金面:</span> <span class="v">换手 ' + fmtOrDash(cap.turnover, 1) + '% | 量比 ' + fmtOrDash(cap.vol_ratio, 2) + '</span></div>' +
+        '<div class="dl"><span class="k">成交额:</span> <span class="v">' + yi(cap.amount) + ' | 3日主力净流入 ' + mflowTxt + '</span></div>' +
+        '<div class="dl"><span class="k">技术达标:</span> <span class="v">' + (tech.hit_count || 0) + '/7 项 (' + ((tech.hits || []).join('、') || '--') + ')</span></div>' +
+        '<div class="dl"><span class="k">分项得分:</span> <span class="v">板块 ' + fmtOrDash(s.score_sector) + ' | 基本面 ' + fmtOrDash(s.score_fundamental) + ' | 资金 ' + fmtOrDash(s.score_capital) + ' | 技术 ' + fmtOrDash(s.score_technical) + '</span></div>' +
+    '</div>';
+}
+
+// 点击"详情"展开/收起
+function toggleRecDetail(tsCode) {
+    if (!_recData) return;
+    _recOpenDetail[tsCode] = !_recOpenDetail[tsCode];
+    renderRecommendTable(_recData);
+}
+
+// 填充筛选下拉选项 (板块/行业 去重)
+function fillRecFilterOptions(stocks) {
+    const sectors = new Set(), industries = new Set();
+    stocks.forEach(s => (s.sectors || []).forEach(x => sectors.add(x)));
+    stocks.forEach(s => { if (s.industry) industries.add(s.industry); });
+    const fill = (id, vals, label) => {
+        const sel = document.getElementById(id);
+        const cur = sel.value;
+        sel.innerHTML = '<option value="">' + label + '</option>' +
+            Array.from(vals).sort().map(v => '<option value="' + v + '">' + v + '</option>').join('');
+        sel.value = cur;
+    };
+    fill('recFilterSector', sectors, '全部热点板块');
+    fill('recFilterIndustry', industries, '全部行业');
+}
+
+// 二次过滤: 板块 / 行业 / 市值范围
+function applyRecFilter(stocks) {
+    return stocks.filter(s => {
+        if (_recFilter.sector && !(s.sectors || []).includes(_recFilter.sector)) return false;
+        if (_recFilter.industry && s.industry !== _recFilter.industry) return false;
+        if (_recFilter.mktcap) {
+            const mv = Number(s.circ_mv);
+            if (isNaN(mv)) return false;
+            if (_recFilter.mktcap === 'small' && mv >= 50) return false;
+            if (_recFilter.mktcap === 'mid' && (mv < 50 || mv > 200)) return false;
+            if (_recFilter.mktcap === 'large' && mv <= 200) return false;
+        }
+        return true;
     });
+}
+
+function setRecFilter() {
+    _recFilter = {
+        sector: document.getElementById('recFilterSector').value,
+        industry: document.getElementById('recFilterIndustry').value,
+        mktcap: document.getElementById('recFilterMktcap').value,
+    };
+    if (_recData) renderRecommendTable(_recData);
+}
+
+function resetRecFilters() {
+    document.getElementById('recFilterSector').value = '';
+    document.getElementById('recFilterIndustry').value = '';
+    document.getElementById('recFilterMktcap').value = '';
+    _recFilter = { sector: '', industry: '', mktcap: '' };
     if (_recData) renderRecommendTable(_recData);
 }
 
 function renderRecommendTable(data) {
     const tbody = document.getElementById('recTableBody');
     const all = data.stocks || [];
-    // 模式过滤: decisive 仅果断买入, all 全部(含短线试错)
-    const stocks = (_recMode === 'decisive') ? all.filter(s => s.tag === '果断买入') : all;
     const upd = data.update_date || '--';
-    const decisiveN = (data.decisive_count !== undefined) ? data.decisive_count : stocks.length;
-    const modeLabel = (_recMode === 'decisive') ? '果断买入' : '全部';
+    const stocks = applyRecFilter(all);
+    const ms = data.market_status || {};
     document.getElementById('recTitle').textContent =
-        '每日果断买入推荐（' + stocks.length + '只/' + modeLabel + '）| 更新：' + upd;
+        '每日推荐股票（' + stocks.length + '只 | 更新：' + upd + '）';
+    const cnt = document.getElementById('recFilterCount');
+    if (cnt) cnt.textContent = (stocks.length === all.length) ? ('共 ' + all.length + ' 只') : ('筛选 ' + stocks.length + '/' + all.length + ' 只');
     if (!stocks.length) {
-        const thr = (_recMode === 'decisive') ? (data.excellent_threshold || 80) : (data.threshold || 70);
-        tbody.innerHTML = '<tr><td colspan="19" class="empty-msg">今日暂无' + modeLabel + '(≥' + thr + '分)股票</td></tr>';
+        let msg = '今日暂无满足五层漏斗筛选的股票';
+        if (ms.is_safe === false) msg = '大盘环境不满足: ' + (ms.reason || '暂无推荐');
+        else if (all.length && (_recFilter.sector || _recFilter.industry || _recFilter.mktcap)) msg = '当前筛选条件下无匹配股票';
+        tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">' + msg + '</td></tr>';
         return;
     }
     let html = '';
     stocks.forEach(s => {
-        const rowCls = s.tag === '果断买入' ? 'row-excellent' : 'row-short';
-        html += '<tr class="' + rowCls + '">' +
+        const cls = recRowClass(Number(s.score_total));
+        html += '<tr class="' + cls + '">' +
             '<td>' + (s.ts_code || '--') + '</td>' +
             '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
-            '<td>' + fmtTag(s.tag) + '</td>' +
-            '<td>' + fmtSystem(s.system) + '</td>' +
+            '<td style="text-align:left;">' + ((s.sectors || []).join('、') || '--') + '</td>' +
+            '<td style="text-align:left;">' + fmtRecTags(s) + '</td>' +
             '<td>' + fmtScore(s.score_total) + '</td>' +
-            '<td>' + fmtScore(s.score_market) + '</td>' +
-            '<td>' + fmtScore(s.score_capital) + '</td>' +
-            '<td>' + fmtScore(s.score_technical) + '</td>' +
-            '<td>' + fmtScore(s.score_fundamental) + '</td>' +
-            '<td>' + fmtScore(s.score_sector_heat) + '</td>' +
-            '<td style="text-align:left;">' + (s.industry || '--') + '</td>' +
             '<td>' + fmtOrDash(s.price) + '</td>' +
             '<td>' + fmtStockPct(s.pct_chg) + '</td>' +
-            '<td>' + fmtOrDash(s.turnover_rate) + '</td>' +
-            '<td>' + fmtOrDash(s.vol_ratio) + '</td>' +
-            '<td>' + fmtOrDash(s.pe_ttm, 1) + '</td>' +
-            '<td>' + fmtOrDash(s.circ_mv, 1) + '</td>' +
-            '<td style="text-align:left;">' + (s.exec_window || '--') + '</td>' +
-            '<td style="text-align:left;">' + (s.holding_period || '--') + '</td>' +
-            '<td style="text-align:left;">止损:' + (s.stop_loss || '--') + '<br>止盈:' + (s.take_profit || '--') + '</td>' +
+            '<td><span class="rec-toggle-btn" onclick="toggleRecDetail(\'' + s.ts_code + '\')">详情</span></td>' +
             '</tr>';
+        if (_recOpenDetail[s.ts_code]) {
+            html += '<tr class="rec-detail-row"><td colspan="8">' + recDetailHtml(s) + '</td></tr>';
+        }
     });
     tbody.innerHTML = html;
 }
 
 function loadRecommendations() {
     const tbody = document.getElementById('recTableBody');
-    tbody.innerHTML = '<tr><td colspan="19" class="empty-msg">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">加载中...</td></tr>';
     fetch('static/recommendations.json?t=' + Date.now(), { cache: 'no-store' })
         .then(r => r.json())
         .then(data => {
             _recData = data;
             renderMarketBanner(data);
+            fillRecFilterOptions(data.stocks || []);
             renderRecommendTable(data);
             _recLoaded = true;
         })
         .catch(err => {
-            tbody.innerHTML = '<tr><td colspan="19" class="empty-msg">⚠️ 加载失败：' + (err.message || '请先运行 rps_calc.py') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">⚠️ 加载失败：' + (err.message || '请先运行 rps_calc.py') + '</td></tr>';
             console.error(err);
         });
 }
