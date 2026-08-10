@@ -118,3 +118,45 @@ test('stockRowHtml: 北交所/涨停卖价为--时行仍完整', () => {
     assert.ok(html.includes('<td>--</td>'), '卖价空显示--');
     assert.ok(html.includes('0.00'), '涨速0显示0.00');
 });
+
+// ---------- 周度推荐辅助 (recommend_weekly 前端) ----------
+
+test('fmtWeeklyTags: 板块名红色/中线属性蓝色/空则--', () => {
+    assert.equal(
+        R.fmtWeeklyTags({ tags: '业绩增长 + 周线突破 + 半导体', sectors: ['半导体'] }),
+        '<span class="tag-rec tech">业绩增长</span><span class="tag-rec tech">周线突破</span><span class="tag-rec sector">半导体</span>'
+    );
+    assert.equal(R.fmtWeeklyTags({ tags: '', sectors: [] }), '--');
+    assert.equal(R.fmtWeeklyTags({ sectors: undefined }), '--');
+});
+
+test('fmtWeeklyMktLevel: 三档判定 good/weak/bad', () => {
+    assert.equal(R.fmtWeeklyMktLevel({ level: 'good' }).cls, 'safe');
+    assert.equal(R.fmtWeeklyMktLevel({ level: 'weak' }).cls, 'warn');
+    assert.equal(R.fmtWeeklyMktLevel({ level: 'bad' }).cls, 'danger');
+    assert.equal(R.fmtWeeklyMktLevel(undefined).cls, 'safe');  // 无数据默认安全
+    assert.ok(R.fmtWeeklyMktLevel({ level: 'bad' }).title.includes('无推荐'));
+});
+
+test('fmtWeeklyFund: 净利润/同比/负债率格式化', () => {
+    const txt = R.fmtWeeklyFund({ net_profit: 1.5e8, netprofit_yoy: 25.0, dt_netprofit_yoy: 18.0, debt_to_assets: 42.5 });
+    assert.ok(txt.includes('净利润 1.50亿'));
+    assert.ok(txt.includes('同比 25.0%'));
+    assert.ok(txt.includes('负债率 42.5%'));
+    // 空值不渲染 undefined
+    const empty = R.fmtWeeklyFund({});
+    assert.ok(!empty.includes('undefined'));
+    assert.ok(empty.includes('--'));
+});
+
+test('fmtWeeklyCap: 周换手/量能/成交额/净流入格式化', () => {
+    const txt = R.fmtWeeklyCap({ turnover: 12.34, vol_expand: 1.8, amount: 2.5e8, net_inflow_5d: 3e7 });
+    assert.ok(txt.includes('周换手 12.3%'));
+    assert.ok(txt.includes('量能 1.80x'));
+    assert.ok(txt.includes('周成交额 2.5亿'));
+    assert.ok(txt.includes('+0.30亿'));
+    // 空值
+    const empty = R.fmtWeeklyCap({});
+    assert.ok(!empty.includes('undefined'));
+    assert.ok(empty.includes('--'));
+});

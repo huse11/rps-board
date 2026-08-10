@@ -48,6 +48,8 @@ jobs:
           # 兜底: 下载上次 recommendations.json, 防止本次推荐生成失败(Tushare 限频等)时
           # 部署后 gh-pages 丢失该文件导致手机 404。rps_calc.py 成功生成会覆盖它。
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/recommendations.json" -o static/recommendations.json && echo "✅ 已获取上次推荐(兜底)" || echo "ℹ️ 首次运行，无历史推荐"
+          # 兜底: 下载上周 weekly_recommendations.json (周度推荐每周五生成1次, 其余天复用上周结果)
+          curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/weekly_recommendations.json" -o static/weekly_recommendations.json && echo "✅ 已获取上周周度推荐(兜底)" || echo "ℹ️ 首次运行，无历史周度推荐"
           # 每天只计算一次：幂等检查（rps_calc.py）保证当天已生成数据时不重复刷新，避免覆盖调入/调出对比基准
           python rps_calc.py
           # 推荐生成失败(不阻断)时, 兜底文件仍在; 若连兜底都没有则告警
@@ -81,7 +83,7 @@ jobs:
       - name: 清理缓存文件（只在gh-pages保留看板必需的文件）
         run: |
           rm -rf static/daily_cache static/rps_history.json static/index_cache __pycache__ .github tests
-          rm -f rps_calc.py recommend.py web_server.py requirements.txt .gitignore
+          rm -f rps_calc.py recommend.py recommend_weekly.py web_server.py requirements.txt .gitignore
           rm -f static/fina_indicator_cache.json static/moneyflow_cache.json static/moneyflow_hsgt_cache.json
 
       - name: 部署到 GitHub Pages

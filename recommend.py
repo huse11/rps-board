@@ -740,7 +740,10 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
                 # 候选股感知: 缓存命中后过滤到候选股 (减少内存, 避免加载全市场5000只财务)
                 if codes_set:
                     cache = {c: v for c, v in cache.items() if c in codes_set}
-                return cache
+                # 旧缓存缺 netprofit_yoy 字段(周度深度排雷需要) → 视为过期重建
+                if all("netprofit_yoy" in v for v in cache.values()):
+                    return cache
+                cache = {}
         except Exception:
             pass
     cache = {}
@@ -764,14 +767,22 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
                 # 候选股感知: 非候选股跳过 (fina 只用于候选股硬门槛排雷, 全市场拉取是浪费)
                 if codes_set is not None and code not in codes_set:
                     continue
-                # 只保留最新一期(已按 period 倒序尝试)
+                # 最新期优先(已按 period 倒序尝试); 已存则作为上一期(周度深度排雷需要近2期增速)
                 if code not in cache:
                     cache[code] = {
                         "end_date": str(r.get("end_date") or ""),
                         "net_profit": float(r["net_profit"]) if pd.notna(r.get("net_profit")) else None,
+                        "netprofit_yoy": float(r["netprofit_yoy"]) if pd.notna(r.get("netprofit_yoy")) else None,
+                        "dt_netprofit_yoy": float(r["dt_netprofit_yoy"]) if pd.notna(r.get("dt_netprofit_yoy")) else None,
                         "n_income_attr_parent": float(r["n_income_attr_parent"]) if pd.notna(r.get("n_income_attr_parent")) else None,
                         "debt_to_assets": float(r["debt_to_assets"]) if pd.notna(r.get("debt_to_assets")) else None,
+                        "prev_end_date": "", "prev_net_profit": None, "prev_netprofit_yoy": None,
                     }
+                elif not cache[code].get("prev_net_profit") and cache[code].get("end_date"):
+                    # 上一期数据(用于周度业绩持续性校验: 近2期同比增速)
+                    cache[code]["prev_end_date"] = str(r.get("end_date") or "")
+                    cache[code]["prev_net_profit"] = float(r["net_profit"]) if pd.notna(r.get("net_profit")) else None
+                    cache[code]["prev_netprofit_yoy"] = float(r["netprofit_yoy"]) if pd.notna(r.get("netprofit_yoy")) else None
             print(f"  ✅ fina_indicator period={period}: {len(df)} 条 (候选股保留 {len(cache)})")
             # 候选股全部找齐 → 退出 period 循环 (无需遍历全部6期)
             if codes_set is not None and len(cache) >= len(codes_set):

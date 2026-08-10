@@ -887,6 +887,42 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
     return result
 
 
+def _current_iso_week(dt=None):
+    """本周 ISO 周标识 (如 2026W32), 用于周度推荐每周一次幂等判断"""
+    dt = dt or datetime.now()
+    iso = dt.isocalendar()
+    return f"{iso[0]}W{iso[1]}"
+
+
+def _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, rps20_records):
+    """周度推荐(中线波段): 每周运行 1 次, 已生成当周结果则跳过
+    失败不阻断主流程(输出空周度推荐或保留上周结果)
+    rps20_records: RPS20 档位入选板块记录(含 name + continuous + stocks 成分股)
+    """
+    if not rps20_records:
+        print("  ⏭️ 无 RPS20 入选板块, 跳过周度推荐")
+        return False
+    try:
+        import recommend_weekly
+        wk_file = recommend_weekly.WEEKLY_REC_FILE
+        if wk_file.exists():
+            try:
+                with open(wk_file, encoding="utf-8") as f:
+                    _wk = json.load(f)
+                if _wk.get("week") == _current_iso_week():
+                    print("  ⏭️ 周度推荐本周已生成, 跳过(每周五运行1次)")
+                    return True
+            except Exception:
+                pass
+        rec_list = recommend_weekly.recommend_weekly_stocks(
+            industry_df, daily_map, latest_date, rps20_records)
+        recommend_weekly.save_weekly_recommendations(rec_list, latest_date, prev_date)
+        return True
+    except Exception as e:
+        print(f"  ⚠️ 周度推荐生成失败(不阻断主流程): {str(e)[:80]}")
+        return False
+
+
 def main():
     print("=" * 55)
     print("  A股板块 RPS 引擎 v3.0（全量历史回溯）")
@@ -935,6 +971,8 @@ def main():
             # 五层漏斗: 候选池 100% 来自入选板块成分股 + 板块共振计数
             rec_list = recommend.recommend_stocks(ind_df, dm, ld, in_list_records)
             recommend.save_recommendations(rec_list, ld, pd_)
+            # 周度推荐(中线波段): 每周运行1次, 已生成当周结果则跳过
+            _maybe_run_weekly(ind_df, dm, ld, pd_, _data.get("rps20", {}).get("in_list", []))
         except Exception as e:
             print(f"  ⚠️ 推荐生成失败(不阻断): {str(e)[:80]}")
         return
@@ -1037,6 +1075,9 @@ def main():
         recommend.save_recommendations(rec_list, latest_date, prev_date)
     except Exception as e:
         print(f"  ⚠️ 推荐股票生成失败(不阻断主流程): {str(e)[:80]}")
+
+    # ===== 每周推荐股票(中线波段, 周线五层漏斗, 复用 RPS20 入选板块成分股) =====
+    _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, res20["in_list"])
 
     print(f"\n{'='*55}")
     print(f"  ✅ 完成!")
