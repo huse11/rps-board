@@ -1,18 +1,18 @@
 {
   "schema_version": 2,
-  "update_date": "20260807",
-  "prev_date": "20260806",
+  "update_date": "20260810",
+  "prev_date": "20260807",
   "threshold": 70,
   "excellent_threshold": 80,
   "strict_threshold": 90,
   "market_status": {
     "index_above_ma60": false,
     "ma60_turning_up": false,
-    "advance_decline_ratio": 1.13,
-    "total_amount_yi": 26834.0,
+    "advance_decline_ratio": 2.92,
+    "total_amount_yi": 25387.0,
     "is_safe": false,
     "veto_reason": "指数跌破60日线",
-    "limit_down_count": 8
+    "limit_down_count": 9
   },
   "decisive_count": 0,
   "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
