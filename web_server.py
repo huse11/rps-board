@@ -23,6 +23,13 @@ async def home():
     return FileResponse(str(index_path))
 
 
+@app.get("/render.js")
+async def render_js():
+    # render.js 与 index.html 同级在项目根目录，单独路由返回
+    js_path = Path(__file__).parent / "render.js"
+    return FileResponse(str(js_path), media_type="text/javascript")
+
+
 if __name__ == "__main__":
     print("=" * 50)
     print("板块 RPS 监测看板 - Web 服务器")

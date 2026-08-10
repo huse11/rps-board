@@ -1,0 +1,4717 @@
+{
+  "schema_version": 3,
+  "update_date": "20260810",
+  "prev_date": "20260807",
+  "market_status": {
+    "is_safe": true,
+    "rule": "至少 1 个指数站上 20 日线",
+    "reason": "",
+    "indexes": [
+      {
+        "code": "000001.SH",
+        "name": "上证指数",
+        "close": 3966.59,
+        "ma": 3862.11,
+        "above": true
+      },
+      {
+        "code": "399006.SZ",
+        "name": "创业板指",
+        "close": 3537.21,
+        "ma": 3517.84,
+        "above": true
+      }
+    ],
+    "advance_ratio": 0.75,
+    "limit_down_count": 9,
+    "note": "大盘环境合格, 继续选股"
+  },
+  "multi_sector_count": 58,
+  "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
+  "count": 123,
+  "stocks": [
+    {
+      "ts_code": "601020.SH",
+      "name": "华钰矿业",
+      "industry": "铅锌",
+      "sectors": [
+        "铅锌"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 23.27,
+      "pct_chg": 10.02,
+      "pe_ttm": 22.3,
+      "circ_mv": 190.81,
+      "score_total": 91,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.01,
+        "vol_ratio": 1.97,
+        "amount": 1113472948.0,
+        "net_inflow_3d": 205824300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "601069.SH",
+      "name": "西部黄金",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 30.28,
+      "pct_chg": 6.21,
+      "pe_ttm": 28.42,
+      "circ_mv": 268.64,
+      "score_total": 91,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.69,
+        "vol_ratio": 1.57,
+        "amount": 1488619278.0,
+        "net_inflow_3d": 145737500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "001337.SZ",
+      "name": "四川黄金",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 51.38,
+      "pct_chg": 7.56,
+      "pe_ttm": 33.96,
+      "circ_mv": 215.8,
+      "score_total": 89,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.91,
+        "vol_ratio": 1.58,
+        "amount": 1625209445.0,
+        "net_inflow_3d": 84519800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "600490.SH",
+      "name": "鹏欣资源",
+      "industry": "铜",
+      "sectors": [
+        "铜"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 7.9,
+      "pct_chg": 10.03,
+      "pe_ttm": 76.67,
+      "circ_mv": 157.42,
+      "score_total": 89,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.39,
+        "vol_ratio": 1.84,
+        "amount": 686712890.0,
+        "net_inflow_3d": 166441600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002155.SZ",
+      "name": "湖南黄金",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 27.08,
+      "pct_chg": 5.04,
+      "pe_ttm": 24.16,
+      "circ_mv": 423.13,
+      "score_total": 86,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.84,
+        "vol_ratio": 1.46,
+        "amount": 2426512226.0,
+        "net_inflow_3d": 195380000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "600338.SH",
+      "name": "西藏珠峰",
+      "industry": "铅锌",
+      "sectors": [
+        "铅锌"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 14.36,
+      "pct_chg": 3.16,
+      "pe_ttm": 23.2,
+      "circ_mv": 131.28,
+      "score_total": 84,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.68,
+        "vol_ratio": 1.17,
+        "amount": 737077104.0,
+        "net_inflow_3d": 15156400.000000002
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "000506.SZ",
+      "name": "招金黄金",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 19.94,
+      "pct_chg": 9.98,
+      "pe_ttm": 53.02,
+      "circ_mv": 185.18,
+      "score_total": 83,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 12,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 13.08,
+        "vol_ratio": 1.24,
+        "amount": 2294767519.0,
+        "net_inflow_3d": 3802400.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "600711.SH",
+      "name": "盛屯矿业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 12.74,
+      "pct_chg": 7.6,
+      "pe_ttm": 14.51,
+      "circ_mv": 393.74,
+      "score_total": 83,
+      "score_sector": 30,
+      "score_fundamental": 15,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 1804077962.85,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.46,
+        "vol_ratio": 1.92,
+        "amount": 2860828457.0,
+        "net_inflow_3d": 296910000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "000603.SZ",
+      "name": "盛达资源",
+      "industry": "铅锌",
+      "sectors": [
+        "铅锌"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 37.12,
+      "pct_chg": 7.81,
+      "pe_ttm": 30.05,
+      "circ_mv": 247.49,
+      "score_total": 82,
+      "score_sector": 40,
+      "score_fundamental": 15,
+      "score_capital": 7,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 390059947.25,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 16.28,
+        "vol_ratio": 1.4,
+        "amount": 3883552770.0,
+        "net_inflow_3d": 5993900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "601168.SH",
+      "name": "西部矿业",
+      "industry": "铜",
+      "sectors": [
+        "铜"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + MACD多头 + 均线多头",
+      "price": 42.45,
+      "pct_chg": -1.44,
+      "pe_ttm": 17.02,
+      "circ_mv": 1011.58,
+      "score_total": 82,
+      "score_sector": 40,
+      "score_fundamental": 12,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 4169335166.0,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.87,
+        "vol_ratio": 1.11,
+        "amount": 3890046516.0,
+        "net_inflow_3d": 176444100.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002237.SZ",
+      "name": "恒邦股份",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 14.73,
+      "pct_chg": 3.37,
+      "pe_ttm": 31.87,
+      "circ_mv": 175.63,
+      "score_total": 81,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.4,
+        "vol_ratio": 1.37,
+        "amount": 589256713.0,
+        "net_inflow_3d": 32109500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002716.SZ",
+      "name": "湖南白银",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 9.4,
+      "pct_chg": 3.41,
+      "pe_ttm": 56.74,
+      "circ_mv": 218.31,
+      "score_total": 81,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 13.35,
+        "vol_ratio": 1.76,
+        "amount": 2852017990.0,
+        "net_inflow_3d": 131870600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "600988.SH",
+      "name": "赤峰黄金",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 43.73,
+      "pct_chg": 3.9,
+      "pe_ttm": 23.17,
+      "circ_mv": 727.63,
+      "score_total": 81,
+      "score_sector": 40,
+      "score_fundamental": 10,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.91,
+        "vol_ratio": 1.15,
+        "amount": 3489494441.0,
+        "net_inflow_3d": 38325000.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "600547.SH",
+      "name": "山东黄金",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 31.47,
+      "pct_chg": 3.25,
+      "pe_ttm": 28.12,
+      "circ_mv": 1137.47,
+      "score_total": 80,
+      "score_sector": 40,
+      "score_fundamental": 10,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.74,
+        "vol_ratio": 1.23,
+        "amount": 3082883293.0,
+        "net_inflow_3d": 170888300.00000003
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "601212.SH",
+      "name": "白银有色",
+      "industry": "铜",
+      "sectors": [
+        "铜"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 5.9,
+      "pct_chg": 4.8,
+      "pe_ttm": null,
+      "circ_mv": 436.88,
+      "score_total": 80,
+      "score_sector": 40,
+      "score_fundamental": 5,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.81,
+        "vol_ratio": 1.51,
+        "amount": 1628183671.0,
+        "net_inflow_3d": 139197700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "603799.SH",
+      "name": "华友钴业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 46.07,
+      "pct_chg": 4.68,
+      "pe_ttm": 11.86,
+      "circ_mv": 869.62,
+      "score_total": 80,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.34,
+        "vol_ratio": 1.84,
+        "amount": 7203400745.0,
+        "net_inflow_3d": 272500500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "000688.SZ",
+      "name": "国城矿业",
+      "industry": "铅锌",
+      "sectors": [
+        "铅锌"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 32.16,
+      "pct_chg": 2.62,
+      "pe_ttm": 55.51,
+      "circ_mv": 381.12,
+      "score_total": 79,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.03,
+        "vol_ratio": 1.11,
+        "amount": 773887302.0,
+        "net_inflow_3d": 68025300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301219.SZ",
+      "name": "腾远钴业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 52.79,
+      "pct_chg": 5.45,
+      "pe_ttm": 13.31,
+      "circ_mv": 144.24,
+      "score_total": 79,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.83,
+        "vol_ratio": 2.03,
+        "amount": 1130293024.0,
+        "net_inflow_3d": 50881500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688102.SH",
+      "name": "斯瑞新材",
+      "industry": "铜",
+      "sectors": [
+        "铜"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 38.51,
+      "pct_chg": 1.21,
+      "pe_ttm": 189.96,
+      "circ_mv": 299.92,
+      "score_total": 79,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.9,
+        "vol_ratio": 1.36,
+        "amount": 1147897116.0,
+        "net_inflow_3d": 19721500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "300618.SZ",
+      "name": "寒锐钴业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 39.9,
+      "pct_chg": 8.45,
+      "pe_ttm": 54.7,
+      "circ_mv": 108.73,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 98631642.07,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 10.99,
+        "vol_ratio": 3.03,
+        "amount": 1200712596.0,
+        "net_inflow_3d": 89346900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "600352.SH",
+      "name": "浙江龙盛",
+      "industry": "染料涂料",
+      "sectors": [
+        "染料涂料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 13.99,
+      "pct_chg": 6.23,
+      "pe_ttm": 23.1,
+      "circ_mv": 455.14,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.04,
+        "vol_ratio": 1.55,
+        "amount": 1362263470.0,
+        "net_inflow_3d": 87051800.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "600392.SH",
+      "name": "盛和资源",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 25.39,
+      "pct_chg": 6.06,
+      "pe_ttm": 44.59,
+      "circ_mv": 445.04,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.64,
+        "vol_ratio": 1.4,
+        "amount": 3272683595.0,
+        "net_inflow_3d": 169695300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002440.SZ",
+      "name": "闰土股份",
+      "industry": "染料涂料",
+      "sectors": [
+        "染料涂料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 13.87,
+      "pct_chg": 4.68,
+      "pe_ttm": 19.36,
+      "circ_mv": 131.26,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.97,
+        "vol_ratio": 1.24,
+        "amount": 1033446153.0,
+        "net_inflow_3d": 14188300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "002497.SZ",
+      "name": "雅化集团",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 19.09,
+      "pct_chg": 3.47,
+      "pe_ttm": 24.76,
+      "circ_mv": 202.28,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.73,
+        "vol_ratio": 1.42,
+        "amount": 945754317.0,
+        "net_inflow_3d": 31634300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301522.SZ",
+      "name": "上大股份",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 24.66,
+      "pct_chg": 6.48,
+      "pe_ttm": 89.75,
+      "circ_mv": 68.25,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 61463201.96,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.42,
+        "vol_ratio": 1.9,
+        "amount": 228961800.0,
+        "net_inflow_3d": 10272200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "600459.SH",
+      "name": "贵研铂业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 21.79,
+      "pct_chg": 3.71,
+      "pe_ttm": 27.22,
+      "circ_mv": 165.54,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.54,
+        "vol_ratio": 1.28,
+        "amount": 911628078.0,
+        "net_inflow_3d": 23883800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603711.SH",
+      "name": "香飘飘",
+      "industry": "软饮料",
+      "sectors": [
+        "软饮料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 12.19,
+      "pct_chg": 10.02,
+      "pe_ttm": 24.27,
+      "circ_mv": 50.33,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.46,
+        "vol_ratio": 1.76,
+        "amount": 119962592.0,
+        "net_inflow_3d": 28161200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688305.SH",
+      "name": "科德数控",
+      "industry": "机床制造",
+      "sectors": [
+        "机床制造"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 61.46,
+      "pct_chg": 6.65,
+      "pe_ttm": 90.47,
+      "circ_mv": 81.26,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.08,
+        "vol_ratio": 2.7,
+        "amount": 409869619.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "002114.SZ",
+      "name": "罗平锌电",
+      "industry": "铅锌",
+      "sectors": [
+        "铅锌"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 7.66,
+      "pct_chg": 6.09,
+      "pe_ttm": null,
+      "circ_mv": 24.77,
+      "score_total": 73,
+      "score_sector": 40,
+      "score_fundamental": 0,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.88,
+        "vol_ratio": 1.64,
+        "amount": 118257126.0,
+        "net_inflow_3d": 9030800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002842.SZ",
+      "name": "翔鹭钨业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 42.22,
+      "pct_chg": 10.01,
+      "pe_ttm": 35.79,
+      "circ_mv": 113.34,
+      "score_total": 73,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 24.15,
+        "vol_ratio": 1.36,
+        "amount": 2534627469.0,
+        "net_inflow_3d": 283910200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "001222.SZ",
+      "name": "源飞宠物",
+      "industry": "文教休闲",
+      "sectors": [
+        "文教休闲"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 15.41,
+      "pct_chg": 9.99,
+      "pe_ttm": 25.98,
+      "circ_mv": 17.41,
+      "score_total": 72,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 14,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.06,
+        "vol_ratio": 1.88,
+        "amount": 101861345.0,
+        "net_inflow_3d": 19356300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "001280.SZ",
+      "name": "中国铀业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 67.06,
+      "pct_chg": 2.57,
+      "pe_ttm": 80.67,
+      "circ_mv": 116.5,
+      "score_total": 72,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.51,
+        "vol_ratio": 1.17,
+        "amount": 751707938.0,
+        "net_inflow_3d": 34284300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "000657.SZ",
+      "name": "中钨高新",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 72.8,
+      "pct_chg": 8.64,
+      "pe_ttm": 85.11,
+      "circ_mv": 1058.11,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 10.97,
+        "vol_ratio": 1.49,
+        "amount": 11027811131.0,
+        "net_inflow_3d": 52178300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002340.SZ",
+      "name": "格林美",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 6.91,
+      "pct_chg": 1.02,
+      "pe_ttm": 22.15,
+      "circ_mv": 350.75,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.68,
+        "vol_ratio": 1.15,
+        "amount": 940877815.0,
+        "net_inflow_3d": 15091600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002378.SZ",
+      "name": "章源钨业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 28.28,
+      "pct_chg": 4.62,
+      "pe_ttm": 54.0,
+      "circ_mv": 337.98,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.02,
+        "vol_ratio": 1.4,
+        "amount": 2291046243.0,
+        "net_inflow_3d": 8872800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "300997.SZ",
+      "name": "欢乐家",
+      "industry": "软饮料",
+      "sectors": [
+        "软饮料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 18.19,
+      "pct_chg": 4.9,
+      "pe_ttm": 168.05,
+      "circ_mv": 71.78,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.88,
+        "vol_ratio": 1.29,
+        "amount": 487017395.0,
+        "net_inflow_3d": 7836900.000000001
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "603527.SH",
+      "name": "众源新材",
+      "industry": "铜",
+      "sectors": [
+        "铜"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 10.41,
+      "pct_chg": 4.0,
+      "pe_ttm": 112.14,
+      "circ_mv": 33.0,
+      "score_total": 71,
+      "score_sector": 40,
+      "score_fundamental": 6,
+      "score_capital": 5,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.18,
+        "vol_ratio": 1.47,
+        "amount": 103449888.0,
+        "net_inflow_3d": 7788099.999999999
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "002460.SZ",
+      "name": "赣锋锂业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 54.13,
+      "pct_chg": 2.48,
+      "pe_ttm": 29.82,
+      "circ_mv": 655.63,
+      "score_total": 70,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.51,
+        "vol_ratio": 1.34,
+        "amount": 2958778104.0,
+        "net_inflow_3d": 9703000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603399.SH",
+      "name": "永杉锂业",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 16.52,
+      "pct_chg": 6.58,
+      "pe_ttm": null,
+      "circ_mv": 84.63,
+      "score_total": 70,
+      "score_sector": 30,
+      "score_fundamental": 5,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 21.03,
+        "vol_ratio": 1.89,
+        "amount": 1789249040.0,
+        "net_inflow_3d": 151777300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "002649.SZ",
+      "name": "博彦科技",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 量价齐升 + MACD多头",
+      "price": 10.79,
+      "pct_chg": 1.22,
+      "pe_ttm": 144.8,
+      "circ_mv": 57.87,
+      "score_total": 69,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 12.85,
+        "vol_ratio": 1.71,
+        "amount": 740172248.0,
+        "net_inflow_3d": 26592300.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "003010.SZ",
+      "name": "若羽臣",
+      "industry": "互联网",
+      "sectors": [
+        "互联网"
+      ],
+      "sector_count": 1,
+      "tags": "互联网热点 + 20日新高 + 量价齐升",
+      "price": 27.65,
+      "pct_chg": 4.89,
+      "pe_ttm": 35.94,
+      "circ_mv": 62.53,
+      "score_total": 69,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.26,
+        "vol_ratio": 1.68,
+        "amount": 447672288.0,
+        "net_inflow_3d": 20876400.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "003043.SZ",
+      "name": "华亚智能",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 1,
+      "tags": "半导体热点 + 量价齐升 + MACD多头",
+      "price": 74.25,
+      "pct_chg": 10.0,
+      "pe_ttm": 142.17,
+      "circ_mv": 69.81,
+      "score_total": 69,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.96,
+        "vol_ratio": 1.52,
+        "amount": 675975194.0,
+        "net_inflow_3d": 52560200.00000001
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "300703.SZ",
+      "name": "创源股份",
+      "industry": "文教休闲",
+      "sectors": [
+        "文教休闲"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 13.94,
+      "pct_chg": 6.41,
+      "pe_ttm": 119.32,
+      "circ_mv": 23.18,
+      "score_total": 69,
+      "score_sector": 30,
+      "score_fundamental": 6,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.7,
+        "vol_ratio": 2.26,
+        "amount": 175799174.0,
+        "net_inflow_3d": 8544700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "300809.SZ",
+      "name": "华辰装备",
+      "industry": "机床制造",
+      "sectors": [
+        "机床制造"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 25.1,
+      "pct_chg": 2.87,
+      "pe_ttm": 33.26,
+      "circ_mv": 37.79,
+      "score_total": 69,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.49,
+        "vol_ratio": 1.85,
+        "amount": 280076266.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "601101.SH",
+      "name": "昊华能源",
+      "industry": "煤炭开采",
+      "sectors": [
+        "煤炭开采"
+      ],
+      "sector_count": 1,
+      "tags": "煤炭开采热点 + MACD多头 + RPS50强势",
+      "price": 13.39,
+      "pct_chg": -0.81,
+      "pe_ttm": 34.7,
+      "circ_mv": 192.82,
+      "score_total": 69,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.35,
+        "vol_ratio": 1.56,
+        "amount": 843231494.0,
+        "net_inflow_3d": 37518600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603341.SH",
+      "name": "龙旗科技",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 量价齐升 + MACD多头",
+      "price": 39.22,
+      "pct_chg": 5.89,
+      "pe_ttm": 45.91,
+      "circ_mv": 104.88,
+      "score_total": 69,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.99,
+        "vol_ratio": 1.83,
+        "amount": 604863155.0,
+        "net_inflow_3d": 63185300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "605337.SH",
+      "name": "李子园",
+      "industry": "乳制品",
+      "sectors": [
+        "乳制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 9.92,
+      "pct_chg": 4.75,
+      "pe_ttm": 21.07,
+      "circ_mv": 38.7,
+      "score_total": 69,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.65,
+        "vol_ratio": 2.33,
+        "amount": 140474612.0,
+        "net_inflow_3d": 16337500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "688293.SH",
+      "name": "奥浦迈",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 20日新高 + 量价齐升",
+      "price": 66.85,
+      "pct_chg": 5.74,
+      "pe_ttm": 143.46,
+      "circ_mv": 78.33,
+      "score_total": 69,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.71,
+        "vol_ratio": 2.4,
+        "amount": 763577478.0,
+        "net_inflow_3d": 31878400.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "002248.SZ",
+      "name": "华东数控",
+      "industry": "机床制造",
+      "sectors": [
+        "机床制造"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 10.05,
+      "pct_chg": 9.96,
+      "pe_ttm": 91.12,
+      "circ_mv": 30.9,
+      "score_total": 68,
+      "score_sector": 30,
+      "score_fundamental": 6,
+      "score_capital": 12,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 11.33,
+        "vol_ratio": 3.51,
+        "amount": 341624381.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "300161.SZ",
+      "name": "华中数控",
+      "industry": "机床制造",
+      "sectors": [
+        "机床制造"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 28.67,
+      "pct_chg": 8.89,
+      "pe_ttm": null,
+      "circ_mv": 55.9,
+      "score_total": 68,
+      "score_sector": 30,
+      "score_fundamental": 5,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.49,
+        "vol_ratio": 2.88,
+        "amount": 359560595.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301335.SZ",
+      "name": "天元宠物",
+      "industry": "文教休闲",
+      "sectors": [
+        "文教休闲"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 22.58,
+      "pct_chg": 5.42,
+      "pe_ttm": 51.98,
+      "circ_mv": 19.96,
+      "score_total": 68,
+      "score_sector": 30,
+      "score_fundamental": 6,
+      "score_capital": 12,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.16,
+        "vol_ratio": 2.65,
+        "amount": 82386986.0,
+        "net_inflow_3d": 4942000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "601958.SH",
+      "name": "金钼股份",
+      "industry": "小金属",
+      "sectors": [
+        "小金属"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 24.67,
+      "pct_chg": 3.83,
+      "pe_ttm": 22.66,
+      "circ_mv": 796.0,
+      "score_total": 68,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.39,
+        "vol_ratio": 1.34,
+        "amount": 1881437747.0,
+        "net_inflow_3d": 77210100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002821.SZ",
+      "name": "凯莱英",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 量价齐升 + MACD多头",
+      "price": 176.0,
+      "pct_chg": 2.17,
+      "pe_ttm": 57.19,
+      "circ_mv": 558.0,
+      "score_total": 67,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.34,
+        "vol_ratio": 2.26,
+        "amount": 4170327990.0,
+        "net_inflow_3d": 59455100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "301328.SZ",
+      "name": "维峰电子",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 量价齐升 + MACD多头",
+      "price": 59.95,
+      "pct_chg": 13.28,
+      "pe_ttm": 103.88,
+      "circ_mv": 69.04,
+      "score_total": 67,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.87,
+        "vol_ratio": 2.1,
+        "amount": 382963757.0,
+        "net_inflow_3d": 53561200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "605080.SH",
+      "name": "浙江自然",
+      "industry": "文教休闲",
+      "sectors": [
+        "文教休闲"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 21.14,
+      "pct_chg": 5.23,
+      "pe_ttm": 17.82,
+      "circ_mv": 29.67,
+      "score_total": 67,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 9,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.37,
+        "vol_ratio": 2.3,
+        "amount": 69236943.0,
+        "net_inflow_3d": 1852200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "000596.SZ",
+      "name": "古井贡酒",
+      "industry": "白酒",
+      "sectors": [
+        "白酒"
+      ],
+      "sector_count": 1,
+      "tags": "白酒热点 + 量价齐升 + MACD多头",
+      "price": 96.57,
+      "pct_chg": 5.32,
+      "pe_ttm": 18.06,
+      "circ_mv": 394.59,
+      "score_total": 66,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.61,
+        "vol_ratio": 1.56,
+        "amount": 1018263870.0,
+        "net_inflow_3d": 14955200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002519.SZ",
+      "name": "银河电子",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 20日新高 + 量价齐升",
+      "price": 5.72,
+      "pct_chg": 3.25,
+      "pe_ttm": null,
+      "circ_mv": 64.26,
+      "score_total": 66,
+      "score_sector": 20,
+      "score_fundamental": 10,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 5441151.09,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.11,
+        "vol_ratio": 1.72,
+        "amount": 322641136.0,
+        "net_inflow_3d": 27948200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "300566.SZ",
+      "name": "激智科技",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 量价齐升 + MACD多头",
+      "price": 28.21,
+      "pct_chg": 4.68,
+      "pe_ttm": 36.64,
+      "circ_mv": 63.95,
+      "score_total": 66,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 12.88,
+        "vol_ratio": 1.39,
+        "amount": 794859186.0,
+        "net_inflow_3d": 69260900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603186.SH",
+      "name": "华正新材",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 量价齐升 + MACD多头",
+      "price": 152.0,
+      "pct_chg": 6.29,
+      "pe_ttm": 82.4,
+      "circ_mv": 238.32,
+      "score_total": 66,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 19.35,
+        "vol_ratio": 1.85,
+        "amount": 4468277023.0,
+        "net_inflow_3d": 259061200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301036.SZ",
+      "name": "双乐股份",
+      "industry": "染料涂料",
+      "sectors": [
+        "染料涂料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 22.51,
+      "pct_chg": 4.26,
+      "pe_ttm": 100.85,
+      "circ_mv": 15.85,
+      "score_total": 65,
+      "score_sector": 30,
+      "score_fundamental": 6,
+      "score_capital": 9,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.43,
+        "vol_ratio": 2.02,
+        "amount": 54153551.0,
+        "net_inflow_3d": 1031500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "600754.SH",
+      "name": "锦江酒店",
+      "industry": "酒店餐饮",
+      "sectors": [
+        "酒店餐饮"
+      ],
+      "sector_count": 1,
+      "tags": "酒店餐饮热点 + 20日新高 + 量价齐升",
+      "price": 19.95,
+      "pct_chg": 4.67,
+      "pe_ttm": 20.73,
+      "circ_mv": 180.76,
+      "score_total": 65,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 12,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.4,
+        "vol_ratio": 1.58,
+        "amount": 429594110.0,
+        "net_inflow_3d": 3471600.0000000005
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002685.SZ",
+      "name": "华东重机",
+      "industry": "机床制造",
+      "sectors": [
+        "机床制造"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 5.52,
+      "pct_chg": 1.84,
+      "pe_ttm": 64.31,
+      "circ_mv": 55.62,
+      "score_total": 64,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 3,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.31,
+        "vol_ratio": 1.35,
+        "amount": 182133132.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603061.SH",
+      "name": "金海通",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 1,
+      "tags": "半导体热点 + 量价齐升 + MACD多头",
+      "price": 319.99,
+      "pct_chg": 1.04,
+      "pe_ttm": 119.29,
+      "circ_mv": 278.39,
+      "score_total": 64,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.36,
+        "vol_ratio": 1.24,
+        "amount": 1495093931.0,
+        "net_inflow_3d": 179896000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688235.SH",
+      "name": "百济神州",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 20日新高 + 量价齐升",
+      "price": 299.79,
+      "pct_chg": 0.15,
+      "pe_ttm": 107.99,
+      "circ_mv": 344.92,
+      "score_total": 64,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.41,
+        "vol_ratio": 1.43,
+        "amount": 3269803552.0,
+        "net_inflow_3d": 11685700.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "688545.SH",
+      "name": "兴福电子",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 量价齐升 + MACD多头",
+      "price": 90.24,
+      "pct_chg": 5.3,
+      "pe_ttm": 149.3,
+      "circ_mv": 164.46,
+      "score_total": 64,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 11.43,
+        "vol_ratio": 1.13,
+        "amount": 1842312425.0,
+        "net_inflow_3d": 95119700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688652.SH",
+      "name": "京仪装备",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 1,
+      "tags": "半导体热点 + 量价齐升 + MACD多头",
+      "price": 160.7,
+      "pct_chg": 7.34,
+      "pe_ttm": 170.34,
+      "circ_mv": 194.05,
+      "score_total": 64,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.58,
+        "vol_ratio": 1.22,
+        "amount": 1456199648.0,
+        "net_inflow_3d": 144618100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "001696.SZ",
+      "name": "宗申动力",
+      "industry": "摩托车",
+      "sectors": [
+        "摩托车"
+      ],
+      "sector_count": 1,
+      "tags": "摩托车热点 + 量价齐升 + MACD多头",
+      "price": 16.24,
+      "pct_chg": 2.14,
+      "pe_ttm": 30.44,
+      "circ_mv": 144.76,
+      "score_total": 63,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.01,
+        "vol_ratio": 1.14,
+        "amount": 1281644967.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "002329.SZ",
+      "name": "皇氏集团",
+      "industry": "乳制品",
+      "sectors": [
+        "乳制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 3.47,
+      "pct_chg": 10.16,
+      "pe_ttm": null,
+      "circ_mv": 22.61,
+      "score_total": 63,
+      "score_sector": 30,
+      "score_fundamental": 0,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 13.83,
+        "vol_ratio": 1.43,
+        "amount": 300558964.0,
+        "net_inflow_3d": 62205900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "002640.SZ",
+      "name": "跨境通",
+      "industry": "互联网",
+      "sectors": [
+        "互联网"
+      ],
+      "sector_count": 1,
+      "tags": "互联网热点 + 20日新高 + 量价齐升",
+      "price": 3.49,
+      "pct_chg": 4.49,
+      "pe_ttm": null,
+      "circ_mv": 54.03,
+      "score_total": 63,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 11.04,
+        "vol_ratio": 1.72,
+        "amount": 596353564.0,
+        "net_inflow_3d": 45026800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "600158.SH",
+      "name": "中体产业",
+      "industry": "文教休闲",
+      "sectors": [
+        "文教休闲"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 7.26,
+      "pct_chg": 3.12,
+      "pe_ttm": null,
+      "circ_mv": 69.66,
+      "score_total": 63,
+      "score_sector": 30,
+      "score_fundamental": 5,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.3,
+        "vol_ratio": 1.19,
+        "amount": 296259846.0,
+        "net_inflow_3d": 172300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "600419.SH",
+      "name": "天润乳业",
+      "industry": "乳制品",
+      "sectors": [
+        "乳制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 8.96,
+      "pct_chg": 4.8,
+      "pe_ttm": 19.56,
+      "circ_mv": 28.27,
+      "score_total": 63,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 5,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.97,
+        "vol_ratio": 1.41,
+        "amount": 111302212.0,
+        "net_inflow_3d": 3608900.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 7
+      }
+    },
+    {
+      "ts_code": "300353.SZ",
+      "name": "东土科技",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 20日新高 + 量价齐升",
+      "price": 20.28,
+      "pct_chg": 5.57,
+      "pe_ttm": 133.99,
+      "circ_mv": 109.52,
+      "score_total": 62,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.8,
+        "vol_ratio": 1.49,
+        "amount": 511487027.0,
+        "net_inflow_3d": 49304300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "603790.SH",
+      "name": "雅运股份",
+      "industry": "染料涂料",
+      "sectors": [
+        "染料涂料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 23.25,
+      "pct_chg": 7.39,
+      "pe_ttm": 54.87,
+      "circ_mv": 44.49,
+      "score_total": 62,
+      "score_sector": 30,
+      "score_fundamental": 6,
+      "score_capital": 6,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.65,
+        "vol_ratio": 1.39,
+        "amount": 112819300.0,
+        "net_inflow_3d": 11621900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "003040.SZ",
+      "name": "楚天龙",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + MACD多头 + KDJ健康",
+      "price": 12.57,
+      "pct_chg": -4.05,
+      "pe_ttm": null,
+      "circ_mv": 57.43,
+      "score_total": 61,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.27,
+        "vol_ratio": 1.6,
+        "amount": 412618543.0,
+        "net_inflow_3d": 12340800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "300748.SZ",
+      "name": "金力永磁",
+      "industry": "矿物制品",
+      "sectors": [
+        "矿物制品"
+      ],
+      "sector_count": 1,
+      "tags": "矿物制品热点 + 20日新高 + 量价齐升",
+      "price": 28.4,
+      "pct_chg": 1.94,
+      "pe_ttm": 53.19,
+      "circ_mv": 320.93,
+      "score_total": 61,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.54,
+        "vol_ratio": 1.21,
+        "amount": 1122083611.0,
+        "net_inflow_3d": 102850800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "300892.SZ",
+      "name": "品渥食品",
+      "industry": "乳制品",
+      "sectors": [
+        "乳制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 24.7,
+      "pct_chg": 10.61,
+      "pe_ttm": null,
+      "circ_mv": 15.95,
+      "score_total": 61,
+      "score_sector": 30,
+      "score_fundamental": 0,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 16.14,
+        "vol_ratio": 1.9,
+        "amount": 249553650.0,
+        "net_inflow_3d": 25042300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "301345.SZ",
+      "name": "涛涛车业",
+      "industry": "摩托车",
+      "sectors": [
+        "摩托车"
+      ],
+      "sector_count": 1,
+      "tags": "摩托车热点 + 量价齐升 + MACD多头",
+      "price": 260.55,
+      "pct_chg": 2.69,
+      "pe_ttm": 31.35,
+      "circ_mv": 91.27,
+      "score_total": 61,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.31,
+        "vol_ratio": 1.24,
+        "amount": 486611641.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "600403.SH",
+      "name": "大有能源",
+      "industry": "煤炭开采",
+      "sectors": [
+        "煤炭开采"
+      ],
+      "sector_count": 1,
+      "tags": "煤炭开采热点 + 20日新高 + 量价齐升",
+      "price": 6.68,
+      "pct_chg": 3.41,
+      "pe_ttm": null,
+      "circ_mv": 159.71,
+      "score_total": 61,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.77,
+        "vol_ratio": 1.51,
+        "amount": 911277443.0,
+        "net_inflow_3d": 30783100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "601918.SH",
+      "name": "新集能源",
+      "industry": "煤炭开采",
+      "sectors": [
+        "煤炭开采"
+      ],
+      "sector_count": 1,
+      "tags": "煤炭开采热点 + 量价齐升 + MACD多头",
+      "price": 10.2,
+      "pct_chg": 3.87,
+      "pe_ttm": 12.28,
+      "circ_mv": 264.24,
+      "score_total": 61,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.19,
+        "vol_ratio": 1.13,
+        "amount": 572702124.0,
+        "net_inflow_3d": 46637800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603188.SH",
+      "name": "亚邦股份",
+      "industry": "染料涂料",
+      "sectors": [
+        "染料涂料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 4.44,
+      "pct_chg": 9.9,
+      "pe_ttm": null,
+      "circ_mv": 25.32,
+      "score_total": 61,
+      "score_sector": 30,
+      "score_fundamental": 0,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.13,
+        "vol_ratio": 3.35,
+        "amount": 126379639.0,
+        "net_inflow_3d": 20433500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002474.SZ",
+      "name": "榕基软件",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 7.04,
+      "pct_chg": 10.0,
+      "pe_ttm": null,
+      "circ_mv": 37.23,
+      "score_total": 60,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.68,
+        "vol_ratio": 1.63,
+        "amount": 316219153.0,
+        "net_inflow_3d": 117832000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "003025.SZ",
+      "name": "思进智能",
+      "industry": "机床制造",
+      "sectors": [
+        "机床制造"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 12.39,
+      "pct_chg": 2.23,
+      "pe_ttm": 22.94,
+      "circ_mv": 28.05,
+      "score_total": 60,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 2,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.0,
+        "vol_ratio": 1.2,
+        "amount": 55466982.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688082.SH",
+      "name": "盛美上海",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 1,
+      "tags": "半导体热点 + 量价齐升 + MACD多头",
+      "price": 323.02,
+      "pct_chg": 12.16,
+      "pe_ttm": 92.29,
+      "circ_mv": 1542.14,
+      "score_total": 60,
+      "score_sector": 20,
+      "score_fundamental": 10,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 988949356.41,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.47,
+        "vol_ratio": 1.47,
+        "amount": 3691627786.0,
+        "net_inflow_3d": 305113000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "688710.SH",
+      "name": "益诺思",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + MACD多头 + 均线多头",
+      "price": 89.01,
+      "pct_chg": -1.85,
+      "pe_ttm": null,
+      "circ_mv": 80.73,
+      "score_total": 60,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.86,
+        "vol_ratio": 1.94,
+        "amount": 565651379.0,
+        "net_inflow_3d": 5497700.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "001300.SZ",
+      "name": "三柏硕",
+      "industry": "文教休闲",
+      "sectors": [
+        "文教休闲"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 11.57,
+      "pct_chg": 9.98,
+      "pe_ttm": null,
+      "circ_mv": 28.2,
+      "score_total": 59,
+      "score_sector": 30,
+      "score_fundamental": 0,
+      "score_capital": 9,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.04,
+        "vol_ratio": 2.19,
+        "amount": 82344498.0,
+        "net_inflow_3d": 8305700.000000001
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301159.SZ",
+      "name": "三维天地",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 34.93,
+      "pct_chg": 8.08,
+      "pe_ttm": 119.13,
+      "circ_mv": 18.52,
+      "score_total": 59,
+      "score_sector": 20,
+      "score_fundamental": 6,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 16.55,
+        "vol_ratio": 1.51,
+        "amount": 308554117.0,
+        "net_inflow_3d": 13888699.999999998
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "605388.SH",
+      "name": "均瑶健康",
+      "industry": "乳制品",
+      "sectors": [
+        "乳制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 6.2,
+      "pct_chg": 5.08,
+      "pe_ttm": null,
+      "circ_mv": 37.23,
+      "score_total": 59,
+      "score_sector": 30,
+      "score_fundamental": 0,
+      "score_capital": 9,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.13,
+        "vol_ratio": 1.12,
+        "amount": 224243569.0,
+        "net_inflow_3d": 22747399.999999996
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688519.SH",
+      "name": "南亚新材",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 量价齐升 + MACD多头",
+      "price": 303.02,
+      "pct_chg": 0.16,
+      "pe_ttm": 192.95,
+      "circ_mv": 712.64,
+      "score_total": 59,
+      "score_sector": 20,
+      "score_fundamental": 8,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.4,
+        "vol_ratio": 1.19,
+        "amount": 3047003968.0,
+        "net_inflow_3d": 49494300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "300397.SZ",
+      "name": "天和防务",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 20日新高 + 量价齐升",
+      "price": 11.9,
+      "pct_chg": 8.48,
+      "pe_ttm": null,
+      "circ_mv": 48.57,
+      "score_total": 58,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.22,
+        "vol_ratio": 2.34,
+        "amount": 432248453.0,
+        "net_inflow_3d": 29661200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301051.SZ",
+      "name": "信濠光电",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 20日新高 + 量价齐升",
+      "price": 20.72,
+      "pct_chg": 19.98,
+      "pe_ttm": null,
+      "circ_mv": 46.79,
+      "score_total": 58,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 11.95,
+        "vol_ratio": 2.61,
+        "amount": 524792428.0,
+        "net_inflow_3d": 40810700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "601666.SH",
+      "name": "平煤股份",
+      "industry": "煤炭开采",
+      "sectors": [
+        "煤炭开采"
+      ],
+      "sector_count": 1,
+      "tags": "煤炭开采热点 + 20日新高 + 量价齐升",
+      "price": 9.35,
+      "pct_chg": 4.59,
+      "pe_ttm": 115.63,
+      "circ_mv": 230.89,
+      "score_total": 58,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 7,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.39,
+        "vol_ratio": 1.26,
+        "amount": 550379197.0,
+        "net_inflow_3d": 1078400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "603612.SH",
+      "name": "索通发展",
+      "industry": "矿物制品",
+      "sectors": [
+        "矿物制品"
+      ],
+      "sector_count": 1,
+      "tags": "矿物制品热点 + 20日新高 + 量价齐升",
+      "price": 17.32,
+      "pct_chg": 2.61,
+      "pe_ttm": 12.17,
+      "circ_mv": 86.27,
+      "score_total": 58,
+      "score_sector": 20,
+      "score_fundamental": 13,
+      "score_capital": 5,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.43,
+        "vol_ratio": 1.11,
+        "amount": 208277352.0,
+        "net_inflow_3d": 211200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "002918.SZ",
+      "name": "蒙娜丽莎",
+      "industry": "陶瓷",
+      "sectors": [
+        "陶瓷"
+      ],
+      "sector_count": 1,
+      "tags": "陶瓷热点 + 20日新高 + 量价齐升",
+      "price": 10.01,
+      "pct_chg": 2.35,
+      "pe_ttm": 43.73,
+      "circ_mv": 21.44,
+      "score_total": 57,
+      "score_sector": 20,
+      "score_fundamental": 8,
+      "score_capital": 9,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.14,
+        "vol_ratio": 1.25,
+        "amount": 151915150.0,
+        "net_inflow_3d": 10487400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301185.SZ",
+      "name": "鸥玛软件",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 17.4,
+      "pct_chg": 5.78,
+      "pe_ttm": 51.04,
+      "circ_mv": 24.13,
+      "score_total": 57,
+      "score_sector": 20,
+      "score_fundamental": 6,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.81,
+        "vol_ratio": 3.89,
+        "amount": 191136701.0,
+        "net_inflow_3d": 25757100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "000798.SZ",
+      "name": "中水渔业",
+      "industry": "渔业",
+      "sectors": [
+        "渔业"
+      ],
+      "sector_count": 1,
+      "tags": "渔业热点 + 20日新高 + 量价齐升",
+      "price": 8.43,
+      "pct_chg": 4.46,
+      "pe_ttm": 41.87,
+      "circ_mv": 30.84,
+      "score_total": 56,
+      "score_sector": 20,
+      "score_fundamental": 8,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.3,
+        "vol_ratio": 1.92,
+        "amount": 101122551.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002777.SZ",
+      "name": "久远银海",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 13.58,
+      "pct_chg": 3.19,
+      "pe_ttm": 75.22,
+      "circ_mv": 54.93,
+      "score_total": 56,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 5,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.16,
+        "vol_ratio": 1.19,
+        "amount": 172985534.0,
+        "net_inflow_3d": 9212200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "300253.SZ",
+      "name": "卫宁健康",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 7.87,
+      "pct_chg": 1.42,
+      "pe_ttm": null,
+      "circ_mv": 145.96,
+      "score_total": 56,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.82,
+        "vol_ratio": 1.37,
+        "amount": 858513060.0,
+        "net_inflow_3d": 64960900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "301321.SZ",
+      "name": "翰博高新",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 量价齐升 + MACD多头",
+      "price": 38.2,
+      "pct_chg": 4.14,
+      "pe_ttm": null,
+      "circ_mv": 56.39,
+      "score_total": 56,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.09,
+        "vol_ratio": 1.35,
+        "amount": 332184040.0,
+        "net_inflow_3d": 41679700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "600797.SH",
+      "name": "浙大网新",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 7.46,
+      "pct_chg": 4.19,
+      "pe_ttm": null,
+      "circ_mv": 76.65,
+      "score_total": 56,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.06,
+        "vol_ratio": 1.18,
+        "amount": 461777275.0,
+        "net_inflow_3d": 27658600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "688552.SH",
+      "name": "航天南湖",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 20日新高 + 量价齐升",
+      "price": 28.38,
+      "pct_chg": 7.38,
+      "pe_ttm": null,
+      "circ_mv": 95.71,
+      "score_total": 56,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.22,
+        "vol_ratio": 2.77,
+        "amount": 206717730.0,
+        "net_inflow_3d": 29215400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "002189.SZ",
+      "name": "中光学",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 20日新高 + 量价齐升",
+      "price": 20.1,
+      "pct_chg": 7.66,
+      "pe_ttm": null,
+      "circ_mv": 52.49,
+      "score_total": 55,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.33,
+        "vol_ratio": 2.74,
+        "amount": 169880654.0,
+        "net_inflow_3d": 8894100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301329.SZ",
+      "name": "信音电子",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 20日新高 + 量价齐升",
+      "price": 19.85,
+      "pct_chg": 1.02,
+      "pe_ttm": 48.41,
+      "circ_mv": 13.11,
+      "score_total": 55,
+      "score_sector": 20,
+      "score_fundamental": 8,
+      "score_capital": 7,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.11,
+        "vol_ratio": 1.2,
+        "amount": 79123669.0,
+        "net_inflow_3d": 1755200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688137.SH",
+      "name": "近岸蛋白",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 20日新高 + 量价齐升",
+      "price": 54.9,
+      "pct_chg": 17.51,
+      "pe_ttm": null,
+      "circ_mv": 38.38,
+      "score_total": 55,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 11.39,
+        "vol_ratio": 3.76,
+        "amount": 435152523.0,
+        "net_inflow_3d": 23288700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "688185.SH",
+      "name": "康希诺",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 20日新高 + 量价齐升",
+      "price": 54.86,
+      "pct_chg": 1.09,
+      "pe_ttm": null,
+      "circ_mv": 62.74,
+      "score_total": 55,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.22,
+        "vol_ratio": 1.94,
+        "amount": 204319197.0,
+        "net_inflow_3d": 6768700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "300414.SZ",
+      "name": "中光防雷",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 量价齐升 + MACD多头",
+      "price": 11.85,
+      "pct_chg": 3.22,
+      "pe_ttm": 169.76,
+      "circ_mv": 37.15,
+      "score_total": 54,
+      "score_sector": 20,
+      "score_fundamental": 6,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.59,
+        "vol_ratio": 1.24,
+        "amount": 204845979.0,
+        "net_inflow_3d": 3040400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "603636.SH",
+      "name": "南威软件",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 7.57,
+      "pct_chg": 6.77,
+      "pe_ttm": null,
+      "circ_mv": 43.93,
+      "score_total": 54,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 14,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.77,
+        "vol_ratio": 2.37,
+        "amount": 294616313.0,
+        "net_inflow_3d": 36203700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "000661.SZ",
+      "name": "长春高新",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 20日新高 + 量价齐升",
+      "price": 83.0,
+      "pct_chg": 3.09,
+      "pe_ttm": null,
+      "circ_mv": 331.68,
+      "score_total": 53,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.35,
+        "vol_ratio": 1.23,
+        "amount": 1105647941.0,
+        "net_inflow_3d": 10156400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "300078.SZ",
+      "name": "思创智联",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 3.17,
+      "pct_chg": 4.28,
+      "pe_ttm": null,
+      "circ_mv": 35.29,
+      "score_total": 53,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.45,
+        "vol_ratio": 1.84,
+        "amount": 155824543.0,
+        "net_inflow_3d": 2887700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "300532.SZ",
+      "name": "今天国际",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 量价齐升 + MACD多头",
+      "price": 7.23,
+      "pct_chg": 2.99,
+      "pe_ttm": 21.18,
+      "circ_mv": 43.71,
+      "score_total": 53,
+      "score_sector": 20,
+      "score_fundamental": 8,
+      "score_capital": 5,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.38,
+        "vol_ratio": 1.29,
+        "amount": 103354151.0,
+        "net_inflow_3d": 7649200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "301201.SZ",
+      "name": "诚达药业",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 量价齐升 + MACD多头",
+      "price": 36.35,
+      "pct_chg": 2.86,
+      "pe_ttm": null,
+      "circ_mv": 39.46,
+      "score_total": 53,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.79,
+        "vol_ratio": 1.17,
+        "amount": 344933275.0,
+        "net_inflow_3d": 10805400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "688130.SH",
+      "name": "晶华微",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 1,
+      "tags": "半导体热点 + 20日新高 + 量价齐升",
+      "price": 25.76,
+      "pct_chg": 17.36,
+      "pe_ttm": null,
+      "circ_mv": 15.53,
+      "score_total": 52,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 12,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 14.66,
+        "vol_ratio": 3.84,
+        "amount": 219109934.0,
+        "net_inflow_3d": 9736000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "300094.SZ",
+      "name": "国联水产",
+      "industry": "渔业",
+      "sectors": [
+        "渔业"
+      ],
+      "sector_count": 1,
+      "tags": "渔业热点 + 20日新高 + 量价齐升",
+      "price": 2.91,
+      "pct_chg": 3.93,
+      "pe_ttm": null,
+      "circ_mv": 32.17,
+      "score_total": 51,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.0,
+        "vol_ratio": 2.08,
+        "amount": 192268449.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "600123.SH",
+      "name": "兰花科创",
+      "industry": "煤炭开采",
+      "sectors": [
+        "煤炭开采"
+      ],
+      "sector_count": 1,
+      "tags": "煤炭开采热点 + 20日新高 + 量价齐升",
+      "price": 7.24,
+      "pct_chg": 3.58,
+      "pe_ttm": null,
+      "circ_mv": 106.66,
+      "score_total": 51,
+      "score_sector": 20,
+      "score_fundamental": 5,
+      "score_capital": 6,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.4,
+        "vol_ratio": 1.13,
+        "amount": 254594052.0,
+        "net_inflow_3d": 25286500.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "002646.SZ",
+      "name": "天佑德酒",
+      "industry": "白酒",
+      "sectors": [
+        "白酒"
+      ],
+      "sector_count": 1,
+      "tags": "白酒热点 + 20日新高 + 量价齐升",
+      "price": 7.21,
+      "pct_chg": 6.03,
+      "pe_ttm": null,
+      "circ_mv": 34.31,
+      "score_total": 50,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.97,
+        "vol_ratio": 2.53,
+        "amount": 100244591.0,
+        "net_inflow_3d": 9353900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "603072.SH",
+      "name": "天和磁材",
+      "industry": "矿物制品",
+      "sectors": [
+        "矿物制品"
+      ],
+      "sector_count": 1,
+      "tags": "矿物制品热点 + 20日新高 + 量价齐升",
+      "price": 33.23,
+      "pct_chg": 1.34,
+      "pe_ttm": 50.72,
+      "circ_mv": 41.95,
+      "score_total": 50,
+      "score_sector": 20,
+      "score_fundamental": 6,
+      "score_capital": 4,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.32,
+        "vol_ratio": 1.19,
+        "amount": 96715495.0,
+        "net_inflow_3d": 2650000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "301067.SZ",
+      "name": "显盈科技",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 20日新高 + 量价齐升",
+      "price": 31.24,
+      "pct_chg": 12.94,
+      "pe_ttm": null,
+      "circ_mv": 19.94,
+      "score_total": 49,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 9,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.8,
+        "vol_ratio": 1.47,
+        "amount": 148950691.0,
+        "net_inflow_3d": 11840400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "000721.SZ",
+      "name": "西安饮食",
+      "industry": "酒店餐饮",
+      "sectors": [
+        "酒店餐饮"
+      ],
+      "sector_count": 1,
+      "tags": "酒店餐饮热点 + 量价齐升 + MACD多头",
+      "price": 6.75,
+      "pct_chg": 4.33,
+      "pe_ttm": null,
+      "circ_mv": 34.58,
+      "score_total": 48,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.48,
+        "vol_ratio": 1.17,
+        "amount": 153170209.0,
+        "net_inflow_3d": 8332200.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "002086.SZ",
+      "name": "东方海洋",
+      "industry": "渔业",
+      "sectors": [
+        "渔业"
+      ],
+      "sector_count": 1,
+      "tags": "渔业热点 + 20日新高 + 量价齐升",
+      "price": 2.02,
+      "pct_chg": 7.45,
+      "pe_ttm": null,
+      "circ_mv": 31.94,
+      "score_total": 48,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.06,
+        "vol_ratio": 3.12,
+        "amount": 221059483.0,
+        "net_inflow_3d": null
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      }
+    },
+    {
+      "ts_code": "301218.SZ",
+      "name": "华是科技",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 48.5,
+      "pct_chg": 8.74,
+      "pe_ttm": null,
+      "circ_mv": 33.98,
+      "score_total": 48,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 21.49,
+        "vol_ratio": 1.3,
+        "amount": 689517093.0,
+        "net_inflow_3d": 59257100.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      }
+    },
+    {
+      "ts_code": "300288.SZ",
+      "name": "朗玛信息",
+      "industry": "软件服务",
+      "sectors": [
+        "软件服务"
+      ],
+      "sector_count": 1,
+      "tags": "软件服务热点 + 20日新高 + 量价齐升",
+      "price": 10.22,
+      "pct_chg": 2.71,
+      "pe_ttm": null,
+      "circ_mv": 26.22,
+      "score_total": 44,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 4,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.73,
+        "vol_ratio": 1.24,
+        "amount": 71171086.0,
+        "net_inflow_3d": 5214400.000000001
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      }
+    },
+    {
+      "ts_code": "301180.SZ",
+      "name": "万祥科技",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 1,
+      "tags": "元器件热点 + 20日新高 + 量价齐升",
+      "price": 11.78,
+      "pct_chg": 2.08,
+      "pe_ttm": null,
+      "circ_mv": 19.34,
+      "score_total": 44,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 4,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.64,
+        "vol_ratio": 1.28,
+        "amount": 50122666.0,
+        "net_inflow_3d": 164100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "600293.SH",
+      "name": "三峡新材",
+      "industry": "玻璃",
+      "sectors": [
+        "玻璃"
+      ],
+      "sector_count": 1,
+      "tags": "玻璃热点 + 20日新高 + 量价齐升",
+      "price": 2.86,
+      "pct_chg": 3.25,
+      "pe_ttm": null,
+      "circ_mv": 33.18,
+      "score_total": 44,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 4,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.99,
+        "vol_ratio": 1.13,
+        "amount": 97968645.0,
+        "net_inflow_3d": 1441900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      }
+    },
+    {
+      "ts_code": "688302.SH",
+      "name": "海创药业",
+      "industry": "生物制药",
+      "sectors": [
+        "生物制药"
+      ],
+      "sector_count": 1,
+      "tags": "生物制药热点 + 量价齐升 + MACD多头",
+      "price": 37.56,
+      "pct_chg": 0.97,
+      "pe_ttm": null,
+      "circ_mv": 37.19,
+      "score_total": 44,
+      "score_sector": 20,
+      "score_fundamental": 0,
+      "score_capital": 4,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.16,
+        "vol_ratio": 1.3,
+        "amount": 80515068.0,
+        "net_inflow_3d": 3078900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      }
+    }
+  ]
+}

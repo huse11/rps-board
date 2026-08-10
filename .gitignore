@@ -6,6 +6,12 @@ static/rps_history.json
 # 每日缓存的K线数据（体积大）
 static/daily_cache/
 
+# 推荐股票增强数据缓存（index_daily/fina_indicator/moneyflow/hsgt）
+static/index_cache/
+static/fina_indicator_cache.json
+static/moneyflow_cache.json
+static/moneyflow_hsgt_cache.json
+
 # Python缓存
 __pycache__/
 *.pyc
@@ -20,6 +26,9 @@ __pycache__/
 verify.py
 check_*.py
 run_debug.py
+
+# 阿里云部署用的 SSH 私钥（严禁提交）
+.deploy_keys/
 
 # 调试/临时文件（含token的脚本严禁提交）
 _*.py

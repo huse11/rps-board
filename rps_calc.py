@@ -140,12 +140,14 @@ def get_stock_industry():
     cache_file = STATIC_DIR / "stock_basic_cache.json"
     if os.path.exists(cache_file):
         df = pd.read_json(cache_file, dtype={"ts_code": str})
-        if len(df) > 0:
-            return df[["ts_code", "name", "industry"]]
+        # 缓存必须含 list_date 列(次新股过滤用), 否则视为旧缓存需重新拉取
+        if len(df) > 0 and "list_date" in df.columns:
+            return df[["ts_code", "name", "industry", "list_date"]]
     try:
-        df, _ = pool.call("stock_basic")
+        df, _ = pool.call("stock_basic", fields="ts_code,name,industry,list_date")
         df = df[df["industry"].notna() & (df["industry"] != "")]
-        result = df[["ts_code", "name", "industry"]]
+        result = df[["ts_code", "name", "industry", "list_date"]].copy()
+        result["list_date"] = result["list_date"].astype(str).fillna("")
         result.to_json(cache_file, orient="records", force_ascii=False)
         print(f"  ✅ stock_basic: {len(result)}只, {result['industry'].nunique()}个行业")
         return result
@@ -160,8 +162,9 @@ def get_stock_industry():
             result = df_daily[["ts_code"]].copy()
             result["name"] = result["ts_code"].str.replace(r"\.(SZ|SH|BJ)$", "", regex=True)
             result["industry"] = result["ts_code"].apply(_get_industry_from_code)
+            result["list_date"] = ""  # 降级时无上市日期, 次新股过滤将跳过
             print(f"  ✅ 前缀推断: {result['industry'].nunique()}个分组")
-            return result[["ts_code", "name", "industry"]]
+            return result[["ts_code", "name", "industry", "list_date"]]
     raise Exception("无法获取股票数据")
 
 
@@ -913,6 +916,27 @@ def main():
             pass
     if skip:
         print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且当天已完整计算，跳过计算（保持调入/调出对比基准）")
+        # 每日推荐与 RPS 计算解耦: 即使 RPS 被幂等跳过, 仍独立加载 daily_map 生成推荐
+        # (recommend 不修改 rps_data.json/last_result.json, 不影响调入/调出对比基准)
+        try:
+            import recommend
+            ind_df = get_stock_industry()
+            dm = fetch_daily_batch(trade_days)
+            avail = [d for d in trade_days if d in dm]
+            ld = avail[-1] if avail else latest_td
+            pd_ = avail[-2] if len(avail) >= 2 else ""
+            in_list_records = []
+            if DATA_FILE.exists():
+                with open(DATA_FILE, encoding="utf-8") as f:
+                    _data = json.load(f)
+                for _k in ("rps5", "rps10", "rps20"):
+                    # 完整入选板块记录(含 name + stocks 成分股), 供板块共振计数
+                    in_list_records.extend(_data.get(_k, {}).get("in_list", []))
+            # 五层漏斗: 候选池 100% 来自入选板块成分股 + 板块共振计数
+            rec_list = recommend.recommend_stocks(ind_df, dm, ld, in_list_records)
+            recommend.save_recommendations(rec_list, ld, pd_)
+        except Exception as e:
+            print(f"  ⚠️ 推荐生成失败(不阻断): {str(e)[:80]}")
         return
     print(f"  最新交易日: {latest_td}")
 
@@ -1002,6 +1026,17 @@ def main():
     }
     with open(LAST_RESULT_FILE, "w", encoding="utf-8") as f:
         json.dump(save_last, f, ensure_ascii=False, indent=2)
+
+    # ===== 每日推荐股票(五层漏斗筛选 + 综合评分, 复用 daily_map/industry_df) =====
+    # 失败不阻断主流程, 推荐 JSON 仍输出上次结果或空
+    try:
+        import recommend
+        # 完整入选板块记录(含 name + stocks 成分股), 跨 RPS5/10/20 汇总, 供板块共振计数
+        in_list_records = [rec for res in (res5, res10, res20) for rec in res["in_list"]]
+        rec_list = recommend.recommend_stocks(industry_df, daily_map, latest_date, in_list_records)
+        recommend.save_recommendations(rec_list, latest_date, prev_date)
+    except Exception as e:
+        print(f"  ⚠️ 推荐股票生成失败(不阻断主流程): {str(e)[:80]}")
 
     print(f"\n{'='*55}")
     print(f"  ✅ 完成!")

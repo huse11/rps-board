@@ -45,8 +45,13 @@ jobs:
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/last_result.json" -o static/last_result.json && echo "✅ 已获取上次名单" || echo "ℹ️ 首次运行，无历史名单"
           # 下载当前数据文件，供幂等判断（当天已更新则跳过计算，保护last_result对比基准）
           curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/rps_data.json" -o static/rps_data.json && echo "✅ 已获取当前数据" || echo "ℹ️ 首次运行，无现有数据"
+          # 兜底: 下载上次 recommendations.json, 防止本次推荐生成失败(Tushare 限频等)时
+          # 部署后 gh-pages 丢失该文件导致手机 404。rps_calc.py 成功生成会覆盖它。
+          curl -sf "https://raw.githubusercontent.com/huse11/rps-board/gh-pages/static/recommendations.json" -o static/recommendations.json && echo "✅ 已获取上次推荐(兜底)" || echo "ℹ️ 首次运行，无历史推荐"
           # 每天只计算一次：幂等检查（rps_calc.py）保证当天已生成数据时不重复刷新，避免覆盖调入/调出对比基准
           python rps_calc.py
+          # 推荐生成失败(不阻断)时, 兜底文件仍在; 若连兜底都没有则告警
+          if [ ! -f static/recommendations.json ]; then echo "❌ recommendations.json 缺失(无历史兜底+本次生成失败)"; exit 1; fi
 
       - name: 数据新鲜度检查（数据过期即失败，触发通知）
         run: |
@@ -75,8 +80,9 @@ jobs:
 
       - name: 清理缓存文件（只在gh-pages保留看板必需的文件）
         run: |
-          rm -rf static/daily_cache static/rps_history.json __pycache__ .github tests
-          rm -f rps_calc.py web_server.py requirements.txt .gitignore
+          rm -rf static/daily_cache static/rps_history.json static/index_cache __pycache__ .github tests
+          rm -f rps_calc.py recommend.py web_server.py requirements.txt .gitignore
+          rm -f static/fina_indicator_cache.json static/moneyflow_cache.json static/moneyflow_hsgt_cache.json
 
       - name: 部署到 GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
