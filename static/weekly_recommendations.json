@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "update_date": "20260810",
+  "week": "2026W33",
+  "prev_date": "20260807",
+  "market_status": {
+    "is_safe": false,
+    "level": "bad",
+    "reason": "上证指数/创业板指 跌破20周均线, 中期趋势偏弱",
+    "position_advice": "建议空仓或轻仓观望",
+    "indexes": [
+      {
+        "code": "000001.SH",
+        "name": "上证指数",
+        "close": 3966.59,
+        "ma": 4007.03,
+        "above": false
+      },
+      {
+        "code": "399006.SZ",
+        "name": "创业板指",
+        "close": 3537.21,
+        "ma": 3738.73,
+        "above": false
+      }
+    ],
+    "advance_ratio": 0.8,
+    "big_drop_count": 16,
+    "macd_ok": null,
+    "note": "周度大盘环境恶劣, 本周无推荐"
+  },
+  "position_advice": "建议空仓或轻仓观望",
+  "disclaimer": "⚠️ 周度推荐为中线波段量化筛选结果(周线五层漏斗), 仅作技术逻辑参考, 绝对不构成任何个股投资建议; 中线波段同样高风险, 严禁杠杆借贷炒股; 本工具仅个人研究使用, 严禁对外收费荐股牟利。",
+  "count": 0,
+  "stocks": []
+}
