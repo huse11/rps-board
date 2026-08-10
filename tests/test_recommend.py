@@ -482,6 +482,21 @@ class TestScoreFunnel(unittest.TestCase):
         self.assertEqual(recommend.score_capital_funnel({}), 0)
 
 
+class TestFilterByMinScore(unittest.TestCase):
+    def test_filters_below_threshold(self):
+        recs = [{"score_total": 91}, {"score_total": 69}, {"score_total": 70}, {"score_total": 65}]
+        out = recommend.filter_by_min_score(recs, 70)
+        self.assertEqual([r["score_total"] for r in out], [91, 70])
+
+    def test_default_config_threshold(self):
+        recs = [{"score_total": 91}, {"score_total": 69}]
+        out = recommend.filter_by_min_score(recs)  # 用 CONFIG 默认 70
+        self.assertEqual([r["score_total"] for r in out], [91])
+
+    def test_empty(self):
+        self.assertEqual(recommend.filter_by_min_score([]), [])
+
+
 class TestBuildRecommendTags(unittest.TestCase):
     def test_multi_sector_resonance(self):
         tags = recommend.build_recommend_tags(

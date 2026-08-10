@@ -118,6 +118,7 @@ CONFIG = {
         "fundamental": 20,         # 基本面分
         "capital": 20,             # 资金面分
         "technical": 20,           # 技术面分
+        "min_score": 70,           # 综合得分门槛: <70 的股票不进入推荐列表(前端不显示)
     },
 }
 INDEX_CODES = CONFIG["market"]["index_codes"]
@@ -1387,6 +1388,15 @@ def build_recommend_tags(sector_names, tech_hits, sector_count=None):
     return " + ".join(tags)
 
 
+def filter_by_min_score(results, min_score=None):
+    """综合得分门槛过滤: 只保留 score_total >= min_score 的推荐 (低于门槛的不进入推荐列表, 前端不显示)
+    min_score 缺省取 CONFIG["score"]["min_score"] (默认 70)
+    """
+    if min_score is None:
+        min_score = float(CONFIG["score"].get("min_score", 70))
+    return [r for r in results if r["score_total"] >= min_score]
+
+
 def _extract_member_codes(in_list_records):
     """从 RPS 入选板块记录中提取成分股 ts_code 集合
     in_list_records: 板块记录数组, 每条含 "stocks" 字段(成分股数组, 元素为 dict 含 ts_code 或直接是代码)
@@ -1657,6 +1667,10 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         })
     results.sort(key=lambda x: -x["score_total"])
 
+    # 综合得分门槛: < min_score 的股票不进入推荐列表 (前端不显示)
+    shown = filter_by_min_score(results)
+    dropped = len(results) - len(shown)
+
     # 分数分布诊断 (确认五层筛选后仍有区分度, 避免误判 "代码 bug")
     all_totals = [r["score_total"] for r in results]
     if all_totals:
@@ -1669,8 +1683,8 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
             else: buckets["90+"] += 1
         print(f"  综合得分分布: {buckets}")
         print(f"  最高分: {max(all_totals)} | 中位数: {sorted(all_totals)[len(all_totals) // 2]}")
-    print(f"\n[结果] 最终推荐 {len(results)} 只, 按综合得分降序")
-    return results
+    print(f"\n[结果] 漏斗通过 {len(results)} 只, 门槛≥{CONFIG['score'].get('min_score', 70):.0f}分后显示 {len(shown)} 只 (剔除 {dropped} 只), 按综合得分降序")
+    return shown
 
 
 def _sanitize_json(obj):
