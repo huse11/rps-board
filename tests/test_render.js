@@ -228,3 +228,73 @@ test('buildReviewHtml: 无数据兜底提示', () => {
     assert.ok(R.buildReviewHtml(null).includes('暂无复盘数据'));
     assert.ok(R.buildReviewHtml({}).includes('暂无复盘数据'));
 });
+
+// ===== 日度推荐「预测化」格式化 =====
+test('fmtPredUpProb: 空值显示 --', () => {
+    assert.equal(R.fmtPredUpProb(null), '--');
+    assert.equal(R.fmtPredUpProb(undefined), '--');
+    assert.equal(R.fmtPredUpProb(''), '--');
+});
+
+test('fmtPredUpProb: 三档配色(≥68强红/58-67中橙/<58弱灰)', () => {
+    assert.ok(R.fmtPredUpProb(72).includes('class="pos"'));
+    assert.ok(R.fmtPredUpProb(65).includes('class="pred-mid"'));
+    assert.ok(R.fmtPredUpProb(50).includes('class="pred-low"'));
+    assert.ok(R.fmtPredUpProb(72).includes('72%'));
+});
+
+test('fmtPredGain: 中值+区间, 空值兜底', () => {
+    const html = R.fmtPredGain({ expected_gain: 7.0, gain_range: [3.9, 10.2] });
+    assert.ok(html.includes('7.0%'));
+    assert.ok(html.includes('3.9~10.2'));
+    assert.equal(R.fmtPredGain(null), '--');
+    assert.equal(R.fmtPredGain({}), '--');
+});
+
+test('fmtPredGain: 无区间时按中值±45%兜底', () => {
+    const html = R.fmtPredGain({ expected_gain: 6.0 });
+    assert.ok(html.includes('3.3~8.7'));
+});
+
+test('fmtPredStop: 负值红色, 空值兜底', () => {
+    const html = R.fmtPredStop({ stop_loss: -4.5 });
+    assert.ok(html.includes('-4.5%'));
+    assert.ok(html.includes('class="neg"'));
+    assert.equal(R.fmtPredStop(null), '--');
+    assert.equal(R.fmtPredStop({}), '--');
+});
+
+test('fmtPredConf: 高/中/低三档徽标, 未知值--', () => {
+    assert.ok(R.fmtPredConf('高').includes('pred-conf high'));
+    assert.ok(R.fmtPredConf('中').includes('pred-conf mid'));
+    assert.ok(R.fmtPredConf('低').includes('pred-conf low'));
+    assert.equal(R.fmtPredConf('未知'), '--');
+});
+
+test('buildPredictionBox: 无预测字段返回空串', () => {
+    assert.equal(R.buildPredictionBox(null), '');
+    assert.equal(R.buildPredictionBox({}), '');
+    assert.equal(R.buildPredictionBox({ name: 'X' }), '');
+});
+
+test('buildPredictionBox: 完整预测内容渲染', () => {
+    const s = {
+        prediction: {
+            horizon: 3, up_prob: 72, expected_gain: 7.0, gain_range: [3.9, 10.2],
+            stop_loss: -4.5, confidence: '高', regime: '震荡市',
+            logic: ['三档RPS共振', '主力资金连续流入', '突破20日新高+放量+均线多头'],
+            basis: '基于历史动量统计',
+            factors: { momentum: 66, technical: 62, capital: 60, sector: 70, sentiment: 56, fundamental: 57 }
+        }
+    };
+    const html = R.buildPredictionBox(s);
+    assert.ok(html.includes('预测（3日内）'), '预测周期');
+    assert.ok(html.includes('72%'), '上涨概率');
+    assert.ok(html.includes('止损位'), '止损位');
+    assert.ok(html.includes('置信度'), '置信度');
+    assert.ok(html.includes('pred-conf high'), '高置信');
+    assert.ok(html.includes('三档RPS共振'), '预测逻辑');
+    assert.ok(html.includes('动量'), '六维概率');
+    assert.ok(html.includes('基于历史动量统计'), '依据');
+    assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});

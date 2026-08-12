@@ -166,6 +166,68 @@
             '（种子' + p.seed_n + ' 调出' + p.out_n + ' 核心' + p.core_n + ' 高分' + p.high_n + '）';
     }
 
+    // ===== 日度推荐「预测化」格式化 =====
+    // 上涨概率 → 带色文本 (≥68 强, 58-67 中, <58 弱)
+    function fmtPredUpProb(v) {
+        if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
+        var n = Number(v);
+        var cls = n >= 68 ? 'pos' : (n >= 58 ? 'pred-mid' : 'pred-low');
+        return '<span class="' + cls + '" style="font-weight:700;">' + n + '%</span>';
+    }
+
+    // 预期涨幅 → 中值 + 区间
+    function fmtPredGain(p) {
+        if (!p || p.expected_gain === null || p.expected_gain === undefined || isNaN(Number(p.expected_gain))) return '--';
+        var g = Number(p.expected_gain);
+        var range = (p.gain_range && p.gain_range.length === 2) ? p.gain_range : [g * 0.55, g * 1.45];
+        return '<span class="pos">' + g.toFixed(1) + '%</span><span style="color:#64748b;font-size:10px;"> (' +
+            Number(range[0]).toFixed(1) + '~' + Number(range[1]).toFixed(1) + ')</span>';
+    }
+
+    // 止损位 → 负值红色
+    function fmtPredStop(p) {
+        if (!p || p.stop_loss === null || p.stop_loss === undefined || isNaN(Number(p.stop_loss))) return '--';
+        return '<span class="neg" style="font-weight:700;">' + Number(p.stop_loss).toFixed(1) + '%</span>';
+    }
+
+    // 置信度 → 三档徽标 (高红/中橙/低灰)
+    function fmtPredConf(v) {
+        if (v === '高') return '<span class="pred-conf high">高</span>';
+        if (v === '中') return '<span class="pred-conf mid">中</span>';
+        if (v === '低') return '<span class="pred-conf low">低</span>';
+        return '--';
+    }
+
+    // 预测详情块: 核心逻辑 + 六维度概率 + 风控位 (详情展开内使用)
+    function buildPredictionBox(s) {
+        var p = s && s.prediction;
+        if (!p) return '';
+        var dims = { momentum: '动量', technical: '技术', capital: '资金',
+                     sector: '板块', sentiment: '情绪', fundamental: '基本面' };
+        var fHtml = '';
+        if (p.factors) {
+            fHtml = Object.keys(dims).map(function (k) {
+                var v = p.factors[k];
+                return '<span style="display:inline-block;margin:2px 6px 2px 0;font-size:11px;">' + dims[k] +
+                    ' <b>' + (v === undefined || v === null ? '--' : v + '%') + '</b></span>';
+            }).join('');
+        }
+        var logic = (p.logic || []).map(function (x) {
+            return '<span class="tag-rec tech">' + x + '</span>';
+        }).join('') || '--';
+        return '<div style="margin-top:6px;padding-top:6px;border-top:1px dashed #e2e8f0;">' +
+            '<div style="font-weight:700;color:#1e293b;">预测（' + (p.horizon || 3) + '日内）</div>' +
+            '<div class="dl"><span class="k">上涨概率:</span> <span class="v">' + fmtPredUpProb(p.up_prob) +
+            ' | 预期涨幅 ' + fmtPredGain(p) + ' | 止损位 ' + fmtPredStop(p) + '</span></div>' +
+            '<div class="dl"><span class="k">置信度:</span> <span class="v">' + fmtPredConf(p.confidence) +
+            (p.regime ? '（市场' + p.regime + '）' : '') + '</span></div>' +
+            '<div class="dl"><span class="k">预测逻辑:</span> <span class="v">' + logic + '</span></div>' +
+            (fHtml ? '<div class="dl"><span class="k">六维概率:</span> <span class="v">' + fHtml + '</span></div>' : '') +
+            '<div class="dl"><span class="k">依据:</span> <span class="v" style="font-size:10px;opacity:0.7;">' +
+            (p.basis || '') + '</span></div>' +
+        '</div>';
+    }
+
     // 复盘统计 → 完整 HTML (六大方向 + 进阶)
     function buildReviewHtml(data) {
         if (!data || !data.update_date) return '<div class="empty-msg">暂无复盘数据, 请先运行 rps_calc.py</div>';
@@ -243,6 +305,11 @@
     root.fmtReviewWarnings = fmtReviewWarnings;
     root.fmtReviewPhase = fmtReviewPhase;
     root.buildReviewHtml = buildReviewHtml;
+    root.fmtPredUpProb = fmtPredUpProb;
+    root.fmtPredGain = fmtPredGain;
+    root.fmtPredStop = fmtPredStop;
+    root.fmtPredConf = fmtPredConf;
+    root.buildPredictionBox = buildPredictionBox;
 
     // Node: 导出供单元测试
     if (typeof module !== 'undefined' && module.exports) {
@@ -262,7 +329,12 @@
             fmtReviewTone: fmtReviewTone,
             fmtReviewWarnings: fmtReviewWarnings,
             fmtReviewPhase: fmtReviewPhase,
-            buildReviewHtml: buildReviewHtml
+            buildReviewHtml: buildReviewHtml,
+            fmtPredUpProb: fmtPredUpProb,
+            fmtPredGain: fmtPredGain,
+            fmtPredStop: fmtPredStop,
+            fmtPredConf: fmtPredConf,
+            buildPredictionBox: buildPredictionBox
         };
     }
 })(typeof window !== 'undefined' ? window : globalThis);

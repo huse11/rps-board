@@ -31,6 +31,7 @@ from pathlib import Path
 
 import rps_calc
 from rps_calc import pool, STATIC_DIR
+import predict  # 预测化模块: 6 维度概率 + 置信度 + 止损位 + 每日校准
 
 # AKShare 免费数据源 (腾讯/东财, 替代 Tushare premium + 手动东财 push2)
 # 未安装时 _AK_OK=False, 各 fetch_*_ak 返回 None/{}, 自动降级到下方东财手动接口
@@ -1425,6 +1426,63 @@ def _extract_member_codes(in_list_records):
     return codes
 
 
+def _build_sector_cont_map(in_list_records):
+    """板块名 → 连续上榜天数 (跨 RPS 档位取最大)"""
+    out = {}
+    for rec in in_list_records or []:
+        nm = str(rec.get("name") or "").strip()
+        if not nm:
+            continue
+        try:
+            c = int(rec.get("continuous") or 0)
+        except (TypeError, ValueError):
+            c = 0
+        if c > out.get(nm, 0):
+            out[nm] = c
+    return out
+
+
+def _pred_features(code, s, cap, tech, rps50_map, daily_by_code, sector_cont_map, market_status):
+    """提取预测特征 (供 predict.build_prediction 使用, 全部来自现有数据零新增接口)"""
+    df = daily_by_code.get(code) if daily_by_code else None
+    closes, lows = [], []
+    if df is not None and len(df):
+        closes = [float(c) for c in df["close"].tolist()]
+        lows = [float(x) for x in df["low"].tolist()]
+    chg3 = chg5 = consec_up = None
+    if len(closes) >= 4:
+        chg3 = (closes[-1] / closes[-4] - 1) * 100
+    if len(closes) >= 6:
+        chg5 = (closes[-1] / closes[-6] - 1) * 100
+    if len(closes) >= 2:
+        consec_up = 0
+        for i in range(len(closes) - 1, 0, -1):
+            if closes[i] > closes[i - 1]:
+                consec_up += 1
+            else:
+                break
+    sector_names = s.get("sector_names") or []
+    continuous = max([sector_cont_map.get(nm, 0) for nm in sector_names] or [0])
+    cap = cap or {}
+    tech = tech or {}
+    return {
+        "rps50": rps50_map.get(code),
+        "sector_count": int(s.get("sector_count") or 0),
+        "continuous": continuous,
+        "chg3": chg3, "chg5": chg5, "consec_up": consec_up,
+        "vol_ratio": cap.get("vol_ratio") if cap.get("vol_ratio") is not None else s.get("vol_ratio"),
+        "turnover": cap.get("turnover") if cap.get("turnover") is not None else s.get("turnover_rate"),
+        "net_inflow_3d": cap.get("net_inflow_3d"),
+        "pct_chg": s.get("pct_chg"),
+        "price": s.get("price"),
+        "pe_ttm": s.get("pe_ttm"),
+        "tech_hits": tech.get("hits", []),
+        "hit_count": tech.get("hit_count", 0),
+        "lows": lows[-20:] if lows else [],
+        "advance_ratio": market_status.get("advance_ratio") if market_status else None,
+    }
+
+
 def _select_member_pool(industry_df, in_list_industries, member_codes=None):
     """构建选股池: 只保留入选板块成分股
     - member_codes 提供时: 严格用成分股名单 (industry_df 的 ts_code ∈ member_codes)
@@ -1639,7 +1697,8 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         return []
 
     # ============ 综合评分与最终推荐排序 ============
-    print(f"\n[综合评分] 通过五层漏斗 {len(stocks_df)} 只 → 四维评分 (板块40/基本面20/资金20/技术20)")
+    print(f"\n[综合评分] 通过五层漏斗 {len(stocks_df)} 只 → 四维评分 (板块40/基本面20/资金20/技术20) + 预测化")
+    sector_cont_map = _build_sector_cont_map(in_list_records)
     results = []
     for _, s in stocks_df.iterrows():
         code = s["ts_code"]
@@ -1653,6 +1712,10 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         score_cap = score_capital_funnel(cap)
         score_tech = score_technical_funnel(tech.get("hit_count", 0))
         total = score_sector + score_fund + score_cap + score_tech
+        # 预测化: 6 维度概率 + 置信度 + 止损位 + 预测逻辑 (不依赖额外接口)
+        pred_features = _pred_features(code, s, cap, tech, rps50_map, _DAILY_BY_CODE,
+                                       sector_cont_map, market_status)
+        prediction = predict.build_prediction(pred_features, market_status)
         results.append({
             "ts_code": code,
             "name": s["name"],
@@ -1675,6 +1738,7 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
             },
             "capital": cap,
             "technical": tech,
+            "prediction": prediction,
         })
     results.sort(key=lambda x: -x["score_total"])
 
@@ -1695,6 +1759,15 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         print(f"  综合得分分布: {buckets}")
         print(f"  最高分: {max(all_totals)} | 中位数: {sorted(all_totals)[len(all_totals) // 2]}")
     print(f"\n[结果] 漏斗通过 {len(results)} 只, 门槛≥{CONFIG['score'].get('min_score', 70):.0f}分后显示 {len(shown)} 只 (剔除 {dropped} 只), 按综合得分降序")
+
+    # 预测化每日校准: 核对历史预测实际涨跌, 产出预测效果复盘 (失败不阻断)
+    try:
+        review = predict.calc_prediction_accuracy(daily_map, latest_date)
+        if review:
+            s_ = review["summary"]
+            print(f"  [校准] 预测效果复盘: 样本{s_['samples']} | {predict.PRED_HORIZON}日上涨命中率 {s_['hit_rate']:.0%} | 平均涨幅 {s_['avg_gain']:+.1f}%")
+    except Exception as e:
+        print(f"  ⚠️ 预测校准失败(不影响推荐): {str(e)[:60]}")
     return shown
 
 
@@ -1736,12 +1809,25 @@ def save_recommendations(rec_list, latest_date, prev_date=""):
         "note": "指数数据缺失, 无法校验大盘环境",
     }
     multi_sector_count = sum(1 for r in rec_list if r.get("sector_count", 0) >= 2)
+    # 预测化: 市场环境档位 (震荡市动量权重最高; 偏弱时前端提示控制仓位)
+    try:
+        regime = predict.market_regime(market_status)
+    except Exception:
+        regime = {"regime": "震荡市", "prob_adjust": 0, "note": ""}
+    prediction_status = {
+        "regime": regime["regime"],
+        "note": regime["note"],
+        "horizon": predict.PRED_HORIZON,
+        "warning": regime["regime"] == "偏弱"
+        or (market_status.get("advance_ratio") is not None and market_status["advance_ratio"] < 0.4),
+    }
     output = {
         "schema_version": 3,
         "update_date": latest_date,
         "prev_date": prev_date,
         "market_status": market_status,
         "multi_sector_count": multi_sector_count,
+        "prediction_status": prediction_status,
         "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
         "count": len(rec_list),
         "stocks": rec_list,
@@ -1750,6 +1836,13 @@ def save_recommendations(rec_list, latest_date, prev_date=""):
     with open(REC_FILE, "w", encoding="utf-8") as f:
         # allow_nan=False: 兜底, 若 sanitizer 漏网 NaN 直接抛错而非静默写出非法 JSON
         json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
+    # 预测化: 记录当日预测 (供每日校准核对实际涨跌)
+    try:
+        n_pred = predict.record_predictions(rec_list, latest_date)
+        if n_pred:
+            print(f"  ✅ 预测日志: 记录 {n_pred} 只预测 (保存至 {predict.LOG_FILE.name})")
+    except Exception as e:
+        print(f"  ⚠️ 预测日志记录失败(不影响推荐): {str(e)[:60]}")
     print(f"  ✅ 已保存: {REC_FILE} ({len(rec_list)} 只, 多板块共振 {multi_sector_count})")
 
 

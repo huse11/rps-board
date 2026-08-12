@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>板块RPS监测看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="render.js?v=3"></script>
+    <script src="render.js?v=4"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -263,6 +263,13 @@
         }
         .tag-rec.sector { background: #b91c1c; }
         .tag-rec.tech { background: #2563eb; }
+        /* 预测化: 概率/止损/置信度配色 */
+        .pred-mid { color: #f59e0b; font-weight: 700; }
+        .pred-low { color: #64748b; font-weight: 700; }
+        .pred-conf { font-weight: 700; }
+        .pred-conf.high { color: #dc2626; }
+        .pred-conf.mid { color: #f59e0b; }
+        .pred-conf.low { color: #64748b; }
         /* 详情展开行 */
         .rec-detail-row td { background: #f8fafc !important; border-top: 1px dashed #cbd5e1; }
         .rec-detail-box { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px 14px; padding: 6px 8px; font-size: 11px; text-align: left; }
@@ -513,9 +520,11 @@
                         <thead><tr>
                             <th>代码</th><th>名称</th>
                             <th>核心热点板块</th><th>推荐理由标签</th><th>总分</th>
-                            <th>现价</th><th>涨幅%</th><th></th>
+                            <th>现价</th><th>涨幅%</th>
+                            <th>上涨概率</th><th>预期涨幅</th><th>止损</th><th>置信度</th>
+                            <th></th>
                         </tr></thead>
-                        <tbody id="recTableBody"><tr><td colspan="8" class="empty-msg">加载中...</td></tr></tbody>
+                        <tbody id="recTableBody"><tr><td colspan="12" class="empty-msg">加载中...</td></tr></tbody>
                     </table>
                 </div>
                 <!-- 底部固定区: 风险提示 -->
@@ -831,6 +840,11 @@ function renderMarketBanner(data) {
     const title = safe ? '大盘环境合格, 继续选股' : '大盘环境不满足, 暂无推荐';
     const reason = m.reason ? ('<div style="margin-top:4px;font-weight:700;">原因：' + m.reason + '</div>') : '';
     const note = m.note ? ('<div style="margin-top:4px;font-size:11px;opacity:0.75;">ℹ️ ' + m.note + '</div>') : '';
+    // 预测化: 市场环境档位提示 (偏弱时预警预测胜率)
+    const ps = data.prediction_status || {};
+    const predWarn = ps.warning
+        ? '<div style="margin-top:4px;font-size:11px;font-weight:700;color:#d97706;">⚠️ ' + (ps.note || '当前市场赚钱效应偏弱, 预测胜率下降') + '</div>'
+        : '';
     // 指数 vs 20日线状态行
     let idxHtml = '';
     if (m.indexes && m.indexes.length) {
@@ -847,7 +861,7 @@ function renderMarketBanner(data) {
             '<span class="mb-item"><span class="k">规则:</span><span class="v">' + (m.rule || '--') + '</span></span>' +
             '<span class="mb-item"><span class="k">上涨占比:</span><span class="v">' + fmtV(m.advance_ratio) + '</span></span>' +
             '<span class="mb-item"><span class="k">跌停:</span><span class="v">' + fmtV(m.limit_down_count, '家') + '</span></span>' +
-        '</div>' + reason + note +
+        '</div>' + reason + note + predWarn +
     '</div>';
 }
 
@@ -888,6 +902,7 @@ function recDetailHtml(s) {
         '<div class="dl"><span class="k">成交额:</span> <span class="v">' + yi(cap.amount) + ' | 3日主力净流入 ' + mflowTxt + '</span></div>' +
         '<div class="dl"><span class="k">技术达标:</span> <span class="v">' + (tech.hit_count || 0) + '/7 项 (' + ((tech.hits || []).join('、') || '--') + ')</span></div>' +
         '<div class="dl"><span class="k">分项得分:</span> <span class="v">板块 ' + fmtOrDash(s.score_sector) + ' | 基本面 ' + fmtOrDash(s.score_fundamental) + ' | 资金 ' + fmtOrDash(s.score_capital) + ' | 技术 ' + fmtOrDash(s.score_technical) + '</span></div>' +
+        buildPredictionBox(s) +
     '</div>';
 }
 
@@ -961,12 +976,13 @@ function renderRecommendTable(data) {
         let msg = '今日暂无满足五层漏斗筛选的股票';
         if (ms.is_safe === false) msg = '大盘环境不满足: ' + (ms.reason || '暂无推荐');
         else if (all.length && (_recFilter.sector || _recFilter.industry || _recFilter.mktcap)) msg = '当前筛选条件下无匹配股票';
-        tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">' + msg + '</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">' + msg + '</td></tr>';
         return;
     }
     let html = '';
     stocks.forEach(s => {
         const cls = recRowClass(Number(s.score_total));
+        const pd = s.prediction || {};
         html += '<tr class="' + cls + '">' +
             '<td>' + (s.ts_code || '--') + '</td>' +
             '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
@@ -975,10 +991,14 @@ function renderRecommendTable(data) {
             '<td>' + fmtScore(s.score_total) + '</td>' +
             '<td>' + fmtOrDash(s.price) + '</td>' +
             '<td>' + fmtStockPct(s.pct_chg) + '</td>' +
+            '<td>' + fmtPredUpProb(pd.up_prob) + '</td>' +
+            '<td>' + fmtPredGain(pd) + '</td>' +
+            '<td>' + fmtPredStop(pd) + '</td>' +
+            '<td>' + fmtPredConf(pd.confidence) + '</td>' +
             '<td><span class="rec-toggle-btn" onclick="toggleRecDetail(\'' + s.ts_code + '\')">详情</span></td>' +
             '</tr>';
         if (_recOpenDetail[s.ts_code]) {
-            html += '<tr class="rec-detail-row"><td colspan="8">' + recDetailHtml(s) + '</td></tr>';
+            html += '<tr class="rec-detail-row"><td colspan="12">' + recDetailHtml(s) + '</td></tr>';
         }
     });
     tbody.innerHTML = html;
@@ -986,7 +1006,7 @@ function renderRecommendTable(data) {
 
 function loadRecommendations() {
     const tbody = document.getElementById('recTableBody');
-    tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">加载中...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">加载中...</td></tr>';
     fetch('static/recommendations.json?t=' + Date.now(), { cache: 'no-store' })
         .then(r => r.json())
         .then(data => {
@@ -997,7 +1017,7 @@ function loadRecommendations() {
             _recLoaded = true;
         })
         .catch(err => {
-            tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">⚠️ 加载失败：' + (err.message || '请先运行 rps_calc.py') + '</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="12" class="empty-msg">⚠️ 加载失败：' + (err.message || '请先运行 rps_calc.py') + '</td></tr>';
             console.error(err);
         });
 }
