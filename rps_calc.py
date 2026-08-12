@@ -23,7 +23,7 @@ TUSHARE_TOKENS = [
     "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
 RPS_THRESHOLD = 90
-SCHEMA_VERSION = 2  # 数据格式版本: v2=含成分股stocks（幂等判断用，升级需+1）
+SCHEMA_VERSION = 3  # v3=欧奈尔标准RPS公式 RPS=(1-排名/总数)*100 (幂等判断用, 改公式/格式需+1强制重算)
 STATIC_DIR = Path(__file__).parent / "static"
 DATA_FILE = STATIC_DIR / "rps_data.json"
 LAST_RESULT_FILE = STATIC_DIR / "last_result.json"
@@ -273,14 +273,15 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         # 转 DataFrame 计算 RPS
         df_day_rps = pd.DataFrame(day_scores).T
         df_day_rps.index.name = "industry"
-        # 欧奈尔体系RPS: RPS = (1 - (排名-1)/全部板块总数) * 100，第1名=100
+        # 欧奈尔体系RPS(标准原版): RPS = (1 - 涨幅排名/全市场有效板块总数) * 100
+        # 涨幅从高到低排名(涨幅最高→排名1); RPS=95 表示跑赢全市场95%的板块; 第1名≈100, 最后一名≈0
         total_ind = len(df_day_rps) if len(df_day_rps) > 0 else 1
         for period, col in [(5, "RPS5"), (10, "RPS10"), (20, "RPS20")]:
             chg_col = f"chg{period}"
             if chg_col in df_day_rps.columns and df_day_rps[chg_col].notna().sum() > 0:
-                # 涨幅从高到低排名，涨幅最高 → 排名1
+                # pandas rank 从1开始(ascending=False 涨幅最高→1), 与标准公式 RPS=(1-RANK/TOTAL)*100 直接对应
                 df_day_rps[f"rank{period}"] = df_day_rps[chg_col].rank(ascending=False)
-                df_day_rps[col] = (1 - (df_day_rps[f"rank{period}"] - 1) / total_ind) * 100
+                df_day_rps[col] = (1 - df_day_rps[f"rank{period}"] / total_ind) * 100
 
         # 存储该日历史
         daily_rps_history[date] = {
@@ -452,9 +453,11 @@ def calc_stock_rps50_by_industry(daily_map, industry_df, trade_days):
     if not stock_cum_ret:
         return {}
 
-    # RPS50 = 百分位排名
+    # RPS50 = (1 - 涨幅排名/全市场有效股票总数) * 100 (欧奈尔标准: 涨幅最高→排名1)
     df_stock = pd.DataFrame(list(stock_cum_ret.items()), columns=["ts_code", "chg50"])
-    df_stock["RPS50"] = df_stock["chg50"].rank(pct=True, ascending=True) * 100
+    total_stock = len(df_stock) if len(df_stock) > 0 else 1
+    df_stock["rank50"] = df_stock["chg50"].rank(ascending=False)
+    df_stock["RPS50"] = (1 - df_stock["rank50"] / total_stock) * 100
 
     # 合并行业
     merged = df_stock.merge(industry_df[["ts_code", "industry"]], on="ts_code", how="inner")
@@ -524,9 +527,10 @@ def calc_industry_rps50_60day_count(daily_map, industry_df, trade_days):
             else:
                 day_scores[ind] = None
 
-        # RPS50 = 百分位排名
+        # RPS50 = (1 - 涨幅排名/全行业总数) * 100 (欧奈尔标准)
         df_day = pd.DataFrame(list(day_scores.items()), columns=["industry", "chg50"])
-        df_day["RPS50"] = df_day["chg50"].rank(pct=True, ascending=True) * 100
+        total_ind50 = len(df_day) if len(df_day) > 0 else 1
+        df_day["RPS50"] = (1 - df_day["chg50"].rank(ascending=False) / total_ind50) * 100
 
         daily_rps50[date] = {
             row["industry"]: float(row["RPS50"])
