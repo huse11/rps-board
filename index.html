@@ -605,9 +605,9 @@ function fmtStage(continuous) {
 
 function fmtRps(val) {
     if (val === undefined || val === null || val === '' || isNaN(Number(val))) return '--';
-    const n = Math.round(Number(val));  // 转1~100整数
-    if (n >= 90) return `<span class="tag-red">${n}</span>`;
-    if (n >= 70) return `<span class="tag-blue">${n}</span>`;
+    const n = Number(val).toFixed(1);  // 保留1位小数(欧奈尔RPS精确值, 如 99.1)
+    if (Number(val) >= 90) return `<span class="tag-red">${n}</span>`;
+    if (Number(val) >= 70) return `<span class="tag-blue">${n}</span>`;
     return n;
 }
 
