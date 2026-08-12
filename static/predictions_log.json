@@ -14,6 +14,18 @@
       "net_inflow_3d": 274698400.0
     },
     {
+      "code": "300790.SZ",
+      "name": "宇瞳光学",
+      "price": 18.95,
+      "up_prob": 84,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "中",
+      "sector_count": 2,
+      "hit_count": 3,
+      "net_inflow_3d": 79944000.0
+    },
+    {
       "code": "001696.SZ",
       "name": "宗申动力",
       "price": 17.29,
@@ -22,31 +34,31 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 4,
+      "hit_count": 5,
       "net_inflow_3d": 321172900.0
     },
     {
       "code": "002685.SZ",
       "name": "华东重机",
       "price": 6.21,
-      "up_prob": 74,
-      "expected_gain": 7.0,
+      "up_prob": 76,
+      "expected_gain": 9.0,
       "horizon": 3,
-      "confidence": "中",
+      "confidence": "高",
       "sector_count": 2,
-      "hit_count": 3,
+      "hit_count": 4,
       "net_inflow_3d": 29164899.999999996
     },
     {
       "code": "300395.SZ",
       "name": "菲利华",
       "price": 94.99,
-      "up_prob": 80,
+      "up_prob": 82,
       "expected_gain": 9.0,
       "horizon": 3,
-      "confidence": "中",
+      "confidence": "高",
       "sector_count": 2,
-      "hit_count": 3,
+      "hit_count": 4,
       "net_inflow_3d": 625928400.0
     },
     {
@@ -65,24 +77,24 @@
       "code": "300809.SZ",
       "name": "华辰装备",
       "price": 27.0,
-      "up_prob": 82,
+      "up_prob": 84,
       "expected_gain": 9.0,
       "horizon": 3,
-      "confidence": "中",
+      "confidence": "高",
       "sector_count": 2,
-      "hit_count": 3,
+      "hit_count": 4,
       "net_inflow_3d": 39222200.0
     },
     {
       "code": "301183.SZ",
       "name": "东田微",
       "price": 200.69,
-      "up_prob": 74,
-      "expected_gain": 7.0,
+      "up_prob": 76,
+      "expected_gain": 9.0,
       "horizon": 3,
-      "confidence": "中",
+      "confidence": "高",
       "sector_count": 2,
-      "hit_count": 3,
+      "hit_count": 4,
       "net_inflow_3d": 200204800.0
     },
     {
@@ -98,6 +110,18 @@
       "net_inflow_3d": 14165500.0
     },
     {
+      "code": "002885.SZ",
+      "name": "京泉华",
+      "price": 31.88,
+      "up_prob": 75,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "中",
+      "sector_count": 2,
+      "hit_count": 3,
+      "net_inflow_3d": 34764600.0
+    },
+    {
       "code": "301282.SZ",
       "name": "金禄电子",
       "price": 26.45,
@@ -110,15 +134,27 @@
       "net_inflow_3d": 63754700.0
     },
     {
-      "code": "603626.SH",
-      "name": "科森科技",
-      "price": 16.59,
-      "up_prob": 84,
+      "code": "600353.SH",
+      "name": "旭光电子",
+      "price": 29.09,
+      "up_prob": 88,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "中",
       "sector_count": 2,
       "hit_count": 3,
+      "net_inflow_3d": 23150700.0
+    },
+    {
+      "code": "603626.SH",
+      "name": "科森科技",
+      "price": 16.59,
+      "up_prob": 86,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "高",
+      "sector_count": 2,
+      "hit_count": 4,
       "net_inflow_3d": 62690700.0
     },
     {
@@ -130,8 +166,32 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 50107700.00000001
+    },
+    {
+      "code": "300475.SZ",
+      "name": "香农芯创",
+      "price": 163.8,
+      "up_prob": 82,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "中",
+      "sector_count": 2,
+      "hit_count": 3,
+      "net_inflow_3d": 804805700.0000001
+    },
+    {
+      "code": "300679.SZ",
+      "name": "电连技术",
+      "price": 43.21,
+      "up_prob": 81,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "中",
+      "sector_count": 2,
+      "hit_count": 3,
+      "net_inflow_3d": 64318700.0
     },
     {
       "code": "603823.SH",
@@ -146,27 +206,39 @@
       "net_inflow_3d": 98148100.0
     },
     {
-      "code": "003025.SZ",
-      "name": "思进智能",
-      "price": 13.26,
-      "up_prob": 80,
-      "expected_gain": 9.0,
-      "horizon": 3,
-      "confidence": "中",
-      "sector_count": 2,
-      "hit_count": 3,
-      "net_inflow_3d": 6419100.0
-    },
-    {
-      "code": "300196.SZ",
-      "name": "长海股份",
-      "price": 18.71,
+      "code": "688307.SH",
+      "name": "中润光学",
+      "price": 49.23,
       "up_prob": 83,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "中",
       "sector_count": 2,
       "hit_count": 3,
+      "net_inflow_3d": 27550200.0
+    },
+    {
+      "code": "003025.SZ",
+      "name": "思进智能",
+      "price": 13.26,
+      "up_prob": 82,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "高",
+      "sector_count": 2,
+      "hit_count": 4,
+      "net_inflow_3d": 6419100.0
+    },
+    {
+      "code": "300196.SZ",
+      "name": "长海股份",
+      "price": 18.71,
+      "up_prob": 85,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "高",
+      "sector_count": 2,
+      "hit_count": 4,
       "net_inflow_3d": 34810500.0
     },
     {
