@@ -27,6 +27,12 @@
     "note": "大盘环境合格, 继续选股"
   },
   "multi_sector_count": 18,
+  "prediction_status": {
+    "regime": "偏强",
+    "note": "指数站上20日线且上涨占比≥60%, 赚钱效应强",
+    "horizon": 3,
+    "warning": false
+  },
   "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
   "count": 18,
   "stocks": [
@@ -41,7 +47,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 60.07,
       "pct_chg": 10.0,
-      "pe_ttm": 135.2507,
+      "pe_ttm": 135.25,
       "circ_mv": 221.36,
       "score_total": 81,
       "score_sector": 30,
@@ -66,6 +72,32 @@
           "均线支撑"
         ],
         "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 77,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "连涨7日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -79,7 +111,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 17.29,
       "pct_chg": 9.99,
-      "pe_ttm": 32.4109,
+      "pe_ttm": 32.41,
       "circ_mv": 154.12,
       "score_total": 78,
       "score_sector": 30,
@@ -104,6 +136,32 @@
           "RPS50强势"
         ],
         "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 88,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 67,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -117,7 +175,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 6.21,
       "pct_chg": 2.31,
-      "pe_ttm": 72.3503,
+      "pe_ttm": 72.35,
       "circ_mv": 62.57,
       "score_total": 76,
       "score_sector": 30,
@@ -141,6 +199,32 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 74,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -154,7 +238,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 94.99,
       "pct_chg": 8.02,
-      "pe_ttm": 103.6467,
+      "pe_ttm": 103.65,
       "circ_mv": 486.87,
       "score_total": 76,
       "score_sector": 30,
@@ -178,6 +262,32 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -191,7 +301,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 28.65,
       "pct_chg": 7.54,
-      "pe_ttm": 37.2123,
+      "pe_ttm": 37.21,
       "circ_mv": 64.94,
       "score_total": 76,
       "score_sector": 30,
@@ -216,6 +326,32 @@
           "均线支撑"
         ],
         "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 88,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 67,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -229,7 +365,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 27.0,
       "pct_chg": 5.72,
-      "pe_ttm": 35.7736,
+      "pe_ttm": 35.77,
       "circ_mv": 40.65,
       "score_total": 76,
       "score_sector": 30,
@@ -253,6 +389,32 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 82,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -266,7 +428,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 28.23,
       "pct_chg": 6.89,
-      "pe_ttm": 38.3782,
+      "pe_ttm": 38.38,
       "circ_mv": 47.71,
       "score_total": 76,
       "score_sector": 30,
@@ -292,6 +454,32 @@
           "均线支撑"
         ],
         "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 60,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -305,7 +493,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 200.69,
       "pct_chg": 4.91,
-      "pe_ttm": 148.0414,
+      "pe_ttm": 148.04,
       "circ_mv": 117.8,
       "score_total": 76,
       "score_sector": 30,
@@ -329,6 +517,32 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 74,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "连涨7日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 55,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -342,7 +556,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 21.47,
       "pct_chg": 2.0,
-      "pe_ttm": 25.389,
+      "pe_ttm": 25.39,
       "circ_mv": 112.07,
       "score_total": 76,
       "score_sector": 30,
@@ -368,6 +582,32 @@
           "均线支撑"
         ],
         "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 86,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 64,
+          "technical": 60,
+          "capital": 58,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -381,7 +621,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 26.45,
       "pct_chg": 11.13,
-      "pe_ttm": 66.601,
+      "pe_ttm": 66.6,
       "circ_mv": 46.7,
       "score_total": 74,
       "score_sector": 30,
@@ -406,6 +646,32 @@
           "均线支撑"
         ],
         "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 83,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -419,7 +685,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 16.59,
       "pct_chg": 0.18,
-      "pe_ttm": 72.0375,
+      "pe_ttm": 72.04,
       "circ_mv": 92.05,
       "score_total": 74,
       "score_sector": 30,
@@ -443,6 +709,98 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "连涨9日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 62,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
+      }
+    },
+    {
+      "ts_code": "603980.SH",
+      "name": "吉华集团",
+      "industry": "染料涂料",
+      "sectors": [
+        "染料涂料"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 7.21,
+      "pct_chg": 6.34,
+      "pe_ttm": 49.65,
+      "circ_mv": 48.8,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.86,
+        "vol_ratio": 1.81,
+        "amount": 377760211.0,
+        "net_inflow_3d": 50107700.00000001
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 88,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "技术7项共振6/7"
+        ],
+        "factors": {
+          "momentum": 65,
+          "technical": 65,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -482,6 +840,32 @@
           "均线支撑"
         ],
         "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 81,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 60,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -495,7 +879,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 77.7,
       "pct_chg": 3.3,
-      "pe_ttm": 197.1682,
+      "pe_ttm": 197.17,
       "circ_mv": 323.52,
       "score_total": 72,
       "score_sector": 30,
@@ -520,46 +904,32 @@
           "均线支撑"
         ],
         "hit_count": 4
-      }
-    },
-    {
-      "ts_code": "603980.SH",
-      "name": "吉华集团",
-      "industry": "染料涂料",
-      "sectors": [
-        "染料涂料"
-      ],
-      "sector_count": 2,
-      "tags": "2板块共振 + 20日新高 + 量价齐升",
-      "price": 7.21,
-      "pct_chg": 6.34,
-      "pe_ttm": 52.2914,
-      "circ_mv": 48.8,
-      "score_total": 72,
-      "score_sector": 30,
-      "score_fundamental": 6,
-      "score_capital": 16,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": null,
-        "debt_to_assets": null
       },
-      "capital": {
-        "turnover": 7.86,
-        "vol_ratio": 1.81,
-        "amount": 377760211.0,
-        "net_inflow_3d": 50107700.00000001
-      },
-      "technical": {
-        "hits": [
-          "均线多头",
-          "MACD多头",
-          "20日新高",
-          "量价齐升",
-          "RPS50强势",
-          "均线支撑"
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 76,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
         ],
-        "hit_count": 6
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 58,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -573,7 +943,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 13.26,
       "pct_chg": 6.0,
-      "pe_ttm": 24.5519,
+      "pe_ttm": 24.55,
       "circ_mv": 30.02,
       "score_total": 71,
       "score_sector": 30,
@@ -597,6 +967,32 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "连涨9日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 60,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -610,7 +1006,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 18.71,
       "pct_chg": 4.58,
-      "pe_ttm": 23.5126,
+      "pe_ttm": 23.51,
       "circ_mv": 46.22,
       "score_total": 71,
       "score_sector": 30,
@@ -634,6 +1030,32 @@
           "量价齐升"
         ],
         "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 83,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -672,6 +1094,32 @@
           "均线支撑"
         ],
         "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 76,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "资金埋伏(流入+滞涨)"
+        ],
+        "factors": {
+          "momentum": 54,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     },
     {
@@ -711,6 +1159,32 @@
           "均线支撑"
         ],
         "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "连涨5日动量延续"
+        ],
+        "factors": {
+          "momentum": 62,
+          "technical": 60,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "偏强"
       }
     }
   ]
