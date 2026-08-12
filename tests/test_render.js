@@ -160,3 +160,71 @@ test('fmtWeeklyCap: 周换手/量能/成交额/净流入格式化', () => {
     assert.ok(!empty.includes('undefined'));
     assert.ok(empty.includes('--'));
 });
+
+// ---------- 每日复盘渲染辅助 (daily_review 前端) ----------
+
+test('fmtReviewNames: 字符串/对象数组混合, 超长截断', () => {
+    assert.equal(R.fmtReviewNames([]), '无');
+    assert.equal(R.fmtReviewNames(['黄金', '半导体']), '黄金、半导体');
+    assert.equal(R.fmtReviewNames([{ name: '乳制品' }, { name: '白酒' }]), '乳制品、白酒');
+    const many = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+    assert.ok(R.fmtReviewNames(many).includes('等10个'));
+    assert.equal(R.fmtReviewNames(many, 3), 'A、B、C 等10个');
+});
+
+test('fmtReviewSector: 精简板块条目带RPS5/排名/达标率', () => {
+    assert.equal(R.fmtReviewSector({ name: '黄金', RPS5: 100, rank: 1, ratio: 80 }),
+        '黄金(RPS5=100 排名1 达标80%)');
+    assert.equal(R.fmtReviewSector({ name: '铅锌' }), '铅锌');
+});
+
+test('fmtReviewTone: 强/中性/弱 带色, 空值--', () => {
+    assert.ok(R.fmtReviewTone('强').includes('强'));
+    assert.ok(R.fmtReviewTone('强').includes('#059669'));
+    assert.ok(R.fmtReviewTone('弱').includes('#dc2626'));
+    assert.equal(R.fmtReviewTone(''), '--');
+});
+
+test('fmtReviewWarnings: 有预警逐条红字, 无预警绿色', () => {
+    const warn = R.fmtReviewWarnings(['批量调出预警: x', '动量衰减预警: y']);
+    assert.ok(warn.includes('批量调出预警'));
+    assert.ok(warn.includes('动量衰减预警'));
+    const none = R.fmtReviewWarnings([]);
+    assert.ok(none.includes('无风险信号'));
+    assert.ok(none.includes('#059669'));
+});
+
+test('fmtReviewPhase: 五档带色 + 统计数字', () => {
+    assert.ok(R.fmtReviewPhase({ phase: '高潮期', seed_n: 1, out_n: 2, core_n: 5, high_n: 25 })
+        .includes('高潮期'));
+    assert.equal(R.fmtReviewPhase(null), '--');
+});
+
+test('buildReviewHtml: 六大方向齐全, 空数据兜底', () => {
+    const data = {
+        update_date: '20260810',
+        market: { tone: '中性', high5: 12, high10: 12, high20: 12, diff5: 0, note: '上证指数站上20日线' },
+        resonance: { core: [{ name: '黄金', RPS5: 100, rank: 1, ratio: 80 }], pulse: [], diverge: [] },
+        tier: { tier1: [{ name: '黄金', rank: 1 }], tier2: [] },
+        rotation: { new_in: [], rank_jump: [], out_all: ['专用机械'], out_count: 1 },
+        health: { expand: [], mature: [], seed: [] },
+        risk: { warnings: [] },
+        watch: { seed: [], critical: [], diverge_watch: ['乳制品'] },
+        sentiment: { phase: '震荡期', seed_n: 0, out_n: 1, core_n: 1, high_n: 12 },
+        style: { rps5: { 科技: 3, 周期: 2 } }
+    };
+    const html = R.buildReviewHtml(data);
+    for (const sec of ['一、市场整体定调', '二、板块强弱梯队与主线', '三、板块轮动动向',
+        '四、题材/板块健康度', '五、风险与退潮预警', '六、次日跟踪清单', '进阶观察']) {
+        assert.ok(html.includes(sec), '缺少章节: ' + sec);
+    }
+    assert.ok(html.includes('黄金'), '核心主线板块渲染');
+    assert.ok(html.includes('专用机械'), '调出板块渲染');
+    assert.ok(html.includes('乳制品'), '主线分歧池渲染');
+    assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});
+
+test('buildReviewHtml: 无数据兜底提示', () => {
+    assert.ok(R.buildReviewHtml(null).includes('暂无复盘数据'));
+    assert.ok(R.buildReviewHtml({}).includes('暂无复盘数据'));
+});

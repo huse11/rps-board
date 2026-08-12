@@ -480,10 +480,11 @@
             <button class="modal-close" onclick="closeRecModal()">×</button>
         </div>
         <div class="modal-body">
-            <!-- Tab 切换: 日度推荐(短线) / 周度推荐(中线波段) -->
+            <!-- Tab 切换: 日度推荐(短线) / 周度推荐(中线波段) / 每日复盘 -->
             <div class="section-toggle" id="recTabs" style="margin-bottom:10px;">
                 <button class="active" data-rec-tab="daily" onclick="switchRecTab('daily')">日度推荐</button>
                 <button data-rec-tab="weekly" onclick="switchRecTab('weekly')">周度推荐</button>
+                <button data-rec-tab="review" onclick="switchRecTab('review')">每日复盘</button>
             </div>
             <div id="recDaily">
                 <div class="rec-disclaimer" id="recDisclaimer">
@@ -539,6 +540,14 @@
                     ⚠️ 周度推荐为中线波段量化筛选结果(周线五层漏斗: 大盘/候选池/基本面深度排雷/周度资金/周线技术共振), 不构成投资建议; 市场有风险, 入市需谨慎。
                 </div>
             </div>
+            <!-- 每日复盘(动量视角量化复盘): 六大方向 + 进阶观察 -->
+            <div id="recReview" style="display:none;">
+                <div id="reviewUpdate" style="font-size:11px;color:#64748b;margin-bottom:8px;">加载中...</div>
+                <div id="reviewContent"></div>
+                <div class="rec-disclaimer" style="margin-top:8px;">
+                    ⚠️ 本复盘为 RPS 动量量化复盘（整体定调→主线识别→轮动解读→健康度→风险预警→次日清单），仅供研究参考, 不构成投资建议。
+                </div>
+            </div>
         </div>
     </div>
 </div>
@@ -550,10 +559,12 @@
 // 切换标签
 document.querySelectorAll('.section-toggle button').forEach(btn => {
     btn.addEventListener('click', function() {
+        const sec = this.dataset.section;
+        if (!sec) return; // 推荐弹窗/复盘 Tab 用 data-rec-tab + switchRecTab(), 不在此处理
         document.querySelectorAll('.section-toggle button').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.section-content').forEach(s => s.classList.remove('active'));
         this.classList.add('active');
-        document.getElementById('sec-' + this.dataset.section).classList.add('active');
+        document.getElementById('sec-' + sec).classList.add('active');
     });
 });
 
@@ -755,19 +766,32 @@ let _wkLoaded = false;    // 周度推荐仅首次切换 Tab 时拉取
 let _wkData = null;
 let _wkOpenDetail = {};   // 周度详情展开状态
 
+// ===== 每日复盘 Tab (动量视角量化复盘, schema v1) =====
+let _rvLoaded = false;   // 每日复盘仅首次切换 Tab 时拉取
+let _rvData = null;
+
 function switchRecTab(tab) {
     const isDaily = tab === 'daily';
     document.getElementById('recDaily').style.display = isDaily ? '' : 'none';
-    document.getElementById('recWeekly').style.display = isDaily ? 'none' : '';
+    document.getElementById('recWeekly').style.display = (tab === 'weekly') ? '' : 'none';
+    document.getElementById('recReview').style.display = (tab === 'review') ? '' : 'none';
     document.querySelectorAll('#recTabs button').forEach(b => {
         b.classList.toggle('active', b.getAttribute('data-rec-tab') === tab);
     });
     if (isDaily) {
         if (_recData) renderRecommendTable(_recData); // 恢复日度标题/列表
-    } else if (!_wkLoaded) {
-        loadWeeklyRecommendations();
-    } else if (_wkData) {
-        renderWeeklyTable(_wkData);
+    } else if (tab === 'weekly') {
+        if (!_wkLoaded) {
+            loadWeeklyRecommendations();
+        } else if (_wkData) {
+            renderWeeklyTable(_wkData);
+        }
+    } else if (tab === 'review') {
+        if (!_rvLoaded) {
+            loadReview();
+        } else if (_rvData) {
+            renderReview(_rvData);
+        }
     }
 }
 
@@ -1081,6 +1105,36 @@ function loadWeeklyRecommendations() {
             tbody.innerHTML = '<tr><td colspan="8" class="empty-msg">⚠️ 加载失败：' + (err.message || '请先运行 rps_calc.py 或等待周五生成') + '</td></tr>';
             console.error(err);
         });
+}
+
+function loadReview() {
+    const el = document.getElementById('reviewContent');
+    const upd = document.getElementById('reviewUpdate');
+    el.innerHTML = '<div class="empty-msg">加载中...</div>';
+    fetch('static/daily_review.json?t=' + Date.now(), { cache: 'no-store' })
+        .then(r => r.json())
+        .then(data => {
+            _rvData = data;
+            renderReview(data);
+            _rvLoaded = true;
+        })
+        .catch(err => {
+            el.innerHTML = '<div class="empty-msg">⚠️ 复盘加载失败：' + (err.message || '请先运行 rps_calc.py 生成复盘') + '</div>';
+            console.error(err);
+        });
+}
+
+function renderReview(data) {
+    const upd = document.getElementById('reviewUpdate');
+    if (!data || !data.update_date) {
+        upd.textContent = '';
+        document.getElementById('reviewContent').innerHTML =
+            '<div class="empty-msg">暂无复盘数据，请先运行 rps_calc.py</div>';
+        return;
+    }
+    upd.textContent = '复盘日期：' + data.update_date + '（前交易日 ' + (data.prev_date || '--') + '）| 行业 ' +
+        (data.total_industries ?? '--') + ' 个 | 阈值 RPS≥' + (data.threshold ?? '--');
+    document.getElementById('reviewContent').innerHTML = buildReviewHtml(data);
 }
 
 // 加载数据

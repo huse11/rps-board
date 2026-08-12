@@ -923,6 +923,17 @@ def _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, rps20_reco
         return False
 
 
+def _maybe_run_review():
+    """每日复盘(动量视角量化复盘): 读取 rps_data/rps_history 生成 json+md, 失败不阻断主流程
+    daily_review.main() 自带幂等: 当日已生成则跳过
+    """
+    try:
+        import daily_review
+        daily_review.main(force=False)
+    except Exception as e:
+        print(f"  ⚠️ 每日复盘生成失败(不阻断主流程): {str(e)[:80]}")
+
+
 def main():
     print("=" * 55)
     print("  A股板块 RPS 引擎 v3.0（全量历史回溯）")
@@ -973,6 +984,8 @@ def main():
             recommend.save_recommendations(rec_list, ld, pd_)
             # 周度推荐(中线波段): 每周运行1次, 已生成当周结果则跳过
             _maybe_run_weekly(ind_df, dm, ld, pd_, _data.get("rps20", {}).get("in_list", []))
+            # 每日复盘(动量量化复盘): 复用 rps_data/rps_history 自动生成, 幂等
+            _maybe_run_review()
         except Exception as e:
             print(f"  ⚠️ 推荐生成失败(不阻断): {str(e)[:80]}")
         return
@@ -1078,6 +1091,9 @@ def main():
 
     # ===== 每周推荐股票(中线波段, 周线五层漏斗, 复用 RPS20 入选板块成分股) =====
     _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, res20["in_list"])
+
+    # ===== 每日复盘(动量视角量化复盘, 复用 rps_data/rps_history, 幂等) =====
+    _maybe_run_review()
 
     print(f"\n{'='*55}")
     print(f"  ✅ 完成!")

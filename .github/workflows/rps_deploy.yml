@@ -83,7 +83,7 @@ jobs:
       - name: 清理缓存文件（只在gh-pages保留看板必需的文件）
         run: |
           rm -rf static/daily_cache static/rps_history.json static/index_cache __pycache__ .github tests
-          rm -f rps_calc.py recommend.py recommend_weekly.py web_server.py requirements.txt .gitignore
+          rm -f rps_calc.py recommend.py recommend_weekly.py daily_review.py web_server.py requirements.txt .gitignore
           rm -f static/fina_indicator_cache.json static/moneyflow_cache.json static/moneyflow_hsgt_cache.json
 
       - name: 部署到 GitHub Pages
