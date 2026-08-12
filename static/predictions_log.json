@@ -74,18 +74,6 @@
       "net_inflow_3d": 39222200.0
     },
     {
-      "code": "300917.SZ",
-      "name": "特发服务",
-      "price": 28.23,
-      "up_prob": 84,
-      "expected_gain": 9.0,
-      "horizon": 3,
-      "confidence": "高",
-      "sector_count": 2,
-      "hit_count": 5,
-      "net_inflow_3d": 46179600.0
-    },
-    {
       "code": "301183.SZ",
       "name": "东田微",
       "price": 200.69,
@@ -144,18 +132,6 @@
       "sector_count": 2,
       "hit_count": 6,
       "net_inflow_3d": 50107700.00000001
-    },
-    {
-      "code": "000560.SZ",
-      "name": "我爱我家",
-      "price": 2.34,
-      "up_prob": 81,
-      "expected_gain": 9.0,
-      "horizon": 3,
-      "confidence": "高",
-      "sector_count": 2,
-      "hit_count": 5,
-      "net_inflow_3d": 34959300.0
     },
     {
       "code": "603823.SH",

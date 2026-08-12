@@ -26,7 +26,7 @@
     "limit_down_count": 2,
     "note": "大盘环境合格, 继续选股"
   },
-  "multi_sector_count": 18,
+  "multi_sector_count": 16,
   "prediction_status": {
     "regime": "偏强",
     "note": "指数站上20日线且上涨占比≥60%, 赚钱效应强",
@@ -34,7 +34,7 @@
     "warning": false
   },
   "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
-  "count": 18,
+  "count": 16,
   "stocks": [
     {
       "ts_code": "002552.SZ",
@@ -418,71 +418,6 @@
       }
     },
     {
-      "ts_code": "300917.SZ",
-      "name": "特发服务",
-      "industry": "房产服务",
-      "sectors": [
-        "房产服务"
-      ],
-      "sector_count": 2,
-      "tags": "2板块共振 + 20日新高 + 量价齐升",
-      "price": 28.23,
-      "pct_chg": 6.89,
-      "pe_ttm": 38.38,
-      "circ_mv": 47.71,
-      "score_total": 76,
-      "score_sector": 30,
-      "score_fundamental": 8,
-      "score_capital": 18,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": null,
-        "debt_to_assets": null
-      },
-      "capital": {
-        "turnover": 8.87,
-        "vol_ratio": 2.43,
-        "amount": 418210230.0,
-        "net_inflow_3d": 46179600.0
-      },
-      "technical": {
-        "hits": [
-          "MACD多头",
-          "KDJ健康",
-          "20日新高",
-          "量价齐升",
-          "均线支撑"
-        ],
-        "hit_count": 5
-      },
-      "prediction": {
-        "horizon": 3,
-        "up_prob": 84,
-        "expected_gain": 9.0,
-        "gain_range": [
-          5.0,
-          13.0
-        ],
-        "stop_loss": -9.0,
-        "confidence": "高",
-        "logic": [
-          "双RPS共振",
-          "技术多指标共振5/7",
-          "创20日新高"
-        ],
-        "factors": {
-          "momentum": 59,
-          "technical": 60,
-          "capital": 62,
-          "sector": 62,
-          "sentiment": 58,
-          "fundamental": 56
-        },
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
-        "regime": "偏强"
-      }
-    },
-    {
       "ts_code": "301183.SZ",
       "name": "东田微",
       "industry": "元器件",
@@ -798,71 +733,6 @@
           "sector": 62,
           "sentiment": 58,
           "fundamental": 56
-        },
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
-        "regime": "偏强"
-      }
-    },
-    {
-      "ts_code": "000560.SZ",
-      "name": "我爱我家",
-      "industry": "房产服务",
-      "sectors": [
-        "房产服务"
-      ],
-      "sector_count": 2,
-      "tags": "2板块共振 + 20日新高 + 量价齐升",
-      "price": 2.34,
-      "pct_chg": 5.41,
-      "pe_ttm": null,
-      "circ_mv": 54.72,
-      "score_total": 73,
-      "score_sector": 30,
-      "score_fundamental": 5,
-      "score_capital": 18,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": null,
-        "debt_to_assets": null
-      },
-      "capital": {
-        "turnover": 8.34,
-        "vol_ratio": 1.77,
-        "amount": 447023900.0,
-        "net_inflow_3d": 34959300.0
-      },
-      "technical": {
-        "hits": [
-          "MACD多头",
-          "KDJ健康",
-          "20日新高",
-          "量价齐升",
-          "均线支撑"
-        ],
-        "hit_count": 5
-      },
-      "prediction": {
-        "horizon": 3,
-        "up_prob": 81,
-        "expected_gain": 9.0,
-        "gain_range": [
-          5.0,
-          13.0
-        ],
-        "stop_loss": -9.0,
-        "confidence": "高",
-        "logic": [
-          "双RPS共振",
-          "技术多指标共振5/7",
-          "创20日新高"
-        ],
-        "factors": {
-          "momentum": 57,
-          "technical": 60,
-          "capital": 64,
-          "sector": 62,
-          "sentiment": 58,
-          "fundamental": 53
         },
         "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
         "regime": "偏强"

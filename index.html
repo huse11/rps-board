@@ -613,9 +613,9 @@ function fmtRps(val) {
 
 function calcRank(rpsVal, total) {
     if (!rpsVal || isNaN(rpsVal) || !total) return '--';
-    // RPS百分位转排名: rank = (1 - rps/100) * total + 1
-    const rank = Math.round((1 - rpsVal / 100) * (total - 1) + 1);
-    return rank;
+    // 欧奈尔标准公式反推: RPS=(1-RANK/TOTAL)*100 → rank = (1-rps/100)*total, 涨幅第一=排名1
+    const rank = Math.round((1 - rpsVal / 100) * total);
+    return Math.max(1, rank);
 }
 
 function loadData() {

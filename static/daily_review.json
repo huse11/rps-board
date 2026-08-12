@@ -4,26 +4,26 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "弱",
-  "high5": 0,
-  "high10": 0,
-  "high20": 0,
+  "tone": "中性",
+  "high5": 11,
+  "high10": 11,
+  "high20": 11,
   "diff5": 0,
-  "avg_high": 0,
+  "avg_high": 11.0,
   "index": {
    "ok": true,
-   "close": 3946.675,
-   "ma20": 3860.0169,
+   "close": 4132.6052,
+   "ma20": 4119.157335000002,
    "above": true,
    "days": 132
   },
-  "note": "上证指数站上20日线(3860点)"
+  "note": "上证指数站上20日线(4119点)"
  },
  "resonance": {
   "core": [
    {
     "name": "黄金",
-    "RPS5": 98.2,
+    "RPS5": 97.3,
     "rank": 3,
     "rank_change": -2,
     "continuous": 6,
@@ -35,7 +35,7 @@
   "pulse": [
    {
     "name": "医药商业",
-    "RPS5": 96.4,
+    "RPS5": 95.5,
     "rank": 5,
     "rank_change": 9,
     "continuous": 1,
@@ -45,17 +45,17 @@
    },
    {
     "name": "化学制药",
-    "RPS5": 95.5,
+    "RPS5": 94.5,
     "rank": 6,
     "rank_change": 6,
-    "continuous": 2,
+    "continuous": 1,
     "ratio": 34.2,
     "stock_count": 146,
     "rps50_above_90": 50
    },
    {
     "name": "半导体",
-    "RPS5": 93.6,
+    "RPS5": 92.7,
     "rank": 8,
     "rank_change": -5,
     "continuous": 5,
@@ -76,7 +76,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "互联网",
+    "name": "公共交通",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -86,7 +86,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "公共交通",
+    "name": "房产服务",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -181,7 +181,7 @@
   "tier1": [
    {
     "name": "机床制造",
-    "RPS5": 100.0,
+    "RPS5": 99.1,
     "rank": 1,
     "rank_change": 5,
     "continuous": 3,
@@ -191,7 +191,7 @@
    },
    {
     "name": "生物制药",
-    "RPS5": 99.1,
+    "RPS5": 98.2,
     "rank": 2,
     "rank_change": 0,
     "continuous": 4,
@@ -201,7 +201,7 @@
    },
    {
     "name": "黄金",
-    "RPS5": 98.2,
+    "RPS5": 97.3,
     "rank": 3,
     "rank_change": -2,
     "continuous": 6,
@@ -211,17 +211,17 @@
    },
    {
     "name": "元器件",
-    "RPS5": 97.3,
+    "RPS5": 96.4,
     "rank": 4,
     "rank_change": 1,
-    "continuous": 6,
+    "continuous": 5,
     "ratio": 9.6,
     "stock_count": 302,
     "rps50_above_90": 29
    },
    {
     "name": "医药商业",
-    "RPS5": 96.4,
+    "RPS5": 95.5,
     "rank": 5,
     "rank_change": 9,
     "continuous": 1,
@@ -231,17 +231,17 @@
    },
    {
     "name": "化学制药",
-    "RPS5": 95.5,
+    "RPS5": 94.5,
     "rank": 6,
     "rank_change": 6,
-    "continuous": 2,
+    "continuous": 1,
     "ratio": 34.2,
     "stock_count": 146,
     "rps50_above_90": 50
    },
    {
     "name": "摩托车",
-    "RPS5": 94.5,
+    "RPS5": 93.6,
     "rank": 7,
     "rank_change": 2,
     "continuous": 2,
@@ -251,7 +251,7 @@
    },
    {
     "name": "半导体",
-    "RPS5": 93.6,
+    "RPS5": 92.7,
     "rank": 8,
     "rank_change": -5,
     "continuous": 5,
@@ -261,7 +261,7 @@
    },
    {
     "name": "全国地产",
-    "RPS5": 92.7,
+    "RPS5": 91.8,
     "rank": 9,
     "rank_change": 23,
     "continuous": 1,
@@ -271,7 +271,7 @@
    },
    {
     "name": "染料涂料",
-    "RPS5": 91.8,
+    "RPS5": 90.9,
     "rank": 10,
     "rank_change": 0,
     "continuous": 4,
@@ -283,23 +283,13 @@
   "tier2": [
    {
     "name": "玻璃",
-    "RPS5": 90.9,
+    "RPS5": 90.0,
     "rank": 11,
     "rank_change": -4,
     "continuous": 4,
     "ratio": 10.5,
     "stock_count": 19,
     "rps50_above_90": 2
-   },
-   {
-    "name": "房产服务",
-    "RPS5": 90.0,
-    "rank": 12,
-    "rank_change": 18,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
-    "rps50_above_90": 3
    }
   ],
   "tier3": []
@@ -308,59 +298,7 @@
   "new_in": [
    {
     "name": "医药商业",
-    "RPS5": 96.4,
-    "rank": 5,
-    "rank_change": 9,
-    "continuous": 1,
-    "ratio": 24.3,
-    "stock_count": 37,
-    "rps50_above_90": 9
-   },
-   {
-    "name": "全国地产",
-    "RPS5": 92.7,
-    "rank": 9,
-    "rank_change": 23,
-    "continuous": 1,
-    "ratio": 4.0,
-    "stock_count": 25,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "房产服务",
-    "RPS5": 90.0,
-    "rank": 12,
-    "rank_change": 18,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
-    "rps50_above_90": 3
-   }
-  ],
-  "rank_jump": [
-   {
-    "name": "全国地产",
-    "RPS5": 92.7,
-    "rank": 9,
-    "rank_change": 23,
-    "continuous": 1,
-    "ratio": 4.0,
-    "stock_count": 25,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "房产服务",
-    "RPS5": 90.0,
-    "rank": 12,
-    "rank_change": 18,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
-    "rps50_above_90": 3
-   },
-   {
-    "name": "医药商业",
-    "RPS5": 96.4,
+    "RPS5": 95.5,
     "rank": 5,
     "rank_change": 9,
     "continuous": 1,
@@ -370,38 +308,83 @@
    },
    {
     "name": "化学制药",
-    "RPS5": 95.5,
+    "RPS5": 94.5,
     "rank": 6,
     "rank_change": 6,
-    "continuous": 2,
+    "continuous": 1,
+    "ratio": 34.2,
+    "stock_count": 146,
+    "rps50_above_90": 50
+   },
+   {
+    "name": "全国地产",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": 23,
+    "continuous": 1,
+    "ratio": 4.0,
+    "stock_count": 25,
+    "rps50_above_90": 1
+   }
+  ],
+  "rank_jump": [
+   {
+    "name": "全国地产",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": 23,
+    "continuous": 1,
+    "ratio": 4.0,
+    "stock_count": 25,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "医药商业",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": 9,
+    "continuous": 1,
+    "ratio": 24.3,
+    "stock_count": 37,
+    "rps50_above_90": 9
+   },
+   {
+    "name": "化学制药",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": 6,
+    "continuous": 1,
     "ratio": 34.2,
     "stock_count": 146,
     "rps50_above_90": 50
    },
    {
     "name": "机床制造",
-    "RPS5": 100.0,
+    "RPS5": 99.1,
     "rank": 1,
     "rank_change": 5,
     "continuous": 3,
     "ratio": 16.7,
     "stock_count": 24,
     "rps50_above_90": 4
+   },
+   {
+    "name": "摩托车",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 2,
+    "continuous": 2,
+    "ratio": 38.5,
+    "stock_count": 13,
+    "rps50_above_90": 5
    }
   ],
   "out_all": [
-   "煤炭开采",
-   "铅锌",
-   "矿物制品",
-   "小金属",
-   "摩托车",
-   "互联网",
-   "乳制品",
-   "软饮料",
-   "影视音像",
-   "白酒"
+   "房产服务",
+   "林业",
+   "互联网"
   ],
-  "out_count": 10
+  "out_count": 3
  },
  "health": {
   "expand": [
@@ -429,8 +412,8 @@
   ],
   "seed": [
    "医药商业",
-   "全国地产",
-   "房产服务"
+   "化学制药",
+   "全国地产"
   ]
  },
  "risk": {
@@ -453,14 +436,23 @@
  "watch": {
   "seed": [
    "医药商业",
-   "全国地产",
-   "房产服务"
+   "化学制药",
+   "全国地产"
   ],
-  "critical": [],
+  "critical": [
+   {
+    "name": "房产服务",
+    "rps5": 89.1
+   },
+   {
+    "name": "乳制品",
+    "rps5": 88.2
+   }
+  ],
   "diverge_watch": [
    "乳制品",
-   "互联网",
    "公共交通",
+   "房产服务",
    "文教休闲",
    "新型电力",
    "林业",
@@ -469,22 +461,22 @@
   ]
  },
  "sentiment": {
-  "phase": "冰点期",
+  "phase": "震荡期",
   "seed_n": 3,
-  "out_n": 3,
+  "out_n": 1,
   "core_n": 1,
-  "high_n": 0
+  "high_n": 11
  },
  "style": {
   "rps5": {
-   "其他": 6,
+   "其他": 5,
    "医药": 3,
    "周期": 1,
    "科技": 2
   },
   "rps10": {
    "周期": 1,
-   "其他": 6,
+   "其他": 5,
    "科技": 2,
    "医药": 1,
    "公用": 1,
@@ -494,8 +486,7 @@
    "周期": 1,
    "其他": 7,
    "公用": 2,
-   "消费": 1,
-   "科技": 1
+   "消费": 1
   }
  },
  "market_status_rec": {
