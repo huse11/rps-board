@@ -686,10 +686,13 @@ def fetch_index_daily(index_codes, trade_days):
         if cache_path.exists():
             try:
                 df = pd.read_json(cache_path, dtype={"ts_code": str})
-                # 缓存需≥60条才可用(MA60计算需要); 不足则重新拉取
+                # 缓存需≥60条才可用(MA60计算需要); 且必须已含最新交易日, 否则重新拉取当日数据
                 if len(df) >= 60:
-                    result[code] = df
-                    continue
+                    col = "trade_date" if "trade_date" in df.columns else ("date" if "date" in df.columns else None)
+                    last_date = str(df[col].max()) if col else ""
+                    if last_date >= end:
+                        result[code] = df
+                        continue
             except Exception:
                 pass
         try:
