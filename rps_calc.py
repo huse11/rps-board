@@ -157,6 +157,21 @@ def get_stock_industry():
         return result[["ts_code", "name", "industry", "list_date"]]
     except Exception as e:
         print(f"  ⚠️ stock_basic全Token受限: {e}")
+        # 回退: 旧版缓存(缺fetch_date但含真实行业映射)优于前缀推断, 复用并补日期戳
+        # (服务器 Tushare 免费token 无 stock_basic 权限, 重拉必失败; 旧缓存是最近一次
+        #  成功拉取的 110 个真实细分行业, 远好于代码前缀的 6 个粗分组)
+        if os.path.exists(cache_file):
+            try:
+                df = pd.read_json(cache_file, dtype={"ts_code": str})
+                if len(df) > 0 and "list_date" in df.columns and "industry" in df.columns:
+                    result = df[["ts_code", "name", "industry", "list_date"]].copy()
+                    result["list_date"] = result["list_date"].astype(str).fillna("")
+                    result["fetch_date"] = datetime.now().strftime("%Y%m%d")
+                    result.to_json(cache_file, orient="records", force_ascii=False)
+                    print(f"  ✅ stock_basic缓存回退: {len(result)}只, {result['industry'].nunique()}个行业(真实映射)")
+                    return result[["ts_code", "name", "industry", "list_date"]]
+            except Exception:
+                pass
     print("  ⚠️ 降级: 代码前缀推断板块")
     cache_dir = STATIC_DIR / "daily_cache"
     if cache_dir.exists():
