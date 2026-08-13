@@ -140,17 +140,21 @@ def get_stock_industry():
     cache_file = STATIC_DIR / "stock_basic_cache.json"
     if os.path.exists(cache_file):
         df = pd.read_json(cache_file, dtype={"ts_code": str})
-        # 缓存必须含 list_date 列(次新股过滤用), 否则视为旧缓存需重新拉取
+        # 缓存必须含 list_date 列(次新股过滤用), 且拉取日期不超过5天(否则重拉, 纳入新股/退市调整)
         if len(df) > 0 and "list_date" in df.columns:
-            return df[["ts_code", "name", "industry", "list_date"]]
+            fd = str(df["fetch_date"].iloc[0]) if "fetch_date" in df.columns else ""
+            days_old = (datetime.now() - datetime.strptime(fd, "%Y%m%d")).days if len(fd) == 8 else 999
+            if days_old <= 5:
+                return df[["ts_code", "name", "industry", "list_date"]]
     try:
         df, _ = pool.call("stock_basic", fields="ts_code,name,industry,list_date")
         df = df[df["industry"].notna() & (df["industry"] != "")]
         result = df[["ts_code", "name", "industry", "list_date"]].copy()
         result["list_date"] = result["list_date"].astype(str).fillna("")
+        result["fetch_date"] = datetime.now().strftime("%Y%m%d")
         result.to_json(cache_file, orient="records", force_ascii=False)
         print(f"  ✅ stock_basic: {len(result)}只, {result['industry'].nunique()}个行业")
-        return result
+        return result[["ts_code", "name", "industry", "list_date"]]
     except Exception as e:
         print(f"  ⚠️ stock_basic全Token受限: {e}")
     print("  ⚠️ 降级: 代码前缀推断板块")

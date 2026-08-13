@@ -740,16 +740,19 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
         try:
             with open(FINA_CACHE_FILE, encoding="utf-8") as f:
                 cache = json.load(f)
-            if cache:
-                # 候选股感知: 缓存命中后过滤到候选股 (减少内存, 避免加载全市场5000只财务)
-                if codes_set:
-                    cache = {c: v for c, v in cache.items() if c in codes_set}
-                # 旧缓存缺 netprofit_yoy 字段(周度深度排雷需要) → 视为过期重建
-                if all("netprofit_yoy" in v for v in cache.values()):
-                    return cache
-                cache = {}
+            data_items = {k: v for k, v in cache.items() if not k.startswith("_")}
+            if data_items:
+                # 财务为季度披露数据: 仅当"已按最新交易日拉取过"且字段齐全时复用;
+                # 最新交易日变化(跨季度/跨披露期)则清空重建, 确保财务数据是最新披露期
+                fresh = cache.get("_fetched_date", "") == latest_date and all(
+                    "netprofit_yoy" in v for v in data_items.values())
+                if fresh:
+                    if codes_set:
+                        return {c: v for c, v in data_items.items() if c in codes_set}
+                    return data_items
+            cache = {}
         except Exception:
-            pass
+            cache = {}
     cache = {}
     # 尝试最近 3 个季度 period(季报披露有滞后)
     yr = int(latest_date[:4])
@@ -807,6 +810,7 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
             print(f"  ⚠️ fina_indicator 东财替代失败: {str(e)[:50]}")
     if cache:
         try:
+            cache["_fetched_date"] = latest_date
             with open(FINA_CACHE_FILE, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False)
         except Exception:
