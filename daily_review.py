@@ -100,10 +100,13 @@ def high_rps_counts(history, period="RPS5", threshold=90):
 
 
 def index_ma20_status(index_cache_file="000001.SH.json"):
-    """读取指数日线缓存, 返回 {ok, close, ma20, above, days} 或 None"""
+    """读取指数日线缓存, 返回 {ok, close, ma20, above, days} 或 None
+    缓存可能为降序(Tushare index_daily 返回降序), 统一按日期升序后取尾部为最新
+    """
     data = _load_json(STATIC_DIR / "index_cache" / index_cache_file)
     if not data or not isinstance(data, list) or len(data) < 20:
         return None
+    data = sorted(data, key=lambda x: str(x.get("trade_date") or x.get("date") or ""))
     closes = [_num(x.get("close")) for x in data if x.get("close") is not None]
     if len(closes) < 20:
         return None

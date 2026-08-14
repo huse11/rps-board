@@ -83,9 +83,10 @@
 | 缓存文件 | 写入方 | 刷新规则 | 降级路径 |
 |---|---|---|---|
 | `trade_cal_cache.json` 交易日历 | rps_calc | 缓存末日 ≥ 今天才复用 | Tushare trade_cal 失败 → pandas bdate_range 生成 |
-| `stock_basic_cache.json` 股票基础 | rps_calc | `fetch_date` ≤ 5 天才复用；**缺 fetch_date 或过期 → 先尝试重拉，失败回退复用旧缓存（补 fetch_date）** | Tushare 失败 → 旧缓存（110 真实行业）→ 代码前缀推断（6 粗分组，仅无缓存时） |
+| `sw_industry_cache.json` 申万板块池 | sw_industry | `fetch_date` ≤ 7 天才复用（成分名单季度调整） | 拉取失败 → 旧缓存兜底 → 无缓存回退 Tushare 行业 |
+| `stock_basic_cache.json` 股票基础 | rps_calc | **industry 来自申万映射(208细分)**；name/list_date 复用旧缓存 | 申万映射失败 → Tushare stock_basic → 旧缓存回退 → 代码前缀推断 |
 | `daily_cache/*.json` 日 K | rps_calc | 当日文件存在即复用 | Tushare daily 多 token 轮询 |
-| `index_cache/*.json` 指数日线 | recommend | **≥ 60 条且已含最新交易日才复用**，否则重拉 | Tushare index_daily → AKShare → 东财（失败默认安全） |
+| `index_cache/*.json` 指数日线 | recommend | **≥ 60 条且已含最新交易日才复用**，否则重拉；**统一按日期升序存储**（Tushare 返回降序需重排） | Tushare index_daily → AKShare → 东财（失败默认安全） |
 | `fina_indicator_cache.json` 财务 | recommend | **`_fetched_date` == 最新交易日才复用**，跨季度/披露期变化清空重建 | Tushare → 东财（失败降级 PE>0） |
 | `moneyflow_cache.json` 主力资金 | recommend | 按交易日增量补齐缺失日期 | Tushare → 近似估算 → AKShare → 东财 |
 | `moneyflow_hsgt_cache.json` 北向 | recommend | 按日增量 | 失败跳过（加分项，不影响否决；北向 2024 年起停止每日披露） |
@@ -118,15 +119,25 @@ cron: 工作日 18:30 → /opt/rps-board/cron_rps.sh
 
 | 数据文件 | 更新频率 | 最新状态 |
 |---|---|---|
-| rps_data.json / rps_history.json / last_result.json | 每日 | 8/13 三档各 11 板块 |
-| recommendations.json + predictions_log.json | 每日 | 8/13（0 只，大盘不合格） |
-| weekly_recommendations.json | 每周五 | 8/10 |
-| daily_review.json / daily_review.md | 每日 | 8/13 |
-| 各缓存（见第三节） | 按规则 | 均已含 8/13 |
+| rps_data.json / rps_history.json / last_result.json | 每日 | 8/14 三档各 20 板块（208 细分） |
+| recommendations.json + predictions_log.json | 每日 | 8/14（21 只） |
+| weekly_recommendations.json | 每周五 | 8/8 |
+| daily_review.json / daily_review.md | 每日 | 8/14 |
+| 各缓存（见第三节） | 按规则 | 均已含 8/14 |
 
 ---
 
 ## 五、历史更新日志（近期）
+
+### 2026-08-14 — 板块池切换：110 大行业 → 208 申万三级细分板块
+- **背景**：原看板用 Tushare `stock_basic.industry`（约 110 个一级大行业），颗粒度太粗，大行业内细分涨跌被平均，RPS 信号失真
+- **数据源**：新增 `sw_industry.py` 模块，用 AKShare 免费接口 `sw_index_third_info()`（335 个申万三级）+ `index_component_sw()`（各板块成分股）构建股票→细分行业映射
+- **板块池**：剔除成分股 < 8 只的僵尸板块（74 个）→ **208 个主流细分板块**，覆盖 4662 只股票；中位数成分 10 只
+- **缓存**：`static/sw_industry_cache.json`（含 fetch_date，7 天刷新；拉取失败回退旧缓存）
+- **SCHEMA_VERSION 3 → 4** 强制全量重算（板块池变化）
+- **验证**：8/14 数据——208 行业、RPS5/RPS10/RPS20 各 20 入选（阈值 90 下前 20 名，原 110 板块为 11 个）、推荐 21 只、大盘合格（上涨占比 45%）
+- **连带修复**：指数缓存 `index_cache/*.json` 被 Tushare 降序写入导致 `closes[-1]` 取到最旧日期——`recommend.fetch_index_daily` 所有写入点统一升序排序 + `daily_review.index_ma20_status` 读缓存时排序防御（双保险）
+- **注意**：北交所股票（4/8/920 开头）无申万归属，不参与板块 RPS 与推荐；"种子调入"增多属细分板块正常现象，需过滤一日游噪音
 
 ### 2026-08-13 — 数据全链路梳理与修复
 - 修复 `index_cache` 永不刷新 bug（缓存须含最新交易日才复用），8/13 大盘判定由误判"跌破 60 日线"修正为正确判定
@@ -159,11 +170,12 @@ cron: 工作日 18:30 → /opt/rps-board/cron_rps.sh
 
 ## 六、维护注意事项
 
-1. **SCHEMA_VERSION 幂等**：`rps_calc.py` 顶部常量（当前 v3）。同日已生成且版本达标则跳过计算，保护 last_result 调入/调出对比基准。**改公式/输出格式必须 +1**，否则不重算。
+1. **SCHEMA_VERSION 幂等**：`rps_calc.py` 顶部常量（当前 v4=申万三级板块池208个）。同日已生成且版本达标则跳过计算，保护 last_result 调入/调出对比基准。**改公式/输出格式/板块池必须 +1**，否则不重算。
 2. **推荐与 RPS 解耦**：即使 RPS 幂等跳过，推荐流程仍独立加载 daily_map 执行，保证推荐每天生成。
 3. **服务器部署**：默认只推阿里云服务器。改代码后执行 `python _upload_file.py <本地> /opt/rps-board/<远程>`，然后 `python _ssh_run.py "systemctl restart rps-board.service"`。切勿恢复 GitHub 推送。
-4. **服务器必装文件**：`akshare_adapter.py` 必须与 `recommend.py` 同在 /opt/rps-board/（缺失则 AKShare 腾讯数据源不可用，仅剩东财降级）。
-5. **缓存数据不入库**：`rps_data.json` / `last_result.json` / `rps_history.json` / `index_cache/` 等在 .gitignore 中，GitHub 分支已停用，数据只在阿里云服务器生成。
-6. **测试**：改逻辑后跑 `python -m unittest discover -s tests`（184 项，Windows 下需 `PYTHONIOENCODING=utf-8` 避免 GBK emoji 报错）+ `node --test tests/test_render.js`（33 项）。
+4. **服务器必装文件**：`akshare_adapter.py` 与 `sw_industry.py` 必须与 `rps_calc.py`/`recommend.py` 同在 /opt/rps-board/（缺失则 AKShare 数据源/申万板块池不可用）。服务器需安装 akshare（≥1.18）。
+5. **缓存数据不入库**：`rps_data.json` / `last_result.json` / `rps_history.json` / `index_cache/` / `sw_industry_cache.json` 等在 .gitignore 中，GitHub 分支已停用，数据只在阿里云服务器生成。
+6. **测试**：改逻辑后跑 `python -m unittest discover -s tests`（194 项，Windows 下需 `PYTHONIOENCODING=utf-8` 避免 GBK emoji 报错）+ `node --test tests/test_render.js`（33 项）。
 7. **大盘终止选股是设计行为**：上涨占比 < 30% 或跌停 > 50 家时输出 0 只推荐，前端显示"大盘环境不满足"，非数据故障。
 8. **Tushare 免费 token 无 premium 接口权限**（fina_indicator / moneyflow / index_daily / stock_basic），全部依赖降级策略兜底，属正常预期。
+9. **细分板块特性**：208 个申万三级板块中部分成分股少（8-15 只），少数大盘股可撬动板块 RPS 虚高；"调入/种子"增多且多为一两日行情，需结合板块内多数个股是否同步走强判断。

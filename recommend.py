@@ -671,6 +671,14 @@ def fetch_daily_basic_em(latest_date, page_size=100, max_pages=80, codes=None):
 # 6. v2 数据获取层 (真实+降级, 缓存优先, 东财替代)
 # ============================================================
 
+def _sort_index_df(df):
+    """指数日线统一按日期升序(消费者假设升序: closes[-1]为最新; Tushare返回降序需重排)"""
+    col = "trade_date" if "trade_date" in df.columns else ("date" if "date" in df.columns else None)
+    if col is not None:
+        df = df.sort_values(col).reset_index(drop=True)
+    return df
+
+
 def fetch_index_daily(index_codes, trade_days):
     """拉取指数日线(上证/沪深300), 缓存 static/index_cache/{code}.json
     返回 {index_code: DataFrame(date,open,high,low,close,vol,amount)}
@@ -691,13 +699,14 @@ def fetch_index_daily(index_codes, trade_days):
                     col = "trade_date" if "trade_date" in df.columns else ("date" if "date" in df.columns else None)
                     last_date = str(df[col].max()) if col else ""
                     if last_date >= end:
-                        result[code] = df
+                        result[code] = _sort_index_df(df)
                         continue
             except Exception:
                 pass
         try:
             df = pool.call_any("index_daily", ts_code=code, start_date=start, end_date=end)
             if df is not None and len(df) > 0:
+                df = _sort_index_df(df)
                 df.to_json(cache_path, orient="records", force_ascii=False)
                 result[code] = df
                 print(f"  ✅ index_daily {code}: {len(df)} 条")
@@ -709,6 +718,7 @@ def fetch_index_daily(index_codes, trade_days):
             try:
                 df = _ak.fetch_index_daily_ak(code, start, end)
                 if df is not None and len(df) > 0:
+                    df = _sort_index_df(df)
                     df.to_json(cache_path, orient="records", force_ascii=False)
                     result[code] = df
                     print(f"  ✅ index_daily {code} (AKShare): {len(df)} 条")
@@ -719,6 +729,7 @@ def fetch_index_daily(index_codes, trade_days):
         try:
             df = fetch_index_daily_em(code, start, end)
             if df is not None and len(df) > 0:
+                df = _sort_index_df(df)
                 df.to_json(cache_path, orient="records", force_ascii=False)
                 result[code] = df
                 print(f"  ✅ index_daily {code} (东财替代): {len(df)} 条")

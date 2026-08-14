@@ -11,6 +11,7 @@ static/index_cache/
 static/fina_indicator_cache.json
 static/moneyflow_cache.json
 static/moneyflow_hsgt_cache.json
+static/sw_industry_cache.json
 
 # Python缓存
 __pycache__/

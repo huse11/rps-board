@@ -23,7 +23,7 @@ TUSHARE_TOKENS = [
     "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
 RPS_THRESHOLD = 90
-SCHEMA_VERSION = 3  # v3=欧奈尔标准RPS公式 RPS=(1-排名/总数)*100 (幂等判断用, 改公式/格式需+1强制重算)
+SCHEMA_VERSION = 4  # v4=板块池从110大行业切换为申万三级细分板块(208个) (幂等判断用, 改公式/格式/板块池需+1强制重算)
 STATIC_DIR = Path(__file__).parent / "static"
 DATA_FILE = STATIC_DIR / "rps_data.json"
 LAST_RESULT_FILE = STATIC_DIR / "last_result.json"
@@ -137,6 +137,24 @@ def get_trade_days(n=80):
 
 
 def get_stock_industry():
+    """股票→行业映射。优先申万三级细分板块池(208个), 回退 Tushare stock_basic"""
+    import sw_industry
+    sw_map = sw_industry.build_sw_industry_map()
+    if sw_map:
+        cache_file = STATIC_DIR / "stock_basic_cache.json"
+        old_basic = None
+        if os.path.exists(cache_file):
+            try:
+                old_basic = pd.read_json(cache_file, dtype={"ts_code": str})
+            except Exception:
+                pass
+        records = sw_industry.build_industry_df(sw_map, old_basic)
+        if records:
+            result = pd.DataFrame(records)
+            result["fetch_date"] = datetime.now().strftime("%Y%m%d")
+            result.to_json(cache_file, orient="records", force_ascii=False)
+            print(f"  ✅ 申万三级板块池: {result['industry'].nunique()}个细分板块, {len(result)}只股票")
+            return result[["ts_code", "name", "industry", "list_date"]]
     cache_file = STATIC_DIR / "stock_basic_cache.json"
     if os.path.exists(cache_file):
         df = pd.read_json(cache_file, dtype={"ts_code": str})
