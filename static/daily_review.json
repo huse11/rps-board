@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4132.6052,
-   "ma20": 4119.157335000002,
+   "close": 3927.176,
+   "ma20": 3870.39555,
    "above": true,
    "days": 134
   },
-  "note": "上证指数站上20日线(4119点)"
+  "note": "上证指数站上20日线(3870点)"
  },
  "resonance": {
   "core": [
@@ -548,11 +548,11 @@
   ]
  },
  "sentiment": {
-  "phase": "退潮期",
+  "phase": "冰点期",
   "seed_n": 3,
   "out_n": 5,
   "core_n": 3,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
