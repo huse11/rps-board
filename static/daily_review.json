@@ -1,6 +1,6 @@
 {
- "update_date": "20260813",
- "prev_date": "20260812",
+ "update_date": "20260814",
+ "prev_date": "20260813",
  "total_industries": 110,
  "threshold": 90,
  "market": {
@@ -12,60 +12,111 @@
   "avg_high": 11.0,
   "index": {
    "ok": true,
-   "close": 3926.965,
-   "ma20": 3862.2445,
+   "close": 4132.6052,
+   "ma20": 4119.157335000002,
    "above": true,
-   "days": 133
+   "days": 134
   },
-  "note": "上证指数站上20日线(3862点)"
+  "note": "上证指数站上20日线(4119点)"
  },
  "resonance": {
-  "core": [],
+  "core": [
+   {
+    "name": "电器仪表",
+    "RPS5": 98.2,
+    "rank": 2,
+    "rank_change": 7,
+    "continuous": 4,
+    "ratio": 7.8,
+    "stock_count": 102,
+    "rps50_above_90": 8
+   },
+   {
+    "name": "生物制药",
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": -3,
+    "continuous": 6,
+    "ratio": 50.6,
+    "stock_count": 79,
+    "rps50_above_90": 40
+   },
+   {
+    "name": "机床制造",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": 3,
+    "continuous": 5,
+    "ratio": 8.3,
+    "stock_count": 24,
+    "rps50_above_90": 2
+   }
+  ],
   "pulse": [
    {
     "name": "医药商业",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 1,
-    "continuous": 2,
-    "ratio": 24.3,
+    "RPS5": 99.1,
+    "rank": 1,
+    "rank_change": 4,
+    "continuous": 3,
+    "ratio": 32.4,
     "stock_count": 37,
-    "rps50_above_90": 9
+    "rps50_above_90": 12
    },
    {
-    "name": "医疗保健",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 24.9,
-    "stock_count": 177,
-    "rps50_above_90": 44
+    "name": "日用化工",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 1,
+    "continuous": 4,
+    "ratio": 10.5,
+    "stock_count": 19,
+    "rps50_above_90": 2
    },
    {
     "name": "渔业",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 4,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "公共交通",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": 13,
+    "rank_change": 32,
     "continuous": 1,
     "ratio": 14.3,
     "stock_count": 7,
     "rps50_above_90": 1
    },
    {
-    "name": "中成药",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 43,
+    "name": "乳制品",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": -6,
+    "continuous": 2,
+    "ratio": 9.5,
+    "stock_count": 21,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "红黄酒",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": 6,
     "continuous": 1,
-    "ratio": 29.4,
-    "stock_count": 68,
-    "rps50_above_90": 20
+    "ratio": 12.5,
+    "stock_count": 8,
+    "rps50_above_90": 1
    }
   ],
   "diverge": [
    {
-    "name": "专用机械",
+    "name": "互联网",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -75,7 +126,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "公共交通",
+    "name": "元器件",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -85,7 +136,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "半导体",
+    "name": "化学制药",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -115,7 +166,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "新型电力",
+    "name": "染料涂料",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -125,27 +176,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "机械基件",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "林业",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "火力发电",
+    "name": "玻璃",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -195,6 +226,16 @@
     "rps50_above_90": 0
    },
    {
+    "name": "铜",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
+   {
     "name": "黄金",
     "RPS5": 0.0,
     "rank": 0,
@@ -209,116 +250,116 @@
  "tier": {
   "tier1": [
    {
-    "name": "生物制药",
+    "name": "医药商业",
     "RPS5": 99.1,
     "rank": 1,
-    "rank_change": 1,
-    "continuous": 5,
-    "ratio": 48.1,
-    "stock_count": 79,
-    "rps50_above_90": 38
+    "rank_change": 4,
+    "continuous": 3,
+    "ratio": 32.4,
+    "stock_count": 37,
+    "rps50_above_90": 12
    },
    {
-    "name": "化学制药",
+    "name": "电器仪表",
     "RPS5": 98.2,
     "rank": 2,
-    "rank_change": 4,
-    "continuous": 2,
-    "ratio": 42.5,
-    "stock_count": 146,
-    "rps50_above_90": 62
+    "rank_change": 7,
+    "continuous": 4,
+    "ratio": 7.8,
+    "stock_count": 102,
+    "rps50_above_90": 8
    },
    {
-    "name": "乳制品",
+    "name": "日用化工",
     "RPS5": 97.3,
     "rank": 3,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 19.0,
-    "stock_count": 21,
-    "rps50_above_90": 4
+    "rank_change": 1,
+    "continuous": 4,
+    "ratio": 10.5,
+    "stock_count": 19,
+    "rps50_above_90": 2
    },
    {
-    "name": "医药商业",
+    "name": "生物制药",
     "RPS5": 96.4,
     "rank": 4,
-    "rank_change": 1,
-    "continuous": 2,
-    "ratio": 24.3,
-    "stock_count": 37,
-    "rps50_above_90": 9
-   },
-   {
-    "name": "医疗保健",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 24.9,
-    "stock_count": 177,
-    "rps50_above_90": 44
+    "rank_change": -3,
+    "continuous": 6,
+    "ratio": 50.6,
+    "stock_count": 79,
+    "rps50_above_90": 40
    },
    {
     "name": "机床制造",
-    "RPS5": 94.5,
-    "rank": 6,
-    "rank_change": -5,
-    "continuous": 4,
-    "ratio": 16.7,
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": 3,
+    "continuous": 5,
+    "ratio": 8.3,
     "stock_count": 24,
-    "rps50_above_90": 4
+    "rps50_above_90": 2
    },
    {
-    "name": "房产服务",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 5,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
-    "rps50_above_90": 3
+    "name": "半导体",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": 1,
+    "continuous": 7,
+    "ratio": 17.9,
+    "stock_count": 190,
+    "rps50_above_90": 34
    },
    {
     "name": "渔业",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 4,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "公共交通",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": 13,
+    "rank_change": 32,
     "continuous": 1,
     "ratio": 14.3,
     "stock_count": 7,
     "rps50_above_90": 1
    },
    {
-    "name": "元器件",
+    "name": "乳制品",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": -5,
-    "continuous": 6,
-    "ratio": 8.3,
-    "stock_count": 302,
-    "rps50_above_90": 25
+    "rank_change": -6,
+    "continuous": 2,
+    "ratio": 9.5,
+    "stock_count": 21,
+    "rps50_above_90": 2
    },
    {
-    "name": "中成药",
+    "name": "装修装饰",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 43,
+    "rank_change": 4,
     "continuous": 1,
-    "ratio": 29.4,
-    "stock_count": 68,
-    "rps50_above_90": 20
+    "ratio": 4.3,
+    "stock_count": 23,
+    "rps50_above_90": 1
    }
   ],
   "tier2": [
    {
-    "name": "装修装饰",
+    "name": "红黄酒",
     "RPS5": 90.0,
     "rank": 11,
     "rank_change": 6,
     "continuous": 1,
-    "ratio": 8.7,
-    "stock_count": 23,
-    "rps50_above_90": 2
+    "ratio": 12.5,
+    "stock_count": 8,
+    "rps50_above_90": 1
    }
   ],
   "tier3": []
@@ -326,255 +367,236 @@
  "rotation": {
   "new_in": [
    {
-    "name": "乳制品",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 19.0,
-    "stock_count": 21,
-    "rps50_above_90": 4
-   },
-   {
-    "name": "医疗保健",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 24.9,
-    "stock_count": 177,
-    "rps50_above_90": 44
-   },
-   {
-    "name": "房产服务",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 5,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
-    "rps50_above_90": 3
-   },
-   {
-    "name": "渔业",
+    "name": "公共交通",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": 13,
+    "rank_change": 32,
     "continuous": 1,
     "ratio": 14.3,
     "stock_count": 7,
     "rps50_above_90": 1
    },
    {
-    "name": "中成药",
+    "name": "装修装饰",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 43,
+    "rank_change": 4,
     "continuous": 1,
-    "ratio": 29.4,
-    "stock_count": 68,
-    "rps50_above_90": 20
+    "ratio": 4.3,
+    "stock_count": 23,
+    "rps50_above_90": 1
    },
    {
-    "name": "装修装饰",
+    "name": "红黄酒",
     "RPS5": 90.0,
     "rank": 11,
     "rank_change": 6,
     "continuous": 1,
-    "ratio": 8.7,
-    "stock_count": 23,
-    "rps50_above_90": 2
+    "ratio": 12.5,
+    "stock_count": 8,
+    "rps50_above_90": 1
    }
   ],
   "rank_jump": [
    {
-    "name": "中成药",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 43,
-    "continuous": 1,
-    "ratio": 29.4,
-    "stock_count": 68,
-    "rps50_above_90": 20
-   },
-   {
-    "name": "医疗保健",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 24.9,
-    "stock_count": 177,
-    "rps50_above_90": 44
-   },
-   {
-    "name": "渔业",
+    "name": "公共交通",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": 13,
+    "rank_change": 32,
     "continuous": 1,
     "ratio": 14.3,
     "stock_count": 7,
     "rps50_above_90": 1
    },
    {
-    "name": "乳制品",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 19.0,
-    "stock_count": 21,
-    "rps50_above_90": 4
+    "name": "电器仪表",
+    "RPS5": 98.2,
+    "rank": 2,
+    "rank_change": 7,
+    "continuous": 4,
+    "ratio": 7.8,
+    "stock_count": 102,
+    "rps50_above_90": 8
    },
    {
-    "name": "装修装饰",
+    "name": "红黄酒",
     "RPS5": 90.0,
     "rank": 11,
     "rank_change": 6,
     "continuous": 1,
-    "ratio": 8.7,
-    "stock_count": 23,
-    "rps50_above_90": 2
+    "ratio": 12.5,
+    "stock_count": 8,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "医药商业",
+    "RPS5": 99.1,
+    "rank": 1,
+    "rank_change": 4,
+    "continuous": 3,
+    "ratio": 32.4,
+    "stock_count": 37,
+    "rps50_above_90": 12
+   },
+   {
+    "name": "渔业",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 4,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
    }
   ],
   "out_all": [
-   "半导体",
-   "染料涂料",
-   "全国地产",
-   "玻璃",
-   "黄金",
-   "摩托车",
+   "房产服务",
+   "化学制药",
+   "医疗保健",
+   "元器件",
+   "中成药",
+   "铅锌",
+   "专用机械",
+   "机械基件",
    "公共交通",
-   "酒店餐饮"
+   "林业",
+   "乳制品",
+   "新型电力",
+   "火力发电"
   ],
-  "out_count": 8
+  "out_count": 13
  },
  "health": {
   "expand": [
    {
-    "name": "生物制药",
-    "ratio": 48.1
+    "name": "医药商业",
+    "ratio": 32.4
    },
    {
-    "name": "化学制药",
-    "ratio": 42.5
+    "name": "生物制药",
+    "ratio": 50.6
    }
   ],
   "mature": [
    "生物制药",
-   "元器件"
+   "机床制造",
+   "半导体"
   ],
   "seed": [
-   "乳制品",
-   "医疗保健",
-   "房产服务",
-   "渔业",
-   "中成药",
-   "装修装饰"
+   "公共交通",
+   "装修装饰",
+   "红黄酒"
   ]
  },
  "risk": {
   "batch_out": {
-   "科技": 1,
-   "其他": 4,
-   "周期": 1
+   "其他": 2,
+   "医药": 2,
+   "科技": 1
   },
   "diverge": [
    {
+    "name": "电器仪表",
+    "ratio": 7.8
+   },
+   {
+    "name": "日用化工",
+    "ratio": 10.5
+   },
+   {
+    "name": "机床制造",
+    "ratio": 8.3
+   },
+   {
     "name": "渔业",
+    "ratio": 0.0
+   },
+   {
+    "name": "公共交通",
     "ratio": 14.3
    },
    {
-    "name": "元器件",
-    "ratio": 8.3
+    "name": "乳制品",
+    "ratio": 9.5
+   },
+   {
+    "name": "装修装饰",
+    "ratio": 4.3
    }
   ],
   "momentum_decay": false,
   "warnings": [
-   "批量调出预警: 今日调出6个板块, 集中在「其他」(4个), 该方向短期回避",
-   "高位顶背离: 渔业 排名靠前但内部个股达标率低(14%), 指数虚高警惕回落"
+   "高位顶背离: 电器仪表 排名靠前但内部个股达标率低(8%), 指数虚高警惕回落"
   ]
  },
  "watch": {
   "seed": [
-   "乳制品",
-   "医疗保健",
-   "房产服务",
-   "渔业",
-   "中成药",
-   "装修装饰"
-  ],
-  "critical": [
-   {
-    "name": "白酒",
-    "rps5": 89.1
-   },
-   {
-    "name": "林业",
-    "rps5": 88.2
-   }
-  ],
-  "diverge_watch": [
    "公共交通",
+   "装修装饰",
+   "红黄酒"
+  ],
+  "critical": [],
+  "diverge_watch": [
+   "互联网",
    "摩托车",
    "文教休闲",
-   "新型电力",
-   "林业",
-   "火力发电",
    "软饮料",
+   "通信设备",
    "铅锌",
+   "铜",
    "黄金"
   ]
  },
  "sentiment": {
   "phase": "退潮期",
-  "seed_n": 6,
-  "out_n": 6,
-  "core_n": 0,
+  "seed_n": 3,
+  "out_n": 5,
+  "core_n": 3,
   "high_n": 11
  },
  "style": {
   "rps5": {
-   "医药": 4,
+   "医药": 2,
    "其他": 6,
-   "科技": 1
+   "周期": 1,
+   "科技": 1,
+   "公用": 1
   },
   "rps10": {
    "科技": 3,
    "医药": 2,
-   "其他": 4,
-   "制造": 2
+   "其他": 6
   },
   "rps20": {
    "周期": 1,
-   "其他": 7,
-   "公用": 2,
-   "消费": 1
+   "其他": 6,
+   "医药": 1,
+   "消费": 1,
+   "科技": 2
   }
  },
  "market_status_rec": {
-  "is_safe": false,
+  "is_safe": true,
   "rule": "至少 1 个指数站上 20 日线",
-  "reason": "上涨家数占比 21% < 30%",
+  "reason": "",
   "indexes": [
    {
     "code": "000001.SH",
     "name": "上证指数",
-    "close": 3926.97,
-    "ma": 3862.24,
+    "close": 3927.18,
+    "ma": 3870.4,
     "above": true
    },
    {
     "code": "399006.SZ",
     "name": "创业板指",
-    "close": 3586.04,
-    "ma": 3487.29,
+    "close": 3626.3,
+    "ma": 3497.17,
     "above": true
    }
   ],
-  "advance_ratio": 0.21,
-  "limit_down_count": 8,
-  "note": "大盘环境不合格, 终止选股"
+  "advance_ratio": 0.45,
+  "limit_down_count": 19,
+  "note": "大盘环境合格, 继续选股"
  }
 }
