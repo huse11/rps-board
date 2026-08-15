@@ -167,9 +167,25 @@ class TestCheckMarketEnvWeekly(unittest.TestCase):
         self.assertIn("谨慎", status["position_advice"])
 
     def test_bad_extreme_pride(self):
-        """上涨占比 20% (<30%) → bad"""
+        """上涨占比 20% 且涨停少 → bad (极端普跌+无赚钱效应)"""
         closes = [100 + i * 2 for i in range(40)]
         week_pct = {f"{i:06d}.SZ": (2.0 if i < 20 else -2.0) for i in range(100)}  # 20% 上涨
+        level, _ = rw.check_market_env_weekly(make_index_weekly(closes), week_pct, limit_up_count=5)
+        self.assertEqual(level, "bad")
+
+    def test_structural_market_not_bad(self):
+        """上涨占比低(20%) 但涨停活跃(20家) → 结构性行情, 降级 weak 不终止"""
+        closes = [100 + i * 2 for i in range(40)]
+        week_pct = {f"{i:06d}.SZ": (2.0 if i < 20 else -2.0) for i in range(100)}  # 20% 上涨
+        level, status = rw.check_market_env_weekly(make_index_weekly(closes), week_pct, limit_up_count=20)
+        self.assertEqual(level, "weak")
+        self.assertTrue(status["is_safe"])
+        self.assertEqual(status["limit_up_count"], 20)
+
+    def test_reject_limit_up_missing_default(self):
+        """limit_up_count 缺省(None) → 默认按 0 家涨停判定 (保守)"""
+        closes = [100 + i * 2 for i in range(40)]
+        week_pct = {f"{i:06d}.SZ": (2.0 if i < 20 else -2.0) for i in range(100)}
         level, _ = rw.check_market_env_weekly(make_index_weekly(closes), week_pct)
         self.assertEqual(level, "bad")
 
@@ -236,15 +252,24 @@ class TestScreenFundamentalWeekly(unittest.TestCase):
         passed, _ = rw.screen_fundamental_weekly(df, fina)
         self.assertIn("000001.SZ", passed["ts_code"].tolist())
 
-    def test_reject_deduct_abnormal(self):
-        """扣非同比大幅异常(< -50) → 剔除 (疑一次性收益虚增)"""
+    def test_reject_deduct_hard(self):
+        """扣非同比 < -100% → 剔除 (明确恶化)"""
         df = self._df([("000001.SZ", "扣非异常")])
         fina = {"000001.SZ": {"net_profit": 1e8, "netprofit_yoy": 20.0,
-                              "prev_netprofit_yoy": 10.0, "dt_netprofit_yoy": -80.0,
+                              "prev_netprofit_yoy": 10.0, "dt_netprofit_yoy": -150.0,
                               "debt_to_assets": 40.0}}
         passed, rejects = rw.screen_fundamental_weekly(df, fina)
         self.assertNotIn("000001.SZ", passed["ts_code"].tolist())
         self.assertTrue(any("扣非净利润同比" in r["reason"] for r in rejects))
+
+    def test_keep_deduct_mid(self):
+        """扣非同比 ∈ [-100%, -50%) → 不否决, 保留 (评分阶段基本面得分减半)"""
+        df = self._df([("000001.SZ", "扣非中度恶化")])
+        fina = {"000001.SZ": {"net_profit": 1e8, "netprofit_yoy": 20.0,
+                              "prev_netprofit_yoy": 10.0, "dt_netprofit_yoy": -80.0,
+                              "debt_to_assets": 40.0}}
+        passed, rejects = rw.screen_fundamental_weekly(df, fina)
+        self.assertIn("000001.SZ", passed["ts_code"].tolist())
 
     def test_no_fina_map_fallback(self):
         """财务数据缺失 → 仅日度硬门槛, 不误杀"""
@@ -294,15 +319,17 @@ class TestScreenCapitalWeekly(unittest.TestCase):
         self.assertIn("000001.SZ", details)
         self.assertAlmostEqual(details["000001.SZ"]["turnover"], 20.0, places=1)
 
-    def test_reject_volume_shrink(self):
-        """本周量能 < 上周 → 剔除 (量能趋势不向上)"""
+    def test_keep_volume_shrink(self):
+        """本周量能 < 上周 → 保留 (量能已改为打分项, 不否决缩量回踩标的)"""
         dm, wk, mflow = self._setup(this_week_vol=5e7, last_week_vol=1e8)
-        passed, _ = rw.screen_capital_weekly(self._stocks(), wk, dm, "20260807", mflow)
-        self.assertNotIn("000001.SZ", passed["ts_code"].tolist())
+        passed, details = rw.screen_capital_weekly(self._stocks(), wk, dm, "20260807", mflow)
+        self.assertIn("000001.SZ", passed["ts_code"].tolist())
+        self.assertIn("000001.SZ", details)
+        self.assertLess(details["000001.SZ"]["vol_expand"], 1.0)  # 缩量但保留, 仅资金分低
 
     def test_reject_high_turnover(self):
-        """周换手超 40% → 剔除 (高位出货风险)"""
-        # 周换手: Σvol=5e8手, tr=5e8*10/(5e5*100)=100% > 40
+        """周换手超市值自适应上限 → 剔除 (高位出货风险)"""
+        # circ_mv=50亿 → 自适应区间 [2,30]; 周换手: Σvol=5e8手, tr=5e8*10/(5e5*100)=100% > 30
         dm, wk, mflow = self._setup(this_week_vol=5e8, last_week_vol=2e8)
         passed, _ = rw.screen_capital_weekly(self._stocks(), wk, dm, "20260807", mflow)
         self.assertNotIn("000001.SZ", passed["ts_code"].tolist())
@@ -414,7 +441,8 @@ class TestFilterHighGain(unittest.TestCase):
         recs = [{"ts_code": "000001.SZ"}, {"ts_code": "000002.SZ"}, {"ts_code": "000003.SZ"}]
         gains = {"000001.SZ": 10.0, "000002.SZ": 35.0, "000003.SZ": 30.0}  # 30不剔除(严格>30)
         kept, dropped = rw.filter_high_gain(recs, gains)
-        self.assertEqual(dropped, 1)
+        self.assertEqual(len(dropped), 1)
+        self.assertEqual(dropped[0]["ts_code"], "000002.SZ")
         self.assertEqual([r["ts_code"] for r in kept], ["000001.SZ", "000003.SZ"])
 
 
@@ -563,6 +591,184 @@ class TestWeeklyMainFlow(unittest.TestCase):
         dm = self._daily()
         recs = rw.recommend_weekly_stocks(ind, dm, "20260807", [])
         self.assertEqual(recs, [])
+
+
+class TestMaybeRunWeekly(unittest.TestCase):
+    """rps_calc._maybe_run_weekly 幂等回归测试
+    修复: 旧逻辑按 ISO 周判幂等, 周一生成后周五被误跳过 → 周度推荐停留周一数据(20260810)
+    新逻辑: 周一~周四本周已生成则跳过; 周五强制用当日收盘数据重新生成本周最终版
+    """
+
+    def _run(self, weekday, week_in_json, expect_call):
+        import rps_calc
+        import json
+        from pathlib import Path
+        tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        tmp.close()
+        with open(tmp.name, "w", encoding="utf-8") as f:
+            json.dump({"update_date": "20260810", "week": week_in_json, "stocks": []}, f)
+        fake_now = mock.MagicMock()
+        fake_now.weekday.return_value = weekday  # 0=周一 ... 4=周五
+        fake_dt = mock.MagicMock()
+        fake_dt.now.return_value = fake_now
+        try:
+            with mock.patch("rps_calc.datetime", fake_dt), \
+                 mock.patch("rps_calc._current_iso_week", return_value="2026W33"), \
+                 mock.patch("rps_calc.load_run_status",
+                            return_value={"update_date": "20260814", "success": True, "mode": "calc"}), \
+                 mock.patch("recommend_weekly.WEEKLY_REC_FILE", Path(tmp.name)), \
+                 mock.patch("recommend_weekly.recommend_weekly_stocks") as m_stocks, \
+                 mock.patch("recommend_weekly.save_weekly_recommendations") as m_save, \
+                 mock.patch("recommend_weekly.recommend_weekly_early_stocks") as m_early, \
+                 mock.patch("recommend_weekly.save_weekly_early_recommendations") as m_save_early:
+                rps_calc._maybe_run_weekly(None, None, "20260814", "20260813",
+                                           [{"name": "半导体", "continuous": 10, "stocks": []}])
+            self.assertEqual(m_stocks.called, expect_call,
+                             f"weekday={weekday} week={week_in_json} 应{'调用' if expect_call else '跳过'}选股")
+            self.assertEqual(m_save.called, expect_call)
+            self.assertEqual(m_early.called, expect_call)
+            self.assertEqual(m_save_early.called, expect_call)
+        finally:
+            os.unlink(tmp.name)
+
+    def test_monday_same_week_skip(self):
+        """周一 + JSON 本周已生成 → 跳过 (保留本周已生成结果)"""
+        self._run(0, "2026W33", expect_call=False)
+
+    def test_thursday_same_week_skip(self):
+        """周四 + JSON 本周已生成 → 跳过 (周度推荐周五收盘才更新)"""
+        self._run(3, "2026W33", expect_call=False)
+
+    def test_friday_same_week_regenerate(self):
+        """周五 + JSON 本周已有(周一旧版) → 强制重新生成 (修复核心场景)"""
+        self._run(4, "2026W33", expect_call=True)
+
+    def test_monday_prev_week_regenerate(self):
+        """周一 + JSON 为上周(未生成本周) → 补跑生成"""
+        self._run(0, "2026W32", expect_call=True)
+
+    def test_no_rps20_skip(self):
+        """无 RPS20 入选板块 → 直接跳过"""
+        import rps_calc
+        self.assertFalse(rps_calc._maybe_run_weekly(None, None, "20260814", "", []))
+
+    def test_status_fail_skip(self):
+        """当日 RPS 计算状态缺失/失败 → 跳过周度推荐 (防止基于过期 rps_data 输出错误结果)"""
+        import rps_calc
+        for st in (None, {"update_date": "20260814", "success": False, "mode": "error"},
+                   {"update_date": "20260813", "success": True, "mode": "calc"}):
+            with mock.patch("rps_calc.load_run_status", return_value=st), \
+                 mock.patch("recommend_weekly.recommend_weekly_stocks") as m_stocks:
+                ret = rps_calc._maybe_run_weekly(
+                    None, None, "20260814", "20260813",
+                    [{"name": "半导体", "continuous": 10, "stocks": []}])
+            self.assertFalse(ret)
+            m_stocks.assert_not_called()
+
+
+# ============================================================
+# 周度早期启动挖掘 (EARLY_STAGE_START) — 潜力板块/候选池/独立输出
+# ============================================================
+
+class TestRps20PotentialSectors(unittest.TestCase):
+    """周度早期潜力板块: RPS20∈[85,90) (读 rps_history.json 最新交易日)"""
+
+    def _patch_history(self, content):
+        import json
+        from pathlib import Path
+        tmp = tempfile.TemporaryDirectory()
+        with open(Path(tmp.name) / "rps_history.json", "w", encoding="utf-8") as f:
+            json.dump(content, f)
+        return tmp
+
+    def test_potential_range(self):
+        import json
+        from pathlib import Path
+        content = {"20260807": {"半导体": {"RPS20": 95}, "蓄势": {"RPS20": 88.0},
+                                "未达标": {"RPS20": 80}, "ST股": {"RPS20": 87}}}
+        tmp = self._patch_history(content)
+        try:
+            with mock.patch.object(rw, "STATIC_DIR", Path(tmp.name)):
+                out = rw._rps20_potential_sectors()
+        finally:
+            tmp.cleanup()
+        self.assertEqual([s["name"] for s in out], ["蓄势"])
+        self.assertAlmostEqual(out[0]["rps20"], 88.0)
+
+    def test_missing_file(self):
+        import tempfile
+        from pathlib import Path
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            with mock.patch.object(rw, "STATIC_DIR", Path(tmp.name)):
+                self.assertEqual(rw._rps20_potential_sectors(), [])
+        finally:
+            tmp.cleanup()
+
+
+class TestWeeklyEarlySectorPool(unittest.TestCase):
+    def test_pool_and_potential_set(self):
+        rps20_records = [{"name": "半导体"}, {"name": "黄金"}, {"name": "白酒"}]
+        review = {"sector_life_cycle": {"rps20": {"半导体": "accelerate",
+                                                  "黄金": "growth", "白酒": "base"}}}
+        with mock.patch.object(rw, "_rps20_potential_sectors",
+                               return_value=[{"name": "蓄势", "rps20": 88.0}]):
+            names, pot = rw._weekly_early_sector_pool(rps20_records, review)
+        self.assertIn("蓄势", names)
+        self.assertIn("黄金", names)
+        self.assertIn("白酒", names)
+        self.assertNotIn("半导体", names)  # accelerate 排除
+        self.assertEqual(pot, {"蓄势"})
+
+    def test_no_review(self):
+        with mock.patch.object(rw, "_rps20_potential_sectors", return_value=[]):
+            names, pot = rw._weekly_early_sector_pool([{"name": "半导体"}], None)
+        self.assertEqual(names, ["半导体"])
+        self.assertEqual(pot, set())
+
+
+class TestSaveWeeklyEarlyRecommendations(unittest.TestCase):
+    def test_schema_and_platform_count(self):
+        import json
+        tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        tmp.close()
+        rw.WEEKLY_EARLY_REC_FILE = tmp.name
+        try:
+            recs = [{
+                "ts_code": "000001.SZ", "name": "测试", "sectors": ["蓄势"],
+                "sector_count": 1, "tags": "平台刚启动 + 周线观察",
+                "price": 10.0, "pct_chg_week": 1.5, "score_total": 75.0,
+                "score_sector": 20.0, "score_fundamental": 25.0,
+                "score_capital": 10.0, "score_technical": 20.0,
+                "fundamental": {}, "capital": {}, "technical": {},
+            }]
+            rw.save_weekly_early_recommendations(recs, "20260814", "20260807")
+            with open(tmp.name, encoding="utf-8") as f:
+                data = json.load(f)
+            self.assertEqual(data["mode"], "early_stage_start")
+            self.assertEqual(data["schema_version"], 1)
+            self.assertEqual(data["platform_count"], 1)
+            self.assertEqual(data["count"], 1)
+            self.assertEqual(data["update_date"], "20260814")
+            self.assertIn("week", data)
+        finally:
+            os.unlink(tmp.name)
+            rw.WEEKLY_EARLY_REC_FILE = rw.STATIC_DIR / "weekly_recommendations_early.json"
+
+    def test_default_market_status_empty(self):
+        import json
+        tmp = tempfile.NamedTemporaryFile(suffix=".json", delete=False)
+        tmp.close()
+        rw.WEEKLY_EARLY_REC_FILE = tmp.name
+        try:
+            rw.save_weekly_early_recommendations([], "20260814", "")
+            with open(tmp.name, encoding="utf-8") as f:
+                data = json.load(f)
+            self.assertEqual(data["count"], 0)
+            self.assertIn("market_status", data)
+        finally:
+            os.unlink(tmp.name)
+            rw.WEEKLY_EARLY_REC_FILE = rw.STATIC_DIR / "weekly_recommendations_early.json"
 
 
 if __name__ == "__main__":

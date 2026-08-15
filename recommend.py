@@ -14,7 +14,8 @@
   * index_daily(指数日线): 真实拉取, 失败默认大盘安全(避免误否决)
   * fina_indicator(净利润/资产负债率): 按 period 批量, 失败降级 PE>0 / 东财替代
   * moneyflow(主力净流入): 按 trade_date 批量, 失败降级近似估算 / AKShare / 东财替代
-  * moneyflow_hsgt(北向资金): 失败跳过(加分项, 不影响否决)
+  * 大盘主力资金(stock_market_fund_flow): AKShare 真实值, 失败跳过(仅提示, 不影响否决)
+  * 北向资金(moneyflow_hsgt): 港交所2024年8月起停披露, 已移除(替换为大盘主力资金)
 - 输出: static/recommendations.json (schema_version=3)
 
 重要免责声明: 量化条件仅为技术逻辑参考,不构成任何投资建议;
@@ -24,6 +25,7 @@
 import json
 import math
 import os
+import re
 import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
@@ -75,22 +77,41 @@ def build_daily_by_code(daily_map, codes, latest_date, n_days=80):
     return result
 
 REC_FILE = STATIC_DIR / "recommendations.json"
+EARLY_REC_FILE = STATIC_DIR / "recommendations_early.json"  # 早期启动挖掘独立输出(不污染原版)
 # 五层漏斗筛选 + 综合评分 — 全部阈值可配置(无需改代码即可调整选股严格度)
 CONFIG = {
-    # 第一层: 大盘环境全局校验
+    # 第一层: 大盘环境全局校验 (三态: pass 正常选股 / warn 继续但全量打【大盘偏弱】标签 / reject 输出0只)
     "market": {
         "index_codes": ["000001.SH", "399006.SZ"],  # 上证指数 + 创业板指
         "index_names": {"000001.SH": "上证指数", "399006.SZ": "创业板指"},
         "ma_period": 20,           # 指数 20 日均线
         "need_above": 1,           # 至少 1 个指数站稳 20 日线 (可配置为 2)
         "default_safe": True,      # 指数数据完全缺失时默认安全(避免接口故障误否决全市场)
-        "check_sentiment": True,   # 是否做市场情绪校验(涨跌比/跌停数)
-        "limit_down_max": 50,      # 跌停家数上限(超过判为极端普跌)
-        "advance_ratio_min": 0.30, # 上涨家数占比下限
+        "check_sentiment": True,   # 是否做市场情绪校验(涨跌比/涨跌停数)
+        "advance_ratio_min": 0.30, # PASS: 上涨家数占比下限
+        "reject_advance_ratio": 0.25,  # REJECT: 上涨占比 < 该值 → 输出0只 (极端普跌)
+        "reject_limit_down": 40,   # REJECT: 跌停 > 该值 且 涨停 < reject_limit_up 组合判普跌
+        "reject_limit_up": 12,     # REJECT: 涨停家数下限 (跌停>40 但涨停≥12 = 结构性分化, 不否决)
+        "limit_up_pct": 9.8,       # 涨停近似判定: 涨幅 ≥ 该值 (10%/20% 涨停板通用近似)
+        "main_flow_days": 3,       # 大盘主力资金参考近 N 个交易日 (真实值, 仅提示标签不否决)
+        "main_flow_warn_neg": 2,   # 连续 N 日主力净流出 → 提示"资金偏弱"
     },
     # 第二层: 候选股票池 (核心约束 = RPS 入选板块成分股)
     "pool": {
         "min_sector_count": 1,     # 至少属于 1 个强势板块
+        "out_sector_remove": True, # 个股所属板块全部在当日调出列表 → 剔除候选池
+        "rps20_soft": 70,          # 个股 RPS20 < 该值 → 板块热度分减半(软过滤, 不否决)
+        "sector_groups": [         # 同源板块关键词组: 同组板块按真实共振计, 防题材重复虚高板块分
+            ["算力", "AI服务器", "服务器", "数据中心", "液冷", "光模块", "CPO", "云计算"],
+            ["半导体", "芯片", "集成电路", "存储芯片", "模拟芯片", "功率半导体", "半导体设备"],
+            ["白酒", "啤酒", "食品", "饮料", "乳制品", "调味品"],
+            ["银行", "证券", "券商", "保险", "多元金融"],
+            ["锂电池", "电池", "储能", "光伏", "风电", "新能源"],
+            ["军工", "国防", "航空装备", "航天", "船舶制造"],
+            ["CXO", "创新药", "疫苗", "生物医药", "中药"],
+            ["房地产", "物业", "建材", "装修装饰"],
+        ],
+        "blacklist_file": "blacklist.json",  # 手工黑名单(大额解禁/减持/利空), 路径相对 STATIC_DIR
     },
     # 第三层: 基本面排雷 (硬性一票否决)
     "fundamental": {
@@ -98,20 +119,33 @@ CONFIG = {
         "min_circ_mv": 10e8,       # 最低流通市值 10亿 (daily_basic.circ_mv 单位万元 → 10亿=10万万元)
         "max_pe": 200,             # PE-TTM 上限(远超行业上限剔除)
         "max_debt_ratio": 80,      # 资产负债率上限 % (远超合理区间剔除)
-        "max_pledge_ratio": 50,    # 股权质押比例上限 % (数据缺失不剔除)
-        "max_goodwill_ratio": 30,  # 商誉占净资产上限 % (数据缺失不剔除)
+        "max_pledge_ratio": 50,    # 股权质押比例上限 % (有数据则强制校验)
+        "max_goodwill_ratio": 30,  # 商誉占净资产上限 % (有数据则强制校验)
+        "pe_neg_cap": 5,           # PE-TTM<0: 不否决, 基本面得分强制上限 5 分
+        "max_report_age_days": 180,  # 财报距今 > 该天数 → 基本面得分×0.6 + 标签【财报陈旧】
+        "stale_factor": 0.6,       # 财报陈旧基本面得分系数
     },
     # 第四层: 资金面达标校验 (全部核心项必达)
     "capital": {
-        "turnover_min": 2.0,       # 换手率下限 % (保证有资金关注)
-        "turnover_max": 25.0,      # 换手率上限 % (规避出货风险)
+        "turnover_min": 2.0,       # 兜底换手率下限 % (流通市值缺失时用)
+        "turnover_max": 25.0,      # 兜底换手率上限 % (流通市值缺失时用)
+        "turnover_bands": [        # 按流通市值(万元)自适应换手率区间: 大盘股天然换手低, 小盘股活跃
+            {"max_mv": 50e4, "min": 3.0, "max": 25.0},      # 流通市值 < 50亿
+            {"max_mv": 200e4, "min": 2.0, "max": 20.0},     # 50 ~ 200亿
+            {"max_mv": None, "min": 1.0, "max": 15.0},      # > 200亿
+        ],
         "vol_ratio_min": 1.1,      # 量比下限 (近期量能较前期放大)
         "amount_min": 5e7,         # 单日成交额下限 5000万 (保证流动性)
+        "limit_up_pct": 9.8,       # 当日涨停(涨幅≥该值) → 豁免量比校验, 打【涨停无量】标签
     },
     # 第五层: 多技术指标共振
     "technical": {
         "hit_min": 3,              # 达标指标数 ≥3 项判为共振通过
         "rps50_threshold": 80,     # 个股 RPS50 中期强势阈值
+        "rsi_overbought": 75,      # RSI > 该值 → 技术超买
+        "cci_overbought": 150,     # CCI > 该值 → 技术超买
+        "overbought_deduct": 3,    # 单一超买信号: 技术分扣 3
+        "overbought_deduct_both": 5,  # RSI+CCI 双超买: 技术分扣 5
     },
     # 综合评分权重 (总分 100)
     "score": {
@@ -120,13 +154,48 @@ CONFIG = {
         "capital": 20,             # 资金面分
         "technical": 20,           # 技术面分
         "min_score": 70,           # 综合得分门槛: <70 的股票不进入推荐列表(前端不显示)
+        "min_fundamental": 8,      # 分项最低门槛: 基本面 < 8 直接剔除(防板块分拉满掩盖缺陷)
+        "min_capital": 8,          # 分项最低门槛: 资金面 < 8 直接剔除
+        "gain5_threshold": 25.0,   # 近5日累计涨幅 > 该值(%) → 总分扣分(短线追高风险)
+        "gain5_deduct": 8,         # 近5日累计涨幅过高扣分
+        "gain8_week_threshold": 80.0,  # 周度: 近8周累计涨幅 > 该值(%) → 扣分
+        "gain8_week_deduct": 10,   # 周度: 近8周累计涨幅过高扣分
+        "max_per_sector": 3,       # 输出层同板块控制: 同一细分板块最多输出 N 只
+        "fatigue_deduct": 7,       # 复盘联动: 成熟疲劳板块内个股总分扣 7 (6~8 取中)
+        "danger_deduct": 10,       # 复盘联动: danger 风险板块内个股总分扣 10
+    },
+    # 运行模式开关 (新增早期启动挖掘, 原有逻辑/输出完全保留):
+    #   ORIGINAL_MOMENTUM=True → 原有整套日推荐逻辑, 输出 recommendations.json (老输出不变)
+    #   EARLY_STAGE_START=True → 独立候选池/过滤/打分, 输出 recommendations_early.json
+    #   两开关都关 → 不生成任何日度推荐; 关掉 EARLY_STAGE_START → 系统退回原版
+    "run_mode": {
+        "ORIGINAL_MOMENTUM": True,  # 原有模式: 传统RPS, 成熟强势板块, 选已经走强个股
+        "EARLY_STAGE_START": True,  # 新增模式: 刚启动, 潜力板块+涨幅约束, 抓低位初期标的
+    },
+    # 早期启动挖掘专属配置 (只对 EARLY_STAGE_START 生效, 完全不影响原有模式)
+    "early": {
+        "rps50_preferred_min": 78,      # 个股 RPS50 优先区间下限
+        "rps50_preferred_max": 88,      # 个股 RPS50 优先区间上限
+        "rps50_over": 92,               # 个股 RPS50 > 该值 → 硬扣分(已走出, 非刚启动)
+        "rps50_over_deduct": 8,         # RPS50 过高扣分
+        "gain10_max": 28.0,             # 近10日涨幅 > 该值(%) → 硬扣分(涨幅惩罚)
+        "gain10_deduct": 12,            # 近10日涨幅过高扣分
+        "ma60_dev_max": 45.0,           # 距 MA60 偏离 > 该值(%) → 硬扣分(已远离成本区)
+        "ma60_dev_deduct": 10,          # 距 MA60 偏离过高扣分
+        "platform_bonus": 4,            # 平台刚启动形态加分
+        "platform_amplitude_max": 30.0, # 平台整理振幅上限(%) (近20日高低点振幅 ≤ 该值=横盘)
+        "break_above_pct": 1.5,         # 突破确认: 收盘 ≥ 近20日高点×(1-该%) (允许盘中刷新)
+        "sort_tag_first": "平台刚启动",  # 内部排序: 带该标签的优先展示
+        "fundamental_overrides": {},    # 早期模式基本面阈值微调(覆盖 CONFIG["fundamental"])
+        "capital_overrides": {},        # 早期模式资金面阈值微调(覆盖 CONFIG["capital"])
+        "technical_overrides": {},      # 早期模式技术阈值微调(覆盖 CONFIG["technical"])
     },
 }
 INDEX_CODES = CONFIG["market"]["index_codes"]
 INDEX_CACHE_DIR = STATIC_DIR / "index_cache"
 FINA_CACHE_FILE = STATIC_DIR / "fina_indicator_cache.json"
 MFLOW_CACHE_FILE = STATIC_DIR / "moneyflow_cache.json"
-HSGT_CACHE_FILE = STATIC_DIR / "moneyflow_hsgt_cache.json"
+MARKET_FLOW_CACHE_FILE = STATIC_DIR / "market_fund_flow_cache.json"  # 大盘主力资金(替代北向, 真实值)
 
 
 # ============================================================
@@ -407,6 +476,20 @@ def _em_safe_float(val):
         return 0.0
 
 
+def _f10_float(val):
+    """东财F10财务字段: '-'/None/空/NaN → None(真缺失), 数字 → float(保留0/负值)
+    区别于 _em_safe_float: 财务缺失不能伪造为 0 (负债率=0 是假数据)"""
+    if val is None or val == "-" or val == "":
+        return None
+    try:
+        f = float(val)
+        if math.isnan(f) or math.isinf(f):
+            return None
+        return f
+    except (ValueError, TypeError):
+        return None
+
+
 def _em_secid_for_index(index_code):
     """指数 ts_code → 东财 secid (000001.SH→1.000001, 000300.SH→1.000300)"""
     symbol, _ = index_code.split(".")
@@ -503,47 +586,6 @@ def fetch_moneyflow_em(latest_date, page_size=100, max_pages=80, codes=None):
     return result
 
 
-def fetch_hsgt_em(latest_date, n_days=5):
-    """东财沪深港通历史 (替代 moneyflow_hsgt)
-    返回 {trade_date: {"buy_value": 北向净流入元}}
-    """
-    url = ("https://datacenter-web.eastmoney.com/api/data/v1/get"
-           "?reportName=RPT_MUTUAL_DEAL_HISTORY"
-           "&columns=MUTUAL_TYPE,TRADE_DATE,FUND_INFLOW,BUY_AMT,SELL_AMT"
-           f"&pageSize={n_days * 2}&pageNo=1"
-           "&sortColumns=TRADE_DATE&sortTypes=-1"
-           "&filter=(MUTUAL_TYPE=%22001%22)(MUTUAL_TYPE=%22003%22)")
-    # 上面的 filter 语法可能不支持 OR, 用两次请求分别取沪股通+深股通
-    cache = {}
-    for mt in ("001", "003"):  # 001=沪股通 003=深股通
-        u = (url.split("&filter=")[0] +
-             f"&filter=(MUTUAL_TYPE=%22{mt}%22)")
-        try:
-            d = _em_get_json(u, timeout=12)
-        except Exception:
-            continue
-        result = d.get("result")
-        if not result:
-            continue
-        for row in (result.get("data") or []):
-            td_raw = str(row.get("TRADE_DATE") or "")[:10].replace("-", "")
-            if not td_raw:
-                continue
-            inflow = row.get("FUND_INFLOW")
-            # FUND_INFLOW 为 null 时用 BUY_AMT - SELL_AMT 兜底
-            if inflow is None:
-                buy = row.get("BUY_AMT")
-                sell = row.get("SELL_AMT")
-                if buy is not None and sell is not None:
-                    inflow = float(buy) - float(sell)
-                else:
-                    continue
-            # 沪+深累加为北向总净流入
-            cache.setdefault(td_raw, {"buy_value": 0.0})
-            cache[td_raw]["buy_value"] += float(inflow)
-    return cache
-
-
 def fetch_fina_em(latest_date, codes=None):
     """东财财务指标 (替代 fina_indicator), 批量拉取
     RPT_LICO_FN_CPD: PARENT_NETPROFIT(归母净利润), BASIC_EPS, DEDUCT_BASIC_EPS(扣非EPS)
@@ -606,6 +648,83 @@ def fetch_fina_em(latest_date, codes=None):
         if len(data) < 500:
             break
     return cache
+
+
+def fetch_fina_f10_em(latest_date, codes=None):
+    """东财 F10 主要财务指标 (替代 fina_indicator, 字段最全: 含资产负债率真实值)
+    RPT_F10_FINANCE_MAINFINADATA 按最近 6 个报告期逐期过滤分页拉取:
+    披露季各公司最新披露期不同 (如8月多数公司最新仍是Q1), 单一"最新期"会漏股;
+    逐期过滤 (filter=REPORT_DATE) 可 100% 覆盖全市场各公司的最新披露期, 均为真实值
+    字段映射:
+      ZCFZL→debt_to_assets(资产负债率%), PARENTNETPROFIT→net_profit(归母净利),
+      PARENTNETPROFITTZ→netprofit_yoy(归母同比%), KCFJCXSYJLR→n_income_attr_parent(扣非净利),
+      KCFJCXSYJLRTZ→dt_netprofit_yoy(扣非同比%)
+    返回 {ts_code: {end_date, net_profit, netprofit_yoy, dt_netprofit_yoy,
+                    n_income_attr_parent, debt_to_assets}} (全市场个股, 各自最新披露期)
+    codes: 可选候选股 ts_code 集合; 传入时仅保留候选股, 全部找齐即提前退出
+    失败/无数据返回 {}
+    """
+    codes_set = set(codes) if codes else None
+    result = {}
+    # 从最新已结束季度往前生成 8 个报告期 (如 2026-08 → 20260630, 20260331, 20251231, ...)
+    q_end = {1: "0331", 2: "0630", 3: "0930", 4: "1231"}
+    cy, cq = int(latest_date[:4]), (int(latest_date[4:6]) - 1) // 3 + 1
+    periods = []
+    for _ in range(8):
+        periods.append(f"{cy}{q_end[cq]}")
+        cq -= 1
+        if cq == 0:
+            cq, cy = 4, cy - 1
+    for period in periods:
+        end_date = f"{period[:4]}-{period[4:6]}-{period[6:]}"
+        page_has_new = False  # 本报告期是否新增个股
+        period_seen_rows = False  # 本报告期是否存在个股行(未来期=0行, 跳过继续往旧期找)
+        for pn in range(1, 30):
+            url = ("https://datacenter-web.eastmoney.com/api/data/v1/get"
+                   "?sortColumns=REPORT_DATE&sortTypes=-1"
+                   f"&pageSize=500&pageNumber={pn}"
+                   "&reportName=RPT_F10_FINANCE_MAINFINADATA"
+                   "&columns=SECUCODE,REPORT_DATE,ZCFZL,PARENTNETPROFIT,PARENTNETPROFITTZ,"
+                   "KCFJCXSYJLR,KCFJCXSYJLRTZ"
+                   f"&filter=(REPORT_DATE=%27{end_date}%27)")
+            try:
+                d = _em_get_json(url, timeout=20)
+            except Exception:
+                break
+            data = ((d or {}).get("result") or {}).get("data") or []
+            if not data:
+                break
+            for row in data:
+                sc = str(row.get("SECUCODE") or "")
+                if not re.match(r"^\d{6}\.(SH|SZ|BJ)$", sc):
+                    continue  # 过滤指数/基金(A/B开头)等非个股
+                code = sc.split(".")[0] + "." + sc.split(".")[1]
+                period_seen_rows = True
+                if code in result:
+                    continue  # 已有更新的披露期, 保留新期
+                if codes_set is not None and code not in codes_set:
+                    continue
+                result[code] = {
+                    "end_date": period,
+                    "net_profit": _f10_float(row.get("PARENTNETPROFIT")),
+                    "netprofit_yoy": _f10_float(row.get("PARENTNETPROFITTZ")),
+                    "dt_netprofit_yoy": _f10_float(row.get("KCFJCXSYJLRTZ")),
+                    "n_income_attr_parent": _f10_float(row.get("KCFJCXSYJLR")),
+                    "debt_to_assets": _f10_float(row.get("ZCFZL")),
+                }
+                page_has_new = True
+            # 候选股全部找齐 → 提前退出
+            if codes_set is not None and len(result) >= len(codes_set):
+                return result
+            if len(data) < 500:
+                break
+        if codes_set is not None and len(result) >= len(codes_set):
+            break
+        if not period_seen_rows:
+            continue  # 未来期/无披露期 → 继续往更旧期找
+        if not page_has_new:
+            break  # 本披露期有数据但无新增 → 全市场已全部覆盖
+    return result
 
 
 def fetch_daily_basic_em(latest_date, page_size=100, max_pages=80, codes=None):
@@ -794,6 +913,8 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
                         "dt_netprofit_yoy": float(r["dt_netprofit_yoy"]) if pd.notna(r.get("dt_netprofit_yoy")) else None,
                         "n_income_attr_parent": float(r["n_income_attr_parent"]) if pd.notna(r.get("n_income_attr_parent")) else None,
                         "debt_to_assets": float(r["debt_to_assets"]) if pd.notna(r.get("debt_to_assets")) else None,
+                        "pledge_ratio": float(r["pledge_ratio"]) if pd.notna(r.get("pledge_ratio")) else None,
+                        "goodwill_ratio": float(r["goodwill_ratio"]) if pd.notna(r.get("goodwill_ratio")) else None,
                         "prev_end_date": "", "prev_net_profit": None, "prev_netprofit_yoy": None,
                     }
                 elif not cache[code].get("prev_net_profit") and cache[code].get("end_date"):
@@ -810,15 +931,23 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
         except Exception as e:
             print(f"  ⚠️ fina_indicator period={period} 失败: {str(e)[:50]}")
             continue
-    # 东财替代: Tushare 全失败时启用 (传入候选股 codes 提前退出分页)
+    # 东财替代: Tushare 全失败时启用 (F10 逐期全市场最新披露期, 含资产负债率; 旧报表兜底)
+    if not cache:
+        try:
+            f10_cache = fetch_fina_f10_em(latest_date, codes=codes)
+            if f10_cache:
+                cache = f10_cache
+                print(f"  ✅ fina_indicator (东财F10逐期): {len(cache)} 条, 含资产负债率真实值")
+        except Exception as e:
+            print(f"  ⚠️ fina_indicator 东财F10失败: {str(e)[:50]}")
     if not cache:
         try:
             em_cache = fetch_fina_em(latest_date, codes=codes)
             if em_cache:
                 cache = em_cache
-                print(f"  ✅ fina_indicator (东财替代): {len(cache)} 条")
+                print(f"  ✅ fina_indicator (东财旧报表兜底): {len(cache)} 条")
         except Exception as e:
-            print(f"  ⚠️ fina_indicator 东财替代失败: {str(e)[:50]}")
+            print(f"  ⚠️ fina_indicator 东财兜底失败: {str(e)[:50]}")
     if cache:
         try:
             cache["_fetched_date"] = latest_date
@@ -910,54 +1039,31 @@ def fetch_moneyflow_batch(latest_date, daily_map, n_days=3, codes=None):
     return cache
 
 
-def fetch_hsgt_flow(latest_date, daily_map, n_days=5):
-    """moneyflow_hsgt 北向资金近 n 日(全市场, 非按个股)
-    缓存 static/moneyflow_hsgt_cache.json: {trade_date: {buy_value, sell_value}}
-    失败返回 {} (北向为加分项, 缺失跳过)
+def fetch_market_fund_flow(latest_date, n_days=5):
+    """大盘主力资金近 n 日 (替代已停披露的北向资金 moneyflow_hsgt, 真实值)
+    主源 AKShare stock_market_fund_flow (东财datacenter)
+    缓存 static/market_fund_flow_cache.json: {trade_date: {"main_net": 元, "main_pct": %}}
+    失败返回 {} (仅提示, 不影响否决)
     """
-    avail = sorted([d for d in daily_map.keys() if d <= latest_date])[-n_days:]
-    if HSGT_CACHE_FILE.exists():
+    if MARKET_FLOW_CACHE_FILE.exists():
         try:
-            with open(HSGT_CACHE_FILE, encoding="utf-8") as f:
+            with open(MARKET_FLOW_CACHE_FILE, encoding="utf-8") as f:
                 cache = json.load(f)
         except Exception:
             cache = {}
     else:
         cache = {}
-    need_dates = [d for d in avail if d not in cache]
-    for date in need_dates:
+    if _AK_OK:
         try:
-            df = pool.call_any("moneyflow_hsgt", trade_date=date)
-            if df is None or len(df) == 0:
-                continue
-            r = df.iloc[0]
-            cache[date] = {
-                "buy_value": float(r.get("north_money") or 0) * 1e4 if pd.notna(r.get("north_money")) else 0.0,
-            }
-            print(f"  ✅ moneyflow_hsgt {date}")
+            ak_flow = _ak.fetch_market_fund_flow_ak(n_days=n_days)
+            if ak_flow:
+                cache.update(ak_flow)
+                print(f"  ✅ 大盘主力资金 (AKShare): {len(ak_flow)} 日真实值")
         except Exception as e:
-            print(f"  ⚠️ moneyflow_hsgt {date} Tushare失败: {str(e)[:50]}")
-    # AKShare 替代: Tushare 失败时取北向资金历史 (优先)
-    if not cache and _AK_OK:
-        try:
-            ak_hsgt = _ak.fetch_hsgt_ak(latest_date, n_days)
-            if ak_hsgt:
-                cache.update(ak_hsgt)
-                print(f"  ✅ moneyflow_hsgt (AKShare): {len(cache)} 日北向资金 (近期港交所限披露可能为0)")
-        except Exception as e:
-            print(f"  ⚠️ moneyflow_hsgt AKShare失败: {str(e)[:50]}")
-    # 东财手动替代: AKShare 也失败时兜底
-    if not cache:
-        try:
-            em_hsgt = fetch_hsgt_em(latest_date, n_days)
-            if em_hsgt:
-                cache.update(em_hsgt)
-                print(f"  ✅ moneyflow_hsgt (东财替代): {len(cache)} 日北向资金")
-        except Exception as e:
-            print(f"  ⚠️ moneyflow_hsgt 东财替代失败: {str(e)[:50]}")
+            print(f"  ⚠️ 大盘主力资金 AKShare失败: {str(e)[:50]}")
     if cache:
         try:
-            with open(HSGT_CACHE_FILE, "w", encoding="utf-8") as f:
+            with open(MARKET_FLOW_CACHE_FILE, "w", encoding="utf-8") as f:
                 json.dump(cache, f, ensure_ascii=False)
         except Exception:
             pass
@@ -968,34 +1074,33 @@ def fetch_hsgt_flow(latest_date, daily_map, n_days=5):
 # 7. 第一层: 大盘环境全局校验 (20日均线, 不合格终止选股)
 # ============================================================
 
-def check_market_env(index_map, daily_map, latest_date):
-    """第一层: 大盘环境全局校验
+def check_market_env(index_map, daily_map, latest_date, market_flow=None):
+    """第一层: 大盘环境全局校验 (三态: pass 正常选股 / warn 继续但全量打【大盘偏弱】标签 / reject 输出0只)
     规则(可配置 CONFIG["market"]):
-      - 上证指数/创业板指最新收盘 vs 各自 20 日均线
-      - 至少 need_above 个指数站稳 20 日线 (默认 1)
-      - 可选情绪校验: 上涨家数占比 < advance_ratio_min, 或跌停 > limit_down_max
+      - PASS: 至少 need_above 个指数站上 20 日线 且 上涨家数占比 ≥ advance_ratio_min
+      - REJECT: 上涨家数占比 < reject_advance_ratio (极端普跌)
+                OR (跌停 > reject_limit_down 且 涨停 < reject_limit_up) → 组合判普跌, 输出 0 只
+      - WARN: 未满足 PASS 且未触发 REJECT → 继续选股, 全量打【大盘偏弱】标签
+      - 大盘主力资金: market_flow 仅做提示标签(近N日连续净流出→note), 完全移出过滤条件, 数据缺失跳过
     返回 (ok, market_status):
-      ok: 大盘合格继续选股 / 不合格终止
-      market_status: {is_safe, rule, reason, indexes[{code,name,close,ma,above}],
-                      advance_ratio, limit_down_count, note}
+      ok: False 仅当 level=="reject" (其余情况均继续选股, 避免极端结构性行情误杀主线)
+      market_status: {is_safe, level, rule, reason, indexes[{code,name,close,ma,above}],
+                      advance_ratio, limit_down_count, limit_up_count, main_flow, note}
     """
     cfg = CONFIG["market"]
     index_names = cfg.get("index_names", {})
     rows = []
     above_cnt = 0
-    data_ok = True
     for code in cfg["index_codes"]:
         idx_df = index_map.get(code)
         name = index_names.get(code, code)
         if idx_df is None or len(idx_df) == 0:
             rows.append({"code": code, "name": name, "close": None, "ma": None, "above": None})
-            data_ok = False
             continue
         df = idx_df.sort_values("trade_date") if "trade_date" in idx_df.columns else idx_df
         closes = [float(c) for c in df["close"].tolist() if pd.notna(c)]
         if len(closes) < cfg["ma_period"]:
             rows.append({"code": code, "name": name, "close": None, "ma": None, "above": None})
-            data_ok = False
             continue
         today = closes[-1]
         ma = float(np.mean(closes[-cfg["ma_period"]:]))
@@ -1007,48 +1112,90 @@ def check_market_env(index_map, daily_map, latest_date):
             "close": round(today, 2), "ma": round(ma, 2), "above": above,
         })
 
-    # 规则判定: 至少 need_above 个指数站稳 20 日线
-    ok = above_cnt >= cfg["need_above"]
-    reason = ""
-    if not ok:
-        below = [r["name"] for r in rows if r.get("above") is False]
-        if below:
-            reason = " / ".join(below) + f" 跌破{cfg['ma_period']}日线"
-        elif cfg.get("default_safe", True):
-            ok = True  # 指数数据完全缺失 → 默认安全, 避免接口故障误否决全市场
-            reason = "指数数据缺失, 默认安全"
-        else:
-            reason = f"指数数据不足, 无法确认站稳{cfg['ma_period']}日线"
-
-    # 市场情绪校验 (可选, 不单独否决: 仅在指数合格时二次把关)
-    adv, dec, limit_down = 0, 0, 0
+    # 市场情绪统计: 上涨/下跌家数 + 涨跌停家数 (涨停近似 pct>=limit_up_pct, 跌停近似 pct<=-9.8)
+    adv, dec, limit_down, limit_up = 0, 0, 0, 0
     if latest_date in daily_map:
         for _, r in daily_map[latest_date].iterrows():
             chg = r.get("pct_chg")
             if pd.notna(chg):
-                if float(chg) > 0:
+                f = float(chg)
+                if f > 0:
                     adv += 1
-                elif float(chg) < 0:
+                elif f < 0:
                     dec += 1
-                if float(chg) <= -9.8:
+                if f <= -9.8:
                     limit_down += 1
+                if f >= cfg["limit_up_pct"]:
+                    limit_up += 1
     advance_ratio = (adv / (adv + dec)) if (adv + dec) > 0 else None
-    if ok and cfg.get("check_sentiment", True) and latest_date in daily_map:
-        if advance_ratio is not None and advance_ratio < cfg["advance_ratio_min"]:
-            ok = False
-            reason = f"上涨家数占比 {advance_ratio:.0%} < {cfg['advance_ratio_min']:.0%}"
-        if limit_down > cfg["limit_down_max"]:
-            ok = False
-            reason = f"跌停 {limit_down} 家 > {cfg['limit_down_max']} 家 (极端普跌)"
+
+    # 三态判定 (rows 全为 above=None 视为指数数据完全缺失)
+    if all(r.get("above") is None for r in rows):
+        # 指数数据完全缺失 → 默认安全, 避免接口故障误否决全市场
+        if cfg.get("default_safe", True):
+            level, reason = "pass", "指数数据缺失, 默认安全"
+        else:
+            level, reason = "warn", "指数数据不足, 无法确认站上20日线"
+    else:
+        pass_ma = above_cnt >= cfg["need_above"]
+        pass_sent = advance_ratio is None or advance_ratio >= cfg["advance_ratio_min"]
+        if pass_ma and pass_sent:
+            level, reason = "pass", ""
+        else:
+            reject_adv = advance_ratio is not None and advance_ratio < cfg["reject_advance_ratio"]
+            reject_low = limit_down > cfg["reject_limit_down"] and limit_up < cfg["reject_limit_up"]
+            if reject_adv or reject_low:
+                level = "reject"
+                if reject_adv:
+                    reason = f"上涨家数占比 {advance_ratio:.0%} < {cfg['reject_advance_ratio']:.0%} (极端普跌)"
+                else:
+                    reason = (f"跌停 {limit_down} 家 > {cfg['reject_limit_down']} 家 且 涨停 {limit_up} 家 < "
+                              f"{cfg['reject_limit_up']} 家 (极端普跌)")
+            else:
+                level = "warn"
+                if not pass_ma:
+                    below = [r["name"] for r in rows if r.get("above") is False]
+                    if below:
+                        reason = " / ".join(below) + f" 跌破{cfg['ma_period']}日线"
+                    else:
+                        reason = f"仅 {above_cnt} 个指数站上{cfg['ma_period']}日线 (需 {cfg['need_above']} 个)"
+                else:
+                    reason = f"上涨家数占比 {advance_ratio:.0%} < {cfg['advance_ratio_min']:.0%}"
+
+    ok = (level != "reject")
+
+    # 大盘主力资金统计 (真实值, 仅提示不否决: 连续多日净流出 → note 附加资金偏弱提示)
+    main_flow = None
+    note = {"pass": "大盘环境合格, 继续选股",
+            "warn": "大盘环境偏弱, 继续选股(全量打【大盘偏弱】标签)",
+            "reject": "大盘环境不满足, 终止选股"}[level]
+    if market_flow:
+        flow_days = cfg.get("main_flow_days", 3)
+        dates = sorted([d for d in market_flow.keys() if d <= latest_date])[-flow_days:]
+        if dates:
+            neg_days = sum(1 for d in dates if (market_flow[d].get("main_net") or 0) < 0)
+            total_net = float(sum((market_flow[d].get("main_net") or 0) for d in dates))
+            weak = neg_days >= cfg.get("main_flow_warn_neg", 2)
+            main_flow = {
+                "days": len(dates),
+                "neg_days": neg_days,
+                "total_net_yi": round(total_net / 1e8, 1),  # 合计主力净流入(亿元, 负=净流出)
+                "verdict": "资金偏弱" if weak else "资金正常",
+            }
+            if weak:
+                note = note + f"；大盘主力资金近{len(dates)}日{neg_days}日净流出"
 
     market_status = {
         "is_safe": ok,
+        "level": level,
         "rule": f"至少 {cfg['need_above']} 个指数站上 {cfg['ma_period']} 日线",
         "reason": reason,
         "indexes": rows,
         "advance_ratio": round(advance_ratio, 2) if advance_ratio is not None else None,
         "limit_down_count": limit_down,
-        "note": "大盘环境不合格, 终止选股" if not ok else "大盘环境合格, 继续选股",
+        "limit_up_count": limit_up,
+        "main_flow": main_flow,
+        "note": note,
     }
     return ok, market_status
 
@@ -1070,10 +1217,10 @@ def screen_fundamental(stocks_df, fina_map, cfg=None):
       - 当日停牌 (vol<=0 或 price 缺失)
       - 收盘价 < min_price (低价仙股)
       - 流通市值 < min_circ_mv (过小市值)
-      - PE-TTM ≤ 0 或 > max_pe (盈利风险)
+      - PE-TTM > max_pe (远超行业上限); PE-TTM<0 不否决, 评分阶段强制上限 pe_neg_cap 分
       - 净利润 < 0 (fina_map; fina 缺失降级 PE>0 判定, 不误杀)
       - 资产负债率 > max_debt_ratio
-      - 股权质押 > max_pledge_ratio / 商誉 > max_goodwill_ratio (数据缺失则跳过, 不误杀)
+      - 股权质押 > max_pledge_ratio / 商誉 > max_goodwill_ratio (有数据则强制校验, 缺失不剔除)
     返回 (passed_df, rejects): rejects=[{ts_code, name, reason}]
     """
     cfg = (cfg or CONFIG)["fundamental"]
@@ -1097,11 +1244,11 @@ def screen_fundamental(stocks_df, fina_map, cfg=None):
     small_mv = df["circ_mv"].notna() & (df["circ_mv"] < mv_min_wan)
     _reject_rows(df[small_mv], rejects, f"流通市值<{cfg['min_circ_mv']/1e8:.0f}亿")
     df = df[~small_mv]
-    # PE-TTM 盈利风险
-    pe_bad = df["pe_ttm"].notna() & ((df["pe_ttm"] <= 0) | (df["pe_ttm"] > cfg["max_pe"]))
-    _reject_rows(df[pe_bad], rejects, "PE-TTM≤0或超上限")
+    # PE-TTM 远超上限一票否决; PE-TTM<0 不否决(评分阶段基本面分上限 pe_neg_cap)
+    pe_bad = df["pe_ttm"].notna() & (df["pe_ttm"] > cfg["max_pe"])
+    _reject_rows(df[pe_bad], rejects, f"PE-TTM>{cfg['max_pe']}")
     df = df[~pe_bad]
-    # 财务指标 (fina_map: 净利润/资产负债率; 缺失不剔除)
+    # 财务指标 (fina_map: 净利润/资产负债率/质押/商誉; 缺失不剔除)
     if fina_map and len(df) > 0:
         keep = []
         for code in df["ts_code"]:
@@ -1118,6 +1265,17 @@ def screen_fundamental(stocks_df, fina_map, cfg=None):
             if debt is not None and float(debt) > cfg["max_debt_ratio"]:
                 rejects.append({"ts_code": code, "name": df[df["ts_code"] == code]["name"].iloc[0],
                                 "reason": f"资产负债率>{cfg['max_debt_ratio']}%"})
+                continue
+            # 质押/商誉: 有数据则强制校验, 缺失不剔除 (一票否决)
+            plg = fr.get("pledge_ratio")
+            if plg is not None and float(plg) > cfg["max_pledge_ratio"]:
+                rejects.append({"ts_code": code, "name": df[df["ts_code"] == code]["name"].iloc[0],
+                                "reason": f"股权质押>{cfg['max_pledge_ratio']}%"})
+                continue
+            gwl = fr.get("goodwill_ratio")
+            if gwl is not None and float(gwl) > cfg["max_goodwill_ratio"]:
+                rejects.append({"ts_code": code, "name": df[df["ts_code"] == code]["name"].iloc[0],
+                                "reason": f"商誉>{cfg['max_goodwill_ratio']}%"})
                 continue
             keep.append(code)
         df = df[df["ts_code"].isin(keep)]
@@ -1139,14 +1297,37 @@ def _calc_vol_ratio_fallback(daily_map, code, latest_date):
     return None
 
 
+def _turnover_range(mv_wan, cfg=None):
+    """换手率区间按流通市值(万元)自适应 (大盘股天然换手低, 小盘股活跃):
+      <50亿:    [3%, 25%]
+      50~200亿: [2%, 20%]
+      >200亿:   [1%, 15%]
+    流通市值缺失 → 兜底区间 [turnover_min, turnover_max]
+    cfg: 完整 CONFIG 或已提取的 capital 子配置均可
+    """
+    if cfg is None:
+        cap = CONFIG["capital"]
+    elif "capital" in cfg:
+        cap = cfg["capital"]
+    else:
+        cap = cfg
+    bands = cap.get("turnover_bands", [])
+    if mv_wan is None or pd.isna(mv_wan):
+        return cap["turnover_min"], cap["turnover_max"]
+    for b in bands:
+        if b.get("max_mv") is None or float(mv_wan) < b["max_mv"]:
+            return b["min"], b["max"]
+    return cap["turnover_min"], cap["turnover_max"]
+
+
 def screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=None):
     """第四层: 资金面达标校验 (全部核心项必达, 任一不满足即淘汰)
     规则(可配置 CONFIG["capital"]):
-      - 换手率 ∈ [turnover_min, turnover_max] (下限资金关注 / 上限规避出货)
-      - 量比 > vol_ratio_min (量能较前期放大; daily_basic 缺失从日线成交量兜底)
+      - 换手率 ∈ 市值自适应区间 (turnover_bands; 流通市值缺失用 turnover_min/max 兜底)
+      - 量比 > vol_ratio_min (量能较前期放大; 当日涨停豁免量比校验, 打【涨停无量】标签)
       - 单日成交额 > amount_min (daily_map 最新日 amount, 千元→元)
       - 主力资金: 当日净额>0 或 近3日累计净流入>0 (mflow_map; 缺失跳过, 不误杀)
-    返回 (passed_df, cap_details): cap_details={code:{turnover, vol_ratio, amount, net_inflow_3d}}
+    返回 (passed_df, cap_details): cap_details={code:{turnover, vol_ratio, amount, net_inflow_3d, limit_up}}
     """
     cfg = (cfg or CONFIG)["capital"]
     df = stocks_df.copy()
@@ -1159,17 +1340,24 @@ def screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=None):
             tc = r.get("ts_code")
             if tc and pd.notna(r.get("amount")):
                 day_amt[tc] = float(r["amount"]) * 1000
+    limit_up_pct = cfg.get("limit_up_pct", 9.8)
     for _, s in df.iterrows():
         code = s["ts_code"]
-        # 换手率区间
+        # 换手率区间 (按流通市值自适应)
         tr = s.get("turnover_rate")
-        if tr is None or pd.isna(tr) or not (cfg["turnover_min"] <= float(tr) <= cfg["turnover_max"]):
+        if tr is None or pd.isna(tr):
             continue
-        # 量比
+        tr_f = float(tr)
+        lo, hi = _turnover_range(s.get("circ_mv"), cfg)
+        if not (lo <= tr_f <= hi):
+            continue
+        # 量比: 当日涨停(涨幅≥limit_up_pct)豁免量比校验 (一字涨停无量不误杀)
+        pct = s.get("pct_chg")
+        is_limit_up = pct is not None and not pd.isna(pct) and float(pct) >= limit_up_pct
         vr = s.get("vol_ratio")
         if vr is None or pd.isna(vr):
             vr = _calc_vol_ratio_fallback(daily_map, code, latest_date)
-        if vr is None or float(vr) <= cfg["vol_ratio_min"]:
+        if not is_limit_up and (vr is None or float(vr) <= cfg["vol_ratio_min"]):
             continue
         # 单日成交额
         amt = day_amt.get(code, 0)
@@ -1185,10 +1373,11 @@ def screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=None):
         if net3 is not None and net3 <= 0:
             continue
         cap_details[code] = {
-            "turnover": round(float(tr), 2),
-            "vol_ratio": round(float(vr), 2),
+            "turnover": round(tr_f, 2),
+            "vol_ratio": round(float(vr), 2) if vr is not None else None,
             "amount": round(amt, 0),
             "net_inflow_3d": net3,
+            "limit_up": is_limit_up,
         }
         keep.append(code)
     return df[df["ts_code"].isin(keep)], cap_details
@@ -1223,6 +1412,58 @@ def build_member_sector_map(in_list_records):
     return mapping
 
 
+def _merge_same_source_sectors(sector_names, cfg=None):
+    """同源板块合并 → 真实共振板块数 (防题材重复计数虚高板块热度分)
+    例: 个股同属 ["算力", "AI服务器", "半导体"] → 算力/AI服务器同属一个关键词组
+        (CONFIG["pool"]["sector_groups"]) → 真实共振 = 2 (算力主线 + 半导体)
+    打分/标签使用去重后的真实共振数, 避免"算力/AI服务器/数据中心"多板块虚假拉高板块热度 40 分
+    """
+    groups = (cfg or CONFIG)["pool"].get("sector_groups", [])
+    used_groups = set()
+    count = 0
+    for name in sector_names or []:
+        gid = None
+        for gi, g in enumerate(groups):
+            if any(kw in name for kw in g):
+                gid = gi
+                break
+        if gid is not None:
+            if gid not in used_groups:
+                used_groups.add(gid)
+                count += 1
+        else:
+            count += 1  # 不在同源组内的板块独立计数
+    return count
+
+
+def _load_blacklist(cfg=None):
+    """加载手工黑名单 (大额解禁/减持预告/利空个股), L2 候选池直接剔除
+    文件: static/blacklist.json, 结构: {"codes": ["600000.SH", ...]}
+    文件缺失/解析失败 → 返回空集合 (不阻断选股)
+    """
+    fname = (cfg or CONFIG)["pool"].get("blacklist_file", "blacklist.json")
+    fpath = STATIC_DIR / fname
+    if not fpath.exists():
+        return set()
+    try:
+        with open(fpath, encoding="utf-8") as f:
+            data = json.load(f)
+        return {str(c) for c in (data.get("codes") or []) if c}
+    except Exception:
+        return set()
+
+
+def _report_age_days(fina_row, latest_date):
+    """财报距今天数 (fina_row['end_date'] 格式 YYYYMMDD), 缺失/异常返回 None"""
+    ed = (fina_row or {}).get("end_date") or ""
+    if not ed or not latest_date or latest_date < str(ed):
+        return None
+    try:
+        return (datetime.strptime(latest_date, "%Y%m%d") - datetime.strptime(str(ed), "%Y%m%d")).days
+    except Exception:
+        return None
+
+
 # ============================================================
 # 11. 第五层: 多技术指标共振 (达标 ≥ hit_min 项判为通过)
 # ============================================================
@@ -1237,7 +1478,8 @@ def screen_technical(stocks_df, daily_map, latest_date, cfg=None, rps50_map=None
       5 量价配合: 当日上涨(pct>0) 且 量比>1.1 (量价齐升)
       6 中期强势: 个股RPS50 ≥ rps50_threshold (rps50_map 提供; 缺失跳过)
       7 均线支撑: 收盘价 > max(MA5, MA10, MA20, MA60)
-    返回 (passed_df, tech_details): tech_details={code:{hits:[指标名], hit_count}}
+    超买检测(不否决, 评分扣分+打【技术超买】标签): RSI > rsi_overbought / CCI > cci_overbought
+    返回 (passed_df, tech_details): tech_details={code:{hits:[指标名], hit_count, overbought, rsi, cci}}
     """
     cfg = (cfg or CONFIG)["technical"]
     df = stocks_df.copy()
@@ -1287,7 +1529,24 @@ def screen_technical(stocks_df, daily_map, latest_date, cfg=None, rps50_map=None
         if mas and today_close > max(mas):
             hits.append("均线支撑")
         if len(hits) >= cfg["hit_min"]:
-            tech_details[code] = {"hits": hits, "hit_count": len(hits)}
+            detail = {"hits": hits, "hit_count": len(hits)}
+            # 超买检测: RSI>rsi_overbought / CCI>cci_overbought → 技术超买 (不否决, 评分扣分)
+            rsi_obj = calc_rsi(closes)
+            cci_obj = calc_cci(highs, lows, closes)
+            rsi_v = rsi_obj["rsi"] if rsi_obj else None
+            cci_v = cci_obj["cci"] if cci_obj else None
+            if rsi_v is not None:
+                detail["rsi"] = round(rsi_v, 1)
+            if cci_v is not None:
+                detail["cci"] = round(cci_v, 1)
+            ob = []
+            if rsi_v is not None and rsi_v > cfg["rsi_overbought"]:
+                ob.append("rsi")
+            if cci_v is not None and cci_v > cfg["cci_overbought"]:
+                ob.append("cci")
+            if ob:
+                detail["overbought"] = "both" if len(ob) == 2 else ob[0]
+            tech_details[code] = detail
             keep.append(code)
     return df[df["ts_code"].isin(keep)], tech_details
 
@@ -1298,6 +1557,34 @@ def screen_technical(stocks_df, daily_map, latest_date, cfg=None, rps50_map=None
 
 # 模块级缓存: 最近一次大盘状态(供 save_recommendations 写入 banner)
 _LAST_MARKET_STATUS = None
+# 模块级缓存: 最近一次候选股过滤日志(供 save_recommendations 写 candidate_log.json)
+_LAST_CANDIDATE_LOG = []
+# 早期启动挖掘独立缓存(不污染原版模块级状态)
+_LAST_EARLY_MARKET_STATUS = None
+_LAST_EARLY_CANDIDATE_LOG = []
+
+
+def _review_deduct_map(review_data):
+    """从 daily_review.json 提取评分扣分映射 (复盘驱动选股, 不否决只降权):
+      fatigue_sectors: 成熟疲劳板块 (health.mature_fatigue) → 个股总分扣 fatigue_deduct
+      danger_sectors:  风险等级 danger 时的顶背离板块 (risk.diverge) → 个股总分扣 danger_deduct
+    复盘无数据 / 无对应信号 → 返回空集合 (不影响选股)
+    """
+    fatigue, danger = set(), set()
+    if not review_data:
+        return fatigue, danger
+    health = review_data.get("health") or {}
+    for f in health.get("mature_fatigue") or []:
+        nm = f.get("name") if isinstance(f, dict) else f
+        if nm:
+            fatigue.add(str(nm))
+    risk = review_data.get("risk") or {}
+    if risk.get("level") == "danger":
+        for dv in risk.get("diverge") or []:
+            nm = dv.get("name") if isinstance(dv, dict) else dv
+            if nm:
+                danger.add(str(nm))
+    return fatigue, danger
 
 
 def score_sector_funnel(sector_count, cfg=None):
@@ -1427,6 +1714,26 @@ def filter_by_min_score(results, min_score=None):
     return [r for r in results if r["score_total"] >= min_score]
 
 
+def _cap_per_sector(rec_list, max_per):
+    """输出层同板块控制: 以个股第一个强势板块为主板块, 每细分板块最多输出 max_per 只
+    防止市场主线集中时推荐列表全部同一板块 (高度同质化)
+    返回 (保留列表, 剔除列表)
+    """
+    if not max_per or max_per <= 0:
+        return rec_list, []
+    counts = {}
+    kept, removed = [], []
+    for r in rec_list:
+        sectors = r.get("sectors") or []
+        key = str(sectors[0]) if sectors else str(r.get("industry", ""))
+        if counts.get(key, 0) >= max_per:
+            removed.append(r)
+        else:
+            counts[key] = counts.get(key, 0) + 1
+            kept.append(r)
+    return kept, removed
+
+
 def _extract_member_codes(in_list_records):
     """从 RPS 入选板块记录中提取成分股 ts_code 集合
     in_list_records: 板块记录数组, 每条含 "stocks" 字段(成分股数组, 元素为 dict 含 ts_code 或直接是代码)
@@ -1515,16 +1822,16 @@ def _select_member_pool(industry_df, in_list_industries, member_codes=None):
     return members, list(members["ts_code"].unique()), "行业名匹配"
 
 
-def build_rps50_map(daily_map, latest_date):
-    """全市场个股 RPS50 (50日相对强弱) 映射 {ts_code: RPS值}
-    欧奈尔体系: 按近50个交易日累计涨幅在全市场排名, 涨幅越高 RPS 越大
-    RPS50 = (1 - (rank-1)/N) * 100, 第1名=100
-    数据缺失/交易日不足 → 返回 {} (第五层该指标自动跳过)
+def _build_rps_map(daily_map, latest_date, n_days):
+    """全市场个股 RPS_n (n 日相对强弱) 映射 {ts_code: RPS值}
+    欧奈尔体系: 按近 n 个交易日累计涨幅在全市场排名, 涨幅越高 RPS 越大
+    RPS = (1 - (rank-1)/N) * 100, 第1名=100
+    数据缺失/交易日不足 → 返回 {} (对应层指标自动跳过)
     """
     dates = sorted([d for d in daily_map.keys() if d <= latest_date])
     if len(dates) < 2:
         return {}
-    n = min(50, len(dates) - 1)
+    n = min(n_days, len(dates) - 1)
     d_old, d_new = dates[-1 - n], dates[-1]
     old = daily_map[d_old][["ts_code", "close"]].rename(columns={"close": "close_old"})
     new = daily_map[d_new][["ts_code", "close"]].rename(columns={"close": "close_new"})
@@ -1533,32 +1840,479 @@ def build_rps50_map(daily_map, latest_date):
     if merged.empty:
         return {}
     total = len(merged)
-    merged["chg50"] = merged["close_new"] / merged["close_old"] - 1
-    merged["rank"] = merged["chg50"].rank(ascending=False, method="min")
-    merged["RPS50"] = (1 - (merged["rank"] - 1) / total) * 100
-    return {r["ts_code"]: round(float(r["RPS50"]), 1) for _, r in merged.iterrows()}
+    merged["chg_n"] = merged["close_new"] / merged["close_old"] - 1
+    merged["rank"] = merged["chg_n"].rank(ascending=False, method="min")
+    merged["RPS"] = (1 - (merged["rank"] - 1) / total) * 100
+    return {r["ts_code"]: round(float(r["RPS"]), 1) for _, r in merged.iterrows()}
 
 
-def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, member_codes=None):
-    """主推荐流程 v3.0 —— 五层漏斗筛选 + 综合评分
+def build_rps50_map(daily_map, latest_date):
+    """全市场个股 RPS50 (50日相对强弱) 映射 {ts_code: RPS值}"""
+    return _build_rps_map(daily_map, latest_date, 50)
+
+
+def build_rps20_map(daily_map, latest_date):
+    """全市场个股 RPS20 (20日相对强弱) 映射 {ts_code: RPS值}
+    用途: L2 候选池软过滤 — 个股 RPS20 < CONFIG["pool"]["rps20_soft"] (默认70)
+    时板块热度分减半 (不直接一票否决, 板块强而个股弱的"跟班"降权)
+    """
+    return _build_rps_map(daily_map, latest_date, 20)
+
+
+# ============================================================
+# 12. 早期启动挖掘 (EARLY_STAGE_START) — 独立候选池/过滤/打分, 完全不影响原有模式
+# ============================================================
+
+def _early_sector_pool(in_list_records, review_data):
+    """早期启动候选池板块名:
+    ① daily_review.potential_sectors 临界潜力板块 (RPS5∈[88,90) 达标率合格)
+    ② 原 RPS≥90 板块, 剔除 sector_life_cycle 标记为 accelerate 加速高潮的板块
+    返回 (板块名列表, 潜力板块名集合)
+    """
+    review = review_data or {}
+    pot = [str(s.get("name") or "").strip() for s in review.get("potential_sectors", []) or []
+           if s and s.get("name")]
+    pot = [n for n in pot if n]
+    lc = review.get("sector_life_cycle", {}) or {}
+    lc5 = lc.get("rps5", {}) if isinstance(lc, dict) else {}
+    in_names = {str(rec.get("name") or "").strip() for rec in in_list_records or [] if rec.get("name")}
+    keep = [n for n in sorted(in_names) if lc5.get(n) != "accelerate"]
+    names = list(dict.fromkeys(pot + keep))  # 保持顺序, 去重
+    return names, set(pot)
+
+
+def _build_early_sector_map(industry_df, sector_names):
+    """构建 成分股→早期候选板块 映射 {ts_code: [板块名,...]} (候选池共振计数)
+    潜力板块无 stocks 成分股名单, 统一按行业名从 industry_df 匹配 (与 _select_member_pool 行业名回退同源)
+    """
+    mapping = {}
+    if industry_df is None or len(industry_df) == 0:
+        return mapping
+    members = industry_df[industry_df["industry"].isin(sector_names)]
+    for _, r in members.iterrows():
+        mapping.setdefault(str(r["ts_code"]), [])
+        mapping[str(r["ts_code"])].append(str(r["industry"]))
+    return mapping
+
+
+def _is_platform_start(closes, highs, lows, cfg=None):
+    """平台刚启动形态(早期模式加分项): 近20日窄幅横盘整理 + 今日收盘突破平台高点
+    判定(全部满足):
+      1) 近20日高低点振幅 ≤ platform_amplitude_max (横盘整理, 未大幅拉升)
+      2) 今日收盘 ≥ 近20日最高 × (1 - break_above_pct) (突破平台, 允许盘中刷新高点)
+    """
+    e = (cfg or CONFIG)["early"]
+    if len(closes) < 20:
+        return False
+    c20 = closes[-20:]
+    h20 = max(highs[-20:])
+    l20 = min(lows[-20:])
+    close = closes[-1]
+    if h20 <= 0 or l20 <= 0:
+        return False
+    amplitude = (h20 - l20) / l20 * 100
+    if amplitude > e["platform_amplitude_max"]:
+        return False
+    if close < h20 * (1 - e["break_above_pct"] / 100.0):
+        return False
+    return True
+
+
+def recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records, member_codes=None,
+                           out_list_names=None, review_data=None, cfg=None):
+    """早期启动挖掘(刚启动候选) —— 独立候选池/独立过滤/独立打分
+    与原有五层漏斗物理隔离: 原有模式不执行涨幅惩罚/形态加分, 本分支也不受原版逻辑干扰。
+    候选池 = ① daily_review.potential_sectors 潜力板块 (RPS5∈[88,90) 达标率合格)
+             ② 原 RPS≥90 板块剔除 accelerate 加速高潮板块 (避免拿已经高潮的老主线)
+    早期专属约束(只对 early 生效):
+      - 个股 RPS50 优先区间 [78,88]; RPS50>92 硬扣分
+      - 硬惩罚: 近10日涨幅>28% 扣12分; 距 MA60 偏离>45% 扣10分
+      - 平台刚启动形态加分 +4 (标签【平台刚启动】)
+    门槛依然 70 分; 内部排序: 优先【平台刚启动】标签, 同等分数按近10日涨幅从小到大。
+    输出: save_early_recommendations → recommendations_early.json
+    """
+    global _LAST_EARLY_MARKET_STATUS, _LAST_EARLY_CANDIDATE_LOG, _DAILY_BY_CODE
+    cfg = cfg or CONFIG
+    early_cfg = cfg.get("early", {})
+    print("\n" + "=" * 55)
+    print("  早期启动挖掘 (EARLY_STAGE_START) — 独立候选池/过滤/打分")
+    print("=" * 55)
+    candidate_log = []
+
+    def _log_codes(codes, stage, reason, name_map=None):
+        for c in codes:
+            candidate_log.append({"ts_code": c, "name": (name_map or {}).get(c, ""),
+                                  "stage": stage, "reason": reason})
+
+    def _log_rows(sub_df, stage, reason):
+        for _, r in sub_df.iterrows():
+            candidate_log.append({"ts_code": r["ts_code"], "name": r.get("name", ""),
+                                  "stage": stage, "reason": reason})
+
+    if not in_list_records and not review_data:
+        print("  ⚠️ 无入选板块且无复盘数据, 跳过早期启动挖掘")
+        _LAST_EARLY_MARKET_STATUS = None
+        return []
+
+    # ---- 早期候选池板块: 潜力板块 + 非加速入选板块 ----
+    pool_names, potential_set = _early_sector_pool(in_list_records, review_data)
+    if not pool_names:
+        print("  ⚠️ 早期候选池为空(无潜力板块且无入选板块), 跳过")
+        _LAST_EARLY_MARKET_STATUS = None
+        return []
+    print(f"  早期候选板块: {len(pool_names)} 个 (潜力{len(potential_set)} + 非加速入选{len(pool_names)-len(potential_set)})")
+    if member_codes is None:
+        member_codes = _extract_member_codes(in_list_records)
+    members, codes, pool_mode = _select_member_pool(industry_df, pool_names, member_codes)
+    if members.empty:
+        print("  ⚠️ 早期候选池无成分股, 跳过")
+        _LAST_EARLY_MARKET_STATUS = None
+        return []
+    codes = list(members["ts_code"].unique())
+    # 黑名单剔除 (与原有模式共用)
+    bl_codes = _load_blacklist()
+    if bl_codes:
+        codes = [c for c in codes if c not in bl_codes]
+    print(f"  早期选股池: {len(codes)} 只 ({pool_mode})")
+    _DAILY_BY_CODE = build_daily_by_code(daily_map, codes, latest_date, n_days=80)
+
+    if latest_date not in daily_map:
+        print("  ⚠️ latest_date 不在 daily_map, 跳过")
+        _LAST_EARLY_MARKET_STATUS = None
+        return []
+    df_latest = daily_map[latest_date]
+    latest_idx = {r["ts_code"]: r for _, r in df_latest.iterrows() if r["ts_code"] in codes}
+    codes_set = set(codes)
+
+    # ---- 第一层: 大盘环境 (复用原版校验, REJECT 同样终止) ----
+    print("\n[第一层] 大盘环境全局校验...")
+    trade_days = sorted(daily_map.keys())
+    index_map = fetch_index_daily(INDEX_CODES, trade_days)
+    market_flow = fetch_market_fund_flow(latest_date)
+    market_ok, market_status = check_market_env(index_map, daily_map, latest_date, market_flow)
+    _LAST_EARLY_MARKET_STATUS = market_status
+    if not market_ok:
+        print(f"  ⛔ 大盘环境不满足 (REJECT): {market_status['reason']} → 早期候选为空")
+        _LAST_EARLY_CANDIDATE_LOG = candidate_log
+        return []
+    warn_flag = market_status.get("level") == "warn"
+    if warn_flag:
+        print("  ⚠️ 大盘环境偏弱 (WARN) → 继续选股, 全量打【大盘偏弱】标签")
+
+    # ---- daily_basic: PE/流通市值/换手率/量比 (复用原版降级链) ----
+    basic_idx = {}
+    try:
+        df_basic = pool.call_any("daily_basic", trade_date=latest_date)
+        if df_basic is not None and len(df_basic) > 0:
+            basic_idx = {r["ts_code"]: r for _, r in df_basic.iterrows() if r["ts_code"] in codes_set}
+    except Exception as e:
+        print(f"  ⚠️ daily_basic Tushare失败: {str(e)[:50]}, 尝试 AKShare/东财替代...")
+    if not basic_idx and _AK_OK:
+        try:
+            ak_basic = _ak.fetch_daily_basic_ak(latest_date)
+            if ak_basic:
+                basic_idx = {c: v for c, v in ak_basic.items() if c in codes_set}
+        except Exception as e:
+            print(f"  ⚠️ daily_basic AKShare失败: {str(e)[:50]}")
+    if not basic_idx:
+        try:
+            em_basic = fetch_daily_basic_em(latest_date, codes=codes)
+            if em_basic:
+                basic_idx = em_basic
+        except Exception as e:
+            print(f"  ⚠️ daily_basic 东财替代失败: {str(e)[:50]}")
+    print(f"  ✅ daily_basic: 早期候选股 {len(basic_idx)} 条")
+
+    # ---- 第二层: 候选池 DataFrame + 早期共振计数 ----
+    print("\n[第二层] 早期候选池 (潜力板块 + 非加速入选板块成分股)...")
+    rows = []
+    for code in codes:
+        if code not in latest_idx:
+            continue
+        lr = latest_idx[code]
+        m = members[members["ts_code"] == code].iloc[0]
+        br = basic_idx.get(code, {})
+        rows.append({
+            "ts_code": code,
+            "name": str(m.get("name", "")),
+            "industry": str(m.get("industry", "")),
+            "price": float(lr.get("close")) if pd.notna(lr.get("close")) else None,
+            "pct_chg": float(lr.get("pct_chg")) if pd.notna(lr.get("pct_chg")) else None,
+            "vol": int(lr["vol"]) if pd.notna(lr.get("vol")) else 0,
+            "pe_ttm": float(br.get("pe_ttm")) if br is not None and pd.notna(br.get("pe_ttm")) else None,
+            "circ_mv": float(br.get("circ_mv")) if br is not None and pd.notna(br.get("circ_mv")) else None,
+            "turnover_rate": float(br.get("turnover_rate")) if br is not None and pd.notna(br.get("turnover_rate")) else None,
+            "vol_ratio": float(br.get("volume_ratio")) if br is not None and pd.notna(br.get("volume_ratio")) else None,
+        })
+    stocks_df = pd.DataFrame(rows)
+    if stocks_df.empty:
+        print("  ⚠️ 早期候选池为空")
+        _LAST_EARLY_MARKET_STATUS = None
+        return []
+    early_sector_map = _build_early_sector_map(industry_df, pool_names)
+    stocks_df["sector_names"] = stocks_df["ts_code"].apply(
+        lambda c: list(dict.fromkeys(early_sector_map.get(c, []))))
+    stocks_df["sector_count"] = stocks_df["sector_names"].apply(_merge_same_source_sectors)
+    # 全调出剔除: 所属板块全部在当日调出列表 → 剔除 (与原有模式一致)
+    if out_list_names:
+        ol = set(out_list_names)
+        before = len(stocks_df)
+        out_mask = stocks_df["sector_names"].apply(lambda sn: len(sn) > 0 and all(s in ol for s in sn))
+        if out_mask.any():
+            _log_rows(stocks_df[out_mask], "L2全调出", "所属板块全部在当日调出列表")
+        stocks_df = stocks_df[~out_mask]
+        removed = before - len(stocks_df)
+        if removed:
+            print(f"  全调出板块剔除: {before} -> {len(stocks_df)} 只")
+    min_sc = cfg["pool"].get("min_sector_count", 1)
+    before = len(stocks_df)
+    low_res = stocks_df[stocks_df["sector_count"] < min_sc]
+    if len(low_res):
+        _log_rows(low_res, "L2共振不足", f"真实共振板块数<{min_sc}")
+    stocks_df = stocks_df[stocks_df["sector_count"] >= min_sc]
+    print(f"  板块共振过滤: {before} -> {len(stocks_df)} 只 (每股须属 ≥{min_sc} 个候选板块)")
+    if stocks_df.empty:
+        print("  ⚠️ 早期候选池无有效股票, 终止")
+        _LAST_EARLY_CANDIDATE_LOG = candidate_log
+        return []
+
+    # ---- 第三层: 基本面排雷 (复用原版, 允许 early 微调阈值) ----
+    print("\n[第三层] 基本面排雷 (硬性一票否决)...")
+    fund_cfg = dict(cfg["fundamental"])
+    fund_cfg.update(early_cfg.get("fundamental_overrides", {}) or {})
+    fina_map = fetch_fina_indicator_batch(latest_date, codes=codes)
+    eff_fund_cfg = dict(cfg); eff_fund_cfg["fundamental"] = fund_cfg
+    stocks_df, rejects = screen_fundamental(stocks_df, fina_map, cfg=eff_fund_cfg)
+    for r in rejects:
+        candidate_log.append({"ts_code": r["ts_code"], "name": r.get("name", ""),
+                              "stage": "L3基本面", "reason": r["reason"]})
+    print(f"  ⛔ 基本面剔除 {len(rejects)} 只, 通过: {len(stocks_df)} 只")
+    if stocks_df.empty:
+        print("  ⚠️ 基本面排雷后无候选, 终止")
+        _LAST_EARLY_CANDIDATE_LOG = candidate_log
+        return []
+
+    # ---- 第四层: 资金面达标校验 (复用原版, 允许 early 微调阈值) ----
+    print("\n[第四层] 资金面达标校验...")
+    mflow_map = fetch_moneyflow_batch(latest_date, daily_map, n_days=3, codes=codes)
+    cap_cfg = dict(cfg["capital"])
+    cap_cfg.update(early_cfg.get("capital_overrides", {}) or {})
+    eff_cap_cfg = dict(cfg); eff_cap_cfg["capital"] = cap_cfg
+    before_df = stocks_df
+    stocks_df, cap_details = screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=eff_cap_cfg)
+    if len(stocks_df) < len(before_df):
+        cap_removed = before_df[~before_df["ts_code"].isin(set(stocks_df["ts_code"]))]
+        _log_rows(cap_removed, "L4资金面", "换手率区间/量比/成交额/主力资金 未全部达标")
+    print(f"  资金面达标: {len(before_df)} -> {len(stocks_df)} 只")
+    if stocks_df.empty:
+        print("  ⚠️ 资金面无一达标, 终止")
+        _LAST_EARLY_CANDIDATE_LOG = candidate_log
+        return []
+
+    # ---- 第五层: 技术共振 (复用原版, 允许 early 微调阈值) ----
+    print("\n[第五层] 多技术指标共振 (达标 ≥hit_min 通过)...")
+    tech_cfg = dict(cfg["technical"])
+    tech_cfg.update(early_cfg.get("technical_overrides", {}) or {})
+    eff_tech_cfg = dict(cfg); eff_tech_cfg["technical"] = tech_cfg
+    rps50_map = build_rps50_map(daily_map, latest_date)
+    print(f"  全市场 RPS50 映射: {len(rps50_map)} 只")
+    before_df = stocks_df
+    stocks_df, tech_details = screen_technical(stocks_df, daily_map, latest_date,
+                                               cfg=eff_tech_cfg, rps50_map=rps50_map)
+    if len(stocks_df) < len(before_df):
+        tech_removed = before_df[~before_df["ts_code"].isin(set(stocks_df["ts_code"]))]
+        _log_rows(tech_removed, "L5技术共振", f"技术指标达标数<{tech_cfg['hit_min']}")
+    print(f"  技术共振通过: {len(before_df)} -> {len(stocks_df)} 只")
+    if stocks_df.empty:
+        print("  ⚠️ 技术共振无一通过, 终止")
+        _LAST_EARLY_CANDIDATE_LOG = candidate_log
+        return []
+
+    # ---- 综合评分: 复用四维分项 + 早期专属惩罚/加分 ----
+    print(f"\n[综合评分] 通过漏斗 {len(stocks_df)} 只 → 四维评分 + 早期约束(涨幅/MA60偏离/平台形态)")
+    sc_cfg = cfg["score"]
+    fatigue_sectors, danger_sectors = _review_deduct_map(review_data)
+    results = []
+    for _, s in stocks_df.iterrows():
+        code = s["ts_code"]
+        sectors = s["sector_names"] or []
+        sector_count = int(s["sector_count"])
+        fina_row = fina_map.get(code)
+        cap = cap_details.get(code, {})
+        tech = tech_details.get(code, {})
+        score_sector = score_sector_funnel(sector_count)
+        score_fund = score_fundamental_funnel(s, fina_row, cfg=eff_fund_cfg)
+        pe = s.get("pe_ttm")
+        pe_neg = pe is not None and not pd.isna(pe) and float(pe) < 0
+        if pe_neg:
+            score_fund = min(score_fund, fund_cfg["pe_neg_cap"])
+        report_age = _report_age_days(fina_row, latest_date)
+        stale_flag = report_age is not None and report_age > fund_cfg["max_report_age_days"]
+        if stale_flag:
+            score_fund = int(score_fund * fund_cfg["stale_factor"])
+        score_cap = score_capital_funnel(cap)
+        score_tech = score_technical_funnel(tech.get("hit_count", 0))
+        if tech.get("overbought"):
+            score_tech = max(0, score_tech - tech_cfg["overbought_deduct_both"] if tech["overbought"] == "both"
+                             else score_tech - tech_cfg["overbought_deduct"])
+        if score_fund < sc_cfg["min_fundamental"] or score_cap < sc_cfg["min_capital"]:
+            candidate_log.append({"ts_code": code, "name": s["name"], "stage": "评分分项门槛",
+                                  "reason": f"基本面{score_fund}<{sc_cfg['min_fundamental']} "
+                                            f"或资金面{score_cap}<{sc_cfg['min_capital']}"})
+            continue
+        total = score_sector + score_fund + score_cap + score_tech
+
+        # ---- 早期专属: 形态/涨幅/偏离 (只对 early 生效) ----
+        df_by_code = _DAILY_BY_CODE.get(code)
+        closes = [float(c) for c in df_by_code["close"].tolist()] if df_by_code is not None else []
+        highs = [float(h) for h in df_by_code["high"].tolist()] if df_by_code is not None else []
+        lows = [float(l) for l in df_by_code["low"].tolist()] if df_by_code is not None else []
+        chg10 = None
+        if len(closes) >= 11 and closes[-11] > 0:
+            chg10 = (closes[-1] / closes[-11] - 1) * 100
+        ma60 = calc_ma_series(closes, 60)
+        dev60 = None
+        if ma60 and ma60 > 0 and closes:
+            dev60 = (closes[-1] - ma60) / ma60 * 100
+        rps50 = rps50_map.get(code)
+        early_tags = []
+        # 1) 涨幅惩罚: 近10日涨幅 > 阈值 → 硬扣分
+        gain10_high = chg10 is not None and chg10 > early_cfg["gain10_max"]
+        if gain10_high:
+            total -= early_cfg["gain10_deduct"]
+            early_tags.append("涨幅偏大")
+        # 2) MA60 偏离惩罚: 距离 MA60 > 阈值 → 硬扣分 (已远离成本区, 非低位启动)
+        dev60_high = dev60 is not None and dev60 > early_cfg["ma60_dev_max"]
+        if dev60_high:
+            total -= early_cfg["ma60_dev_deduct"]
+            early_tags.append("偏离MA60过大")
+        # 3) RPS50 过高扣分: 已走强个股非"刚启动"
+        rps50_over = rps50 is not None and float(rps50) > early_cfg["rps50_over"]
+        if rps50_over:
+            total -= early_cfg["rps50_over_deduct"]
+            early_tags.append("RPS50偏高")
+        # 4) 平台刚启动形态加分
+        platform = _is_platform_start(closes, highs, lows, cfg=cfg)
+        if platform:
+            total += early_cfg["platform_bonus"]
+        # 复盘联动: 疲劳/danger 板块降权 (与原有模式一致, 不否决只降权)
+        review_deduct = 0
+        if fatigue_sectors and any(sec in fatigue_sectors for sec in sectors):
+            review_deduct = sc_cfg["fatigue_deduct"]
+        elif danger_sectors and any(sec in danger_sectors for sec in sectors):
+            review_deduct = sc_cfg["danger_deduct"]
+        if review_deduct:
+            total -= review_deduct
+            early_tags.append("复盘风险降权")
+
+        tags = build_recommend_tags(sectors, tech.get("hits", []), sector_count)
+        if platform:
+            tags = ("平台刚启动" + (" + " + tags) if tags else "平台刚启动")
+        if total >= 80:
+            tags = ("短线优选" + (" + " + tags) if tags else "短线优选")
+        elif total >= 70:
+            tags = ("短线观察" + (" + " + tags) if tags else "短线观察")
+        extra_tags = list(early_tags)
+        if stale_flag:
+            extra_tags.append("财报陈旧")
+        if tech.get("overbought"):
+            extra_tags.append("技术超买")
+        if warn_flag:
+            extra_tags.append("大盘偏弱")
+        if extra_tags:
+            tags = tags + " + " + " + ".join(extra_tags)
+        results.append({
+            "ts_code": code,
+            "name": s["name"],
+            "industry": s["industry"],
+            "sectors": sectors,
+            "sector_count": sector_count,
+            "tags": tags,
+            "price": round(s["price"], 2) if s.get("price") is not None else None,
+            "pct_chg": round(s["pct_chg"], 2) if s.get("pct_chg") is not None else None,
+            "pe_ttm": s.get("pe_ttm"),
+            "circ_mv": round(s["circ_mv"] / 10000, 2) if s.get("circ_mv") else None,  # 亿元
+            "score_total": total,
+            "score_sector": score_sector,
+            "score_fundamental": score_fund,
+            "score_capital": score_cap,
+            "score_technical": score_tech,
+            "early": {
+                "chg10": round(chg10, 2) if chg10 is not None else None,
+                "ma60_dev": round(dev60, 2) if dev60 is not None else None,
+                "rps50": float(rps50) if rps50 is not None else None,
+                "platform_start": bool(platform),
+                "gain10_deduct": early_cfg["gain10_deduct"] if gain10_high else 0,
+                "ma60_dev_deduct": early_cfg["ma60_dev_deduct"] if dev60_high else 0,
+                "rps50_over_deduct": early_cfg["rps50_over_deduct"] if rps50_over else 0,
+                "platform_bonus": early_cfg["platform_bonus"] if platform else 0,
+            },
+            "fundamental": {
+                "net_profit": fina_row.get("net_profit") if fina_row else None,
+                "debt_to_assets": fina_row.get("debt_to_assets") if fina_row else None,
+                "report_age_days": report_age,
+            },
+            "capital": cap,
+            "technical": tech,
+        })
+
+    # 门槛 ≥70 + 排序: 平台刚启动优先, 同等分数按近10日涨幅从小到大
+    shown = [r for r in results if r["score_total"] >= float(sc_cfg["min_score"])]
+    tag_first = early_cfg.get("sort_tag_first", "平台刚启动")
+    shown.sort(key=lambda x: (0 if tag_first in x.get("tags", "") else 1,
+                              -x["score_total"],
+                              (x.get("early") or {}).get("chg10") if (x.get("early") or {}).get("chg10") is not None else 1e9))
+    max_per = sc_cfg.get("max_per_sector")
+    if max_per and max_per > 0:
+        shown, capped = _cap_per_sector(shown, max_per)
+        for c in capped:
+            candidate_log.append({"ts_code": c["ts_code"], "name": c["name"],
+                                  "stage": "输出同板块控制",
+                                  "reason": f"同细分板块最多输出{max_per}只"})
+        if capped:
+            print(f"  同板块输出控制: 剔除 {len(capped)} 只")
+    _LAST_EARLY_CANDIDATE_LOG = candidate_log
+    dropped = len(results) - len(shown)
+    print(f"\n[结果] 早期漏斗通过 {len(results)} 只, 门槛≥{sc_cfg['min_score']}分后显示 {len(shown)} 只 (剔除 {dropped} 只)")
+    if shown:
+        print(f"  平台刚启动: {sum(1 for r in shown if '平台刚启动' in r.get('tags', ''))} 只")
+    return shown
+
+
+def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, member_codes=None,
+                     out_list_names=None, review_data=None):
+    """主推荐流程 v3.1 —— 五层漏斗筛选 + 综合评分
     输入:
       industry_df: 含 ts_code/name/industry/list_date
       daily_map: {date: DataFrame of daily}
       latest_date: 最新交易日 YYYYMMDD
       in_list_records: 全部 RPS 入选板块记录 (每条含 name + stocks 成分股), 跨 RPS5/10/20 三档汇总
       member_codes: 可选, 入选板块成分股 ts_code 集合 (默认从 in_list_records 提取)
+      out_list_names: 可选, 当日 RPS 调出板块名集合 (个股所属板块全部调出 → 剔除候选池)
+      review_data: 可选, daily_review.json 复盘数据 (mature_fatigue/danger 板块 → 评分扣分降级)
     流程:
-      第一层 大盘环境: 上证/创业板指 vs 20日线, 不合格直接终止 (输出空推荐 + 原因)
-      第二层 候选池:   100% 来自入选板块成分股, 统计每股归属强势板块数(多题材共振)
-      第三层 基本面:   一票否决 (ST/停牌/低价/小市值/PE异常/亏损/高负债)
-      第四层 资金面:   换手率/量比/成交额/主力资金 全部必达
-      第五层 技术共振: 7项独立指标达标 ≥3 项判为通过
-      综合评分: 板块40 + 基本面20 + 资金20 + 技术20 = 100, 按综合得分降序
+      第一层 大盘环境: 三态 PASS/WARN/REJECT, REJECT 输出0只, WARN 全量打【大盘偏弱】标签
+      第二层 候选池:   入选板块成分股 + 同源去重真实共振数 + 全调出剔除 + RPS20软过滤 + 黑名单
+      第三层 基本面:   一票否决 (ST/停牌/低价/小市值/高PE/亏损/高负债/质押商誉超标) + PE<0上限/财报时效
+      第四层 资金面:   换手率市值自适应/量比(涨停豁免)/成交额 全部必达
+      第五层 技术共振: 7项独立指标达标 ≥3 项判为通过 + 超买扣分
+      综合评分: 板块40 + 基本面20 + 资金20 + 技术20 = 100, 分项最低门槛 + 软扣分, 按综合得分降序
     """
-    global _LAST_MARKET_STATUS, _DAILY_BY_CODE
+    global _LAST_MARKET_STATUS, _DAILY_BY_CODE, _LAST_CANDIDATE_LOG
     print("\n" + "=" * 55)
-    print("  每日推荐股票 v3.0 (五层漏斗筛选 + 综合评分)")
+    print("  每日推荐股票 v3.1 (五层漏斗筛选 + 综合评分)")
     print("=" * 55)
+    candidate_log = []  # 落选原因日志: 记录每只候选股被哪一层过滤、为什么 (供调参回测)
+
+    def _log_codes(codes, stage, reason, name_map=None):
+        for c in codes:
+            candidate_log.append({"ts_code": c, "name": (name_map or {}).get(c, ""),
+                                  "stage": stage, "reason": reason})
+
+    def _log_rows(sub_df, stage, reason):
+        for _, r in sub_df.iterrows():
+            candidate_log.append({"ts_code": r["ts_code"], "name": r.get("name", ""),
+                                  "stage": stage, "reason": reason})
 
     if not in_list_records:
         print("  ⚠️ 无 RPS 入选板块, 跳过推荐")
@@ -1572,27 +2326,47 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
     if not member_codes:
         print("  ⚠️ 入选板块无成分股名单, 回退按行业名匹配")
     print(f"  入选板块: {len(in_list_names)} 个 | 成分股: {len(member_codes)} 只")
+    if out_list_names:
+        print(f"  当日调出板块: {len(out_list_names)} 个 (个股全部所属调出 → 剔除)")
+    bl_codes = _load_blacklist()
+    if bl_codes:
+        print(f"  黑名单: {len(bl_codes)} 只 (L2 直接剔除)")
 
     # ============ 第一层: 大盘环境全局校验 ============
-    print("\n[第一层] 大盘环境全局校验 (上证/创业板指 vs 20日均线)...")
+    print("\n[第一层] 大盘环境全局校验 (上证/创业板指 vs 20日均线 + 大盘主力资金)...")
     trade_days = sorted(daily_map.keys())
     index_map = fetch_index_daily(INDEX_CODES, trade_days)
-    market_ok, market_status = check_market_env(index_map, daily_map, latest_date)
+    market_flow = fetch_market_fund_flow(latest_date)
+    market_ok, market_status = check_market_env(index_map, daily_map, latest_date, market_flow)
     _LAST_MARKET_STATUS = market_status
     for r in market_status["indexes"]:
         c, m = r.get("close"), r.get("ma")
         state = "站上" if r.get("above") else "跌破" if r.get("above") is False else "无数据"
         print(f"    {r['name']}: 收盘{c if c is not None else '—'} / MA{m if m is not None else '—'} ({state})")
-    print(f"    上涨占比: {market_status['advance_ratio']} | 跌停: {market_status['limit_down_count']}家")
+    print(f"    上涨占比: {market_status['advance_ratio']} | 跌停: {market_status['limit_down_count']}家 | 涨停: {market_status.get('limit_up_count')}家")
+    mf = market_status.get("main_flow")
+    if mf:
+        print(f"    大盘主力资金: 近{mf['days']}日净流出{mf['neg_days']}日, 合计{mf['total_net_yi']}亿 ({mf['verdict']})")
     if not market_ok:
-        print(f"  ⛔ 大盘环境不满足: {market_status['reason']} → 终止选股, 前端展示「大盘环境不满足, 暂无推荐」")
+        print(f"  ⛔ 大盘环境不满足 (REJECT): {market_status['reason']} → 终止选股, 前端展示「大盘环境不满足, 暂无推荐」")
         return []
-    print(f"  ✅ 大盘环境合格, 继续选股")
+    if market_status.get("level") == "warn":
+        print(f"  ⚠️ 大盘环境偏弱 (WARN): {market_status['reason']} → 继续选股, 全量打【大盘偏弱】标签")
+    else:
+        print(f"  ✅ 大盘环境合格, 继续选股")
 
     # ============ 第二层: 候选股票池构建 (核心约束) ============
-    print("\n[第二层] 候选股票池构建 (100% 来自入选板块成分股 + 板块共振计数)...")
+    print("\n[第二层] 候选股票池构建 (100% 来自入选板块成分股 + 同源去重共振计数)...")
     sector_map = build_member_sector_map(in_list_records)
     members, codes, pool_mode = _select_member_pool(industry_df, in_list_names, member_codes)
+    # 黑名单剔除 (手工维护利空个股, L2 直接剔除, 避免后续拉取浪费)
+    if bl_codes:
+        before_bl = len(codes)
+        codes = [c for c in codes if c not in bl_codes]
+        if before_bl > len(codes):
+            removed_bl = [c for c in _extract_member_codes(in_list_records) if c in bl_codes]
+            _log_codes(removed_bl, "L2黑名单", "手工黑名单(解禁/减持/利空)")
+            print(f"  黑名单剔除: {before_bl} -> {len(codes)} 只")
     print(f"  选股池: {len(codes)} 只 ({pool_mode})")
     # 预建个股日线索引 (提速~100倍, 替代逐股逐日扫描 daily_map)
     _DAILY_BY_CODE = build_daily_by_code(daily_map, codes, latest_date, n_days=80)
@@ -1660,20 +2434,42 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         _LAST_MARKET_STATUS = None
         return []
 
-    # 板块共振计数 (第二层核心: 跨RPS档位共振强度, 数量越高热点认可度越强)
-    # sector_count = 所属板块入选的 RPS 档位数(1~3, 含重复条目长度)
+    # 板块共振计数 (第二层核心)
     # sector_names  = 去重后的板块名(前端展示所属热点板块)
-    stocks_df["sector_count"] = stocks_df["ts_code"].apply(lambda c: len(sector_map.get(c, [])))
+    # sector_count  = 同源合并后的"真实共振板块数" (算力/AI服务器同组只计1, 防题材重复虚高)
     stocks_df["sector_names"] = stocks_df["ts_code"].apply(
         lambda c: list(dict.fromkeys(sector_map.get(c, []))))
+    stocks_df["sector_count"] = stocks_df["sector_names"].apply(_merge_same_source_sectors)
+    # 全调出剔除: 个股所属板块全部在当日 RPS 调出列表 → 剔除候选池 (板块已结束强势, 个股无逻辑支撑)
+    if out_list_names:
+        ol = set(out_list_names)
+        before = len(stocks_df)
+        out_mask = stocks_df["sector_names"].apply(lambda sn: len(sn) > 0 and all(s in ol for s in sn))
+        if out_mask.any():
+            _log_rows(stocks_df[out_mask], "L2全调出", "所属板块全部在当日调出列表")
+        stocks_df = stocks_df[~out_mask]
+        removed = before - len(stocks_df)
+        if removed:
+            print(f"  全调出板块剔除: {before} -> {len(stocks_df)} 只 (所属板块全部调出 {removed} 只)")
     min_sc = CONFIG["pool"]["min_sector_count"]
     before = len(stocks_df)
+    low_res = stocks_df[stocks_df["sector_count"] < min_sc]
+    if len(low_res):
+        _log_rows(low_res, "L2共振不足", f"真实共振板块数<{min_sc}")
     stocks_df = stocks_df[stocks_df["sector_count"] >= min_sc]
-    print(f"  板块共振过滤: {before} -> {len(stocks_df)} 只 (每股须属 ≥{min_sc} 个入选板块)")
+    print(f"  板块共振过滤: {before} -> {len(stocks_df)} 只 (每股须属 ≥{min_sc} 个真实共振板块)")
     if stocks_df.empty:
         print("  ⚠️ 无股票属于入选板块成分股, 终止")
         return []
-    print(f"  共振分布(板块数→只数): {dict(stocks_df['sector_count'].value_counts().sort_index())}")
+    print(f"  真实共振分布(板块数→只数): {dict(stocks_df['sector_count'].value_counts().sort_index())}")
+    # 个股 RPS20 软过滤: RPS20 < rps20_soft 不否决, 但板块热度分减半 (评分循环使用)
+    rps20_map = build_rps20_map(daily_map, latest_date)
+    stocks_df["rps20"] = stocks_df["ts_code"].apply(lambda c: rps20_map.get(c))
+    rps20_soft = CONFIG["pool"].get("rps20_soft")
+    if rps20_map and rps20_soft:
+        weak = stocks_df["rps20"].notna() & (stocks_df["rps20"] < rps20_soft)
+        if weak.any():
+            print(f"  ⚠️ RPS20 软过滤: {int(weak.sum())} 只个股 RPS20<{rps20_soft} → 板块热度分减半")
 
     # ============ 第三层: 基本面排雷 (硬性一票否决) ============
     print("\n[第三层] 基本面排雷 (硬性一票否决)...")
@@ -1681,6 +2477,9 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
     fina_map = fetch_fina_indicator_batch(latest_date, codes=codes)
     print(f"  财务指标: 候选股 {len(fina_map)} 只 ({(datetime.now()-_t1).total_seconds():.1f}s)")
     stocks_df, rejects = screen_fundamental(stocks_df, fina_map)
+    for r in rejects:
+        candidate_log.append({"ts_code": r["ts_code"], "name": r.get("name", ""),
+                              "stage": "L3基本面", "reason": r["reason"]})
     print(f"  ⛔ 基本面剔除 {len(rejects)} 只:")
     for r in rejects[:10]:
         print(f"    - {r['ts_code']} {r['name']}: {r['reason']}")
@@ -1689,6 +2488,7 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
     print(f"  ✅ 通过基本面: {len(stocks_df)} 只")
     if stocks_df.empty:
         print("  ⚠️ 基本面排雷后无候选, 终止")
+        _LAST_CANDIDATE_LOG = candidate_log
         return []
 
     # ============ 第四层: 资金面达标校验 (全部核心项必达) ============
@@ -1696,51 +2496,131 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
     _t2 = datetime.now()
     mflow_map = fetch_moneyflow_batch(latest_date, daily_map, n_days=3, codes=codes)
     print(f"  主力资金: 候选股 {len(mflow_map)} 只 ({(datetime.now()-_t2).total_seconds():.1f}s)")
-    before = len(stocks_df)
+    before_df = stocks_df
     stocks_df, cap_details = screen_capital(stocks_df, daily_map, latest_date, mflow_map)
-    print(f"  资金面达标: {before} -> {len(stocks_df)} 只")
+    if len(stocks_df) < len(before_df):
+        cap_removed = before_df[~before_df["ts_code"].isin(set(stocks_df["ts_code"]))]
+        _log_rows(cap_removed, "L4资金面", "换手率区间/量比/成交额/主力资金 未全部达标")
+    print(f"  资金面达标: {len(before_df)} -> {len(stocks_df)} 只")
     if stocks_df.empty:
         print("  ⚠️ 资金面无一达标, 终止")
+        _LAST_CANDIDATE_LOG = candidate_log
         return []
 
     # ============ 第五层: 多技术指标共振 (达标 ≥3 项通过) ============
     print("\n[第五层] 多技术指标共振 (7项独立指标, 达标 ≥3 通过)...")
     rps50_map = build_rps50_map(daily_map, latest_date)
     print(f"  全市场 RPS50 映射: {len(rps50_map)} 只")
-    before = len(stocks_df)
+    before_df = stocks_df
     stocks_df, tech_details = screen_technical(stocks_df, daily_map, latest_date, rps50_map=rps50_map)
-    print(f"  技术共振通过: {before} -> {len(stocks_df)} 只")
+    if len(stocks_df) < len(before_df):
+        tech_removed = before_df[~before_df["ts_code"].isin(set(stocks_df["ts_code"]))]
+        _log_rows(tech_removed, "L5技术共振", f"技术指标达标数<{CONFIG['technical']['hit_min']}")
+    print(f"  技术共振通过: {len(before_df)} -> {len(stocks_df)} 只")
     if stocks_df.empty:
         print("  ⚠️ 技术共振无一通过, 终止")
+        _LAST_CANDIDATE_LOG = candidate_log
         return []
 
     # ============ 综合评分与最终推荐排序 ============
     print(f"\n[综合评分] 通过五层漏斗 {len(stocks_df)} 只 → 四维评分 (板块40/基本面20/资金20/技术20) + 预测化")
     sector_cont_map = _build_sector_cont_map(in_list_records)
+    sc_cfg = CONFIG["score"]
+    fund_cfg = CONFIG["fundamental"]
+    warn_flag = market_status.get("level") == "warn"
+    fatigue_sectors, danger_sectors = _review_deduct_map(review_data)
+    if fatigue_sectors or danger_sectors:
+        print(f"  ⚠️ 复盘联动: 成熟疲劳板块 {len(fatigue_sectors)} 个 (总分扣{sc_cfg['fatigue_deduct']}) "
+              f"| danger风险板块 {len(danger_sectors)} 个 (总分扣{sc_cfg['danger_deduct']})")
     results = []
     for _, s in stocks_df.iterrows():
         code = s["ts_code"]
         sectors = s["sector_names"] or []  # 去重板块名(前端展示)
-        sector_count = int(s["sector_count"])  # 跨RPS档位共振数(评分用)
+        sector_count = int(s["sector_count"])  # 同源合并后真实共振板块数(评分用)
         fina_row = fina_map.get(code)
         cap = cap_details.get(code, {})
         tech = tech_details.get(code, {})
         score_sector = score_sector_funnel(sector_count)
+        # L2 软过滤: 个股 RPS20 < rps20_soft → 板块热度分减半 (板块强但个股弱的"跟班"降权)
+        rps20 = s.get("rps20")
+        rps20_soft = CONFIG["pool"].get("rps20_soft")
+        if rps20 is not None and rps20_soft and float(rps20) < rps20_soft:
+            score_sector = int(score_sector * 0.5)
         score_fund = score_fundamental_funnel(s, fina_row)
+        # L3 软约束: PE-TTM<0 → 基本面分强制上限 pe_neg_cap (不否决但大幅压低)
+        pe = s.get("pe_ttm")
+        pe_neg = pe is not None and not pd.isna(pe) and float(pe) < 0
+        if pe_neg:
+            score_fund = min(score_fund, fund_cfg["pe_neg_cap"])
+        # L3 财报时效: 财报距今 > max_report_age_days → 基本面分 × stale_factor + 标签【财报陈旧】
+        report_age = _report_age_days(fina_row, latest_date)
+        stale_flag = report_age is not None and report_age > fund_cfg["max_report_age_days"]
+        if stale_flag:
+            score_fund = int(score_fund * fund_cfg["stale_factor"])
         score_cap = score_capital_funnel(cap)
+        # L5 技术超买: RSI>rsi_overbought / CCI>cci_overbought → 技术分扣分 + 标签【技术超买】
         score_tech = score_technical_funnel(tech.get("hit_count", 0))
+        if tech.get("overbought"):
+            score_tech = max(0, score_tech - CONFIG["technical"]["overbought_deduct_both"] if tech["overbought"] == "both"
+                             else score_tech - CONFIG["technical"]["overbought_deduct"])
+        # 分项最低门槛: 基本面/资金面 不达下限直接剔除 (防板块热度分拉满掩盖其他维度缺陷)
+        if score_fund < sc_cfg["min_fundamental"] or score_cap < sc_cfg["min_capital"]:
+            candidate_log.append({"ts_code": code, "name": s["name"], "stage": "评分分项门槛",
+                                  "reason": f"基本面{score_fund}<{sc_cfg['min_fundamental']} "
+                                            f"或资金面{score_cap}<{sc_cfg['min_capital']}"})
+            continue
         total = score_sector + score_fund + score_cap + score_tech
+        # 近5日累计涨幅过高 → 总分软扣 + 标签【短期涨幅过高】 (短线追高风险)
+        df_by_code = _DAILY_BY_CODE.get(code)
+        chg5 = None
+        if df_by_code is not None and len(df_by_code) >= 6:
+            closes5 = [float(c) for c in df_by_code["close"].tolist()]
+            if closes5[-6] > 0:
+                chg5 = (closes5[-1] / closes5[-6] - 1) * 100
+        gain5_high = chg5 is not None and chg5 > sc_cfg["gain5_threshold"]
+        if gain5_high:
+            total -= sc_cfg["gain5_deduct"]
+        # 复盘联动: 成熟疲劳板块扣 fatigue_deduct / danger 风险板块扣 danger_deduct (不否决只降权)
+        review_deduct = 0
+        if fatigue_sectors and any(sec in fatigue_sectors for sec in sectors):
+            review_deduct = sc_cfg["fatigue_deduct"]
+        elif danger_sectors and any(sec in danger_sectors for sec in sectors):
+            review_deduct = sc_cfg["danger_deduct"]
+        if review_deduct:
+            total -= review_deduct
         # 预测化: 6 维度概率 + 置信度 + 止损位 + 预测逻辑 (不依赖额外接口)
         pred_features = _pred_features(code, s, cap, tech, rps50_map, _DAILY_BY_CODE,
                                        sector_cont_map, market_status)
         prediction = predict.build_prediction(pred_features, market_status)
+        tags = build_recommend_tags(sectors, tech.get("hits", []), sector_count)
+        # 级别标签 (日线筛选不固化持有周期, 仅文字提示):
+        #   ≥80 → 【短线优选】; 70-79 → 【短线观察】 (替代旧"优选 2-8周"误导性标签)
+        if total >= 80:
+            tags = ("短线优选" + (" + " + tags) if tags else "短线优选")
+        elif total >= 70:
+            tags = ("短线观察" + (" + " + tags) if tags else "短线观察")
+        extra_tags = []
+        if stale_flag:
+            extra_tags.append("财报陈旧")
+        if tech.get("overbought"):
+            extra_tags.append("技术超买")
+        if cap.get("limit_up"):
+            extra_tags.append("涨停无量")
+        if gain5_high:
+            extra_tags.append("短期涨幅过高")
+        if review_deduct:
+            extra_tags.append("复盘风险降权")
+        if warn_flag:
+            extra_tags.append("大盘偏弱")
+        if extra_tags:
+            tags = tags + " + " + " + ".join(extra_tags)
         results.append({
             "ts_code": code,
             "name": s["name"],
             "industry": s["industry"],
             "sectors": sectors,
             "sector_count": sector_count,
-            "tags": build_recommend_tags(sectors, tech.get("hits", []), sector_count),
+            "tags": tags,
             "price": round(s["price"], 2) if s.get("price") is not None else None,
             "pct_chg": round(s["pct_chg"], 2) if s.get("pct_chg") is not None else None,
             "pe_ttm": s.get("pe_ttm"),
@@ -1753,6 +2633,7 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
             "fundamental": {
                 "net_profit": fina_row.get("net_profit") if fina_row else None,
                 "debt_to_assets": fina_row.get("debt_to_assets") if fina_row else None,
+                "report_age_days": report_age,
             },
             "capital": cap,
             "technical": tech,
@@ -1763,6 +2644,17 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
     # 综合得分门槛: < min_score 的股票不进入推荐列表 (前端不显示)
     shown = filter_by_min_score(results)
     dropped = len(results) - len(shown)
+    # 输出层同板块控制: 同一细分板块最多输出 N 只 (防主线集中时列表高度同质)
+    max_per = sc_cfg.get("max_per_sector")
+    if max_per and max_per > 0:
+        shown, capped = _cap_per_sector(shown, max_per)
+        for c in capped:
+            candidate_log.append({"ts_code": c["ts_code"], "name": c["name"],
+                                  "stage": "输出同板块控制",
+                                  "reason": f"同细分板块最多输出{max_per}只"})
+        if capped:
+            print(f"  同板块输出控制: 剔除 {len(capped)} 只 (每细分板块最多 {max_per} 只)")
+    _LAST_CANDIDATE_LOG = candidate_log
 
     # 分数分布诊断 (确认五层筛选后仍有区分度, 避免误判 "代码 bug")
     all_totals = [r["score_total"] for r in results]
@@ -1854,6 +2746,18 @@ def save_recommendations(rec_list, latest_date, prev_date=""):
     with open(REC_FILE, "w", encoding="utf-8") as f:
         # allow_nan=False: 兜底, 若 sanitizer 漏网 NaN 直接抛错而非静默写出非法 JSON
         json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
+    # 落选原因日志: 记录全部候选股各层过滤原因 (供调参回测, 失败不阻断)
+    try:
+        cl = _LAST_CANDIDATE_LOG or []
+        if cl:
+            log_file = STATIC_DIR / "candidate_log.json"
+            with open(log_file, "w", encoding="utf-8") as f:
+                json.dump({"update_date": latest_date, "count": len(cl),
+                           "candidates": _sanitize_json(cl)}, f,
+                          ensure_ascii=False, indent=2, allow_nan=False)
+            print(f"  ✅ 落选日志: {len(cl)} 条 (保存至 {log_file.name})")
+    except Exception as e:
+        print(f"  ⚠️ 落选日志写入失败(不影响推荐): {str(e)[:60]}")
     # 预测化: 记录当日预测 (供每日校准核对实际涨跌)
     try:
         n_pred = predict.record_predictions(rec_list, latest_date)
@@ -1862,6 +2766,48 @@ def save_recommendations(rec_list, latest_date, prev_date=""):
     except Exception as e:
         print(f"  ⚠️ 预测日志记录失败(不影响推荐): {str(e)[:60]}")
     print(f"  ✅ 已保存: {REC_FILE} ({len(rec_list)} 只, 多板块共振 {multi_sector_count})")
+
+
+def save_early_recommendations(rec_list, latest_date, prev_date=""):
+    """保存早期启动挖掘结果到 static/recommendations_early.json (独立输出, 不污染原版)
+    结构对齐原版 recommendations.json, 前端可复用渲染逻辑分开展示
+    """
+    market_status = _LAST_EARLY_MARKET_STATUS or {
+        "is_safe": None, "rule": "至少 1 个指数站上 20 日线",
+        "reason": "指数数据缺失", "indexes": [],
+        "advance_ratio": None, "limit_down_count": None,
+        "note": "指数数据缺失, 无法校验大盘环境",
+    }
+    multi_sector_count = sum(1 for r in rec_list if r.get("sector_count", 0) >= 2)
+    platform_count = sum(1 for r in rec_list if "平台刚启动" in r.get("tags", ""))
+    output = {
+        "schema_version": 1,
+        "mode": "early_stage_start",
+        "update_date": latest_date,
+        "prev_date": prev_date,
+        "market_status": market_status,
+        "multi_sector_count": multi_sector_count,
+        "platform_count": platform_count,
+        "disclaimer": "⚠️ 早期启动挖掘为独立候选池量化结果(潜力板块RPS∈[88,90) + 涨幅/MA60偏离惩罚 + 平台形态加分), 刚启动标的胜率低于原版动量模式, 但规避高位接盘; 两个列表互为参考, 绝对不构成任何个股投资建议; 严禁杠杆借贷炒股。",
+        "count": len(rec_list),
+        "stocks": rec_list,
+    }
+    output = _sanitize_json(output)  # NaN/Inf/numpy → None/原生, 保证浏览器可解析
+    with open(EARLY_REC_FILE, "w", encoding="utf-8") as f:
+        json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
+    # 早期落选原因日志 (独立文件, 不覆盖原版 candidate_log)
+    try:
+        cl = _LAST_EARLY_CANDIDATE_LOG or []
+        if cl:
+            log_file = STATIC_DIR / "early_candidate_log.json"
+            with open(log_file, "w", encoding="utf-8") as f:
+                json.dump({"update_date": latest_date, "count": len(cl),
+                           "candidates": _sanitize_json(cl)}, f,
+                          ensure_ascii=False, indent=2, allow_nan=False)
+            print(f"  ✅ 早期落选日志: {len(cl)} 条 (保存至 {log_file.name})")
+    except Exception as e:
+        print(f"  ⚠️ 早期落选日志写入失败(不影响推荐): {str(e)[:60]}")
+    print(f"  ✅ 早期启动挖掘已保存: {EARLY_REC_FILE} ({len(rec_list)} 只, 平台刚启动 {platform_count})")
 
 
 if __name__ == "__main__":
@@ -1875,10 +2821,30 @@ if __name__ == "__main__":
     # RPS 入选板块从已有 rps_data.json 读取 (含成分股 stocks, 供板块共振计数)
     data_file = STATIC_DIR / "rps_data.json"
     in_list_records = []
+    out_list_names = set()
     if data_file.exists():
         with open(data_file, encoding="utf-8") as f:
             data = json.load(f)
         for k in ("rps5", "rps10", "rps20"):
             in_list_records.extend(data.get(k, {}).get("in_list", []))
-    rec_list = recommend_stocks(industry_df, daily_map, latest_date, in_list_records)
-    save_recommendations(rec_list, latest_date, prev_date)
+            for rec in data.get(k, {}).get("out_list", []) or []:
+                if rec and rec.get("name"):
+                    out_list_names.add(str(rec["name"]).strip())
+    # 复盘联动: 读取 daily_review.json (成熟疲劳/danger 板块 → 评分扣分降级 + 早期启动潜力板块)
+    review_data = None
+    review_file = STATIC_DIR / "daily_review.json"
+    if review_file.exists():
+        try:
+            with open(review_file, encoding="utf-8") as f:
+                review_data = json.load(f)
+        except Exception as e:
+            print(f"  ⚠️ daily_review.json 读取失败(跳过复盘联动): {str(e)[:50]}")
+    run_mode = CONFIG["run_mode"]
+    if run_mode.get("ORIGINAL_MOMENTUM", True):
+        rec_list = recommend_stocks(industry_df, daily_map, latest_date, in_list_records,
+                                    out_list_names=out_list_names, review_data=review_data)
+        save_recommendations(rec_list, latest_date, prev_date)
+    if run_mode.get("EARLY_STAGE_START", True):
+        rec_early = recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
+                                           out_list_names=out_list_names, review_data=review_data)
+        save_early_recommendations(rec_early, latest_date, prev_date)

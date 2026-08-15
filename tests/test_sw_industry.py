@@ -139,5 +139,53 @@ class TestBuildCache(unittest.TestCase):
             sw_industry._ak = None
 
 
+class TestStFilter(unittest.TestCase):
+    """v5: 股票池统一剔除 ST/*ST/退市 (rps_calc.get_stock_industry 出口过滤)"""
+
+    def test_filter_st_names(self):
+        import pandas as pd
+        import rps_calc
+        df = pd.DataFrame({
+            "ts_code": ["600001.SH", "600002.SH", "600003.SH", "600004.SH", "600005.SH"],
+            "name": ["浦发银行", "ST康美", "*ST康得", "退市美都", "中国平安"],
+            "industry": ["银行Ⅲ", "中药", "医药", "化工", "保险"],
+        })
+        out = rps_calc._filter_st(df)
+        self.assertEqual(set(out["name"]), {"浦发银行", "中国平安"})
+
+    def test_filter_st_null_and_empty(self):
+        import pandas as pd
+        import rps_calc
+        self.assertIsNone(rps_calc._filter_st(None))
+        self.assertEqual(len(rps_calc._filter_st(pd.DataFrame())), 0)
+
+    def test_get_stock_industry_drops_st(self):
+        """申万出口过滤: 含 ST/*ST/退 的股票不进入行业映射"""
+        import pandas as pd
+        import rps_calc
+        from unittest import mock
+        tmpdir = tempfile.mkdtemp()
+        sw_map = {
+            "stock_industry": {
+                "600001.SH": "银行Ⅲ", "600002.SH": "中药", "600003.SH": "医药",
+                "600004.SH": "化工", "600005.SH": "保险",
+            },
+            "stock_name": {
+                "600001.SH": "浦发银行", "600002.SH": "ST康美", "600003.SH": "*ST康得",
+                "600004.SH": "退市美都", "600005.SH": "中国平安",
+            },
+            "board_stocks": {},
+        }
+        with mock.patch.object(sw_industry, "build_sw_industry_map", return_value=sw_map), \
+             mock.patch.object(rps_calc, "STATIC_DIR", Path(tmpdir)):
+            df = rps_calc.get_stock_industry()
+        names = set(df["name"])
+        self.assertIn("浦发银行", names)
+        self.assertIn("中国平安", names)
+        for bad in ("ST康美", "*ST康得", "退市美都"):
+            self.assertNotIn(bad, names)
+        self.assertTrue((~df["name"].str.contains(r"ST|退", regex=True, na=False)).all())
+
+
 if __name__ == "__main__":
     unittest.main()

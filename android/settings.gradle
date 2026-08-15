@@ -1,15 +1,16 @@
+// 国内服务器打包环境: mavenCentral 官方域名超时 → 阿里云镜像 (gradle 分发包走腾讯镜像见 gradle-wrapper.properties)
 pluginManagement {
     repositories {
         google()
-        mavenCentral()
-        gradlePluginPortal()
+        maven { url 'https://maven.aliyun.com/repository/central' }
+        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
     }
 }
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
         google()
-        mavenCentral()
+        maven { url 'https://maven.aliyun.com/repository/central' }
     }
 }
 rootProject.name = "RpsBoard"

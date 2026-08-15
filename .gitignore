@@ -6,11 +6,11 @@ static/rps_history.json
 # 每日缓存的K线数据（体积大）
 static/daily_cache/
 
-# 推荐股票增强数据缓存（index_daily/fina_indicator/moneyflow/hsgt）
+# 推荐股票增强数据缓存（index_daily/fina_indicator/moneyflow/大盘主力资金）
 static/index_cache/
 static/fina_indicator_cache.json
 static/moneyflow_cache.json
-static/moneyflow_hsgt_cache.json
+static/market_fund_flow_cache.json
 static/sw_industry_cache.json
 
 # Python缓存

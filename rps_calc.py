@@ -23,12 +23,74 @@ TUSHARE_TOKENS = [
     "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
 RPS_THRESHOLD = 90
-SCHEMA_VERSION = 4  # v4=板块池从110大行业切换为申万三级细分板块(208个) (幂等判断用, 改公式/格式/板块池需+1强制重算)
+SCHEMA_VERSION = 5  # v5=股票池剔除ST/*ST/退市 (幂等判断用, 改公式/格式/板块池需+1强制重算)
 STATIC_DIR = Path(__file__).parent / "static"
 DATA_FILE = STATIC_DIR / "rps_data.json"
 LAST_RESULT_FILE = STATIC_DIR / "last_result.json"
 RPS_HISTORY_FILE = STATIC_DIR / "rps_history.json"
+RUN_STATUS_FILE = STATIC_DIR / "rps_run_status.json"
 # ==========================================================
+
+
+def write_run_status(success, date, mode="calc", message=""):
+    """写 rps 运行状态文件 (rps_run_status.json), 供下游模块校验当日是否执行成功
+    - 前端可据此提示"今日计算失败/过期数据", 而非静默展示旧结果
+    - 周度推荐执行前校验: 当日 RPS 未成功则跳过, 避免拿旧 json 输出错误结果
+    success: bool 当日 rps_data.json 是否完整可用(计算成功 或 幂等跳过但文件完整)
+    mode:    "calc"(重新计算) / "skip"(幂等跳过) / "error"(失败)
+    """
+    try:
+        status = {
+            "update_date": date,
+            "success": bool(success),
+            "mode": mode,
+            "message": message or "",
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        }
+        with open(RUN_STATUS_FILE, "w", encoding="utf-8") as f:
+            json.dump(status, f, ensure_ascii=False, indent=2)
+        if not success:
+            print(f"  ⚠️ 运行状态已标记失败: {RUN_STATUS_FILE.name}")
+        return True
+    except Exception as e:
+        print(f"  ⚠️ 运行状态写入失败: {str(e)[:60]}")
+        return False
+
+
+def load_run_status():
+    """读取 rps 运行状态; 文件缺失/解析失败 → None"""
+    try:
+        if RUN_STATUS_FILE.exists():
+            with open(RUN_STATUS_FILE, encoding="utf-8") as f:
+                return json.load(f)
+    except Exception:
+        pass
+    return None
+
+
+def load_out_list_names(data):
+    """从 rps_data.json 提取当日三档调出板块名集合 (供候选池全调出剔除)"""
+    out = set()
+    if not data:
+        return out
+    for k in ("rps5", "rps10", "rps20"):
+        for rec in data.get(k, {}).get("out_list", []) or []:
+            if rec and rec.get("name"):
+                out.add(str(rec["name"]).strip())
+    return out
+
+
+def load_review_data():
+    """读取 daily_review.json 复盘数据 (供推荐模块成熟疲劳/danger 板块评分扣分联动);
+    文件缺失/解析失败 → None (不影响选股)"""
+    try:
+        f = STATIC_DIR / "daily_review.json"
+        if f.exists():
+            with open(f, encoding="utf-8") as fp:
+                return json.load(fp)
+    except Exception as e:
+        print(f"  ⚠️ daily_review.json 读取失败(跳过复盘联动): {str(e)[:50]}")
+    return None
 
 
 class TusharePool:
@@ -136,8 +198,20 @@ def get_trade_days(n=80):
         return sorted(all_days)[-n:]
 
 
+def _filter_st(df):
+    """剔除 ST/*ST/退市 股票 (名称含 ST/退 关键词, 板块RPS/成分股/候选池统一过滤)"""
+    if df is None or len(df) == 0:
+        return df
+    n0 = len(df)
+    df = df[~df["name"].fillna("").str.contains(r"ST|退", regex=True, na=False)]
+    if len(df) < n0:
+        print(f"  ⏭️ 剔除ST/退市: {n0 - len(df)}只")
+    return df
+
+
 def get_stock_industry():
-    """股票→行业映射。优先申万三级细分板块池(208个), 回退 Tushare stock_basic"""
+    """股票→行业映射。优先申万三级细分板块池(208个), 回退 Tushare stock_basic
+    所有出口统一剔除 ST/*ST/退市 股票(名称含 ST/退)"""
     import sw_industry
     sw_map = sw_industry.build_sw_industry_map()
     if sw_map:
@@ -154,7 +228,7 @@ def get_stock_industry():
             result["fetch_date"] = datetime.now().strftime("%Y%m%d")
             result.to_json(cache_file, orient="records", force_ascii=False)
             print(f"  ✅ 申万三级板块池: {result['industry'].nunique()}个细分板块, {len(result)}只股票")
-            return result[["ts_code", "name", "industry", "list_date"]]
+            return _filter_st(result[["ts_code", "name", "industry", "list_date"]])
     cache_file = STATIC_DIR / "stock_basic_cache.json"
     if os.path.exists(cache_file):
         df = pd.read_json(cache_file, dtype={"ts_code": str})
@@ -163,7 +237,7 @@ def get_stock_industry():
             fd = str(df["fetch_date"].iloc[0]) if "fetch_date" in df.columns else ""
             days_old = (datetime.now() - datetime.strptime(fd, "%Y%m%d")).days if len(fd) == 8 else 999
             if days_old <= 5:
-                return df[["ts_code", "name", "industry", "list_date"]]
+                return _filter_st(df[["ts_code", "name", "industry", "list_date"]])
     try:
         df, _ = pool.call("stock_basic", fields="ts_code,name,industry,list_date")
         df = df[df["industry"].notna() & (df["industry"] != "")]
@@ -172,7 +246,7 @@ def get_stock_industry():
         result["fetch_date"] = datetime.now().strftime("%Y%m%d")
         result.to_json(cache_file, orient="records", force_ascii=False)
         print(f"  ✅ stock_basic: {len(result)}只, {result['industry'].nunique()}个行业")
-        return result[["ts_code", "name", "industry", "list_date"]]
+        return _filter_st(result[["ts_code", "name", "industry", "list_date"]])
     except Exception as e:
         print(f"  ⚠️ stock_basic全Token受限: {e}")
         # 回退: 旧版缓存(缺fetch_date但含真实行业映射)优于前缀推断, 复用并补日期戳
@@ -187,7 +261,7 @@ def get_stock_industry():
                     result["fetch_date"] = datetime.now().strftime("%Y%m%d")
                     result.to_json(cache_file, orient="records", force_ascii=False)
                     print(f"  ✅ stock_basic缓存回退: {len(result)}只, {result['industry'].nunique()}个行业(真实映射)")
-                    return result[["ts_code", "name", "industry", "list_date"]]
+                    return _filter_st(result[["ts_code", "name", "industry", "list_date"]])
             except Exception:
                 pass
     print("  ⚠️ 降级: 代码前缀推断板块")
@@ -201,7 +275,7 @@ def get_stock_industry():
             result["industry"] = result["ts_code"].apply(_get_industry_from_code)
             result["list_date"] = ""  # 降级时无上市日期, 次新股过滤将跳过
             print(f"  ✅ 前缀推断: {result['industry'].nunique()}个分组")
-            return result[["ts_code", "name", "industry", "list_date"]]
+            return _filter_st(result[["ts_code", "name", "industry", "list_date"]])
     raise Exception("无法获取股票数据")
 
 
@@ -935,42 +1009,109 @@ def _current_iso_week(dt=None):
     return f"{iso[0]}W{iso[1]}"
 
 
-def _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, rps20_records):
-    """周度推荐(中线波段): 每周运行 1 次, 已生成当周结果则跳过
-    失败不阻断主流程(输出空周度推荐或保留上周结果)
+def build_potential_stats(rps_history, stock_rps50=None, lo=88.0, hi=None):
+    """临界潜力板块(RPS5∈[lo, hi))成分股统计 → 供 daily_review.potential_sectors 确认达标率
+    边界板块(RPS 接近阈值但未入选, 如 RPS5∈[88,90)) 不在 rps_data.json 的
+    in_list/out_list 中(无成分股 stocks), 其内部达标率无法在 daily_review 自行计算
+    → 由 rps_calc 在 main() 中根据 daily_map 聚合个股 RPS50 后传入
+    返回 [{name, stock_count, rps50_above_90, rank5, rank_change, continuous}]
+    rank_change: 排名变化(正值=排名上升, 与 df_rps 的 rank_chg5 约定一致)
+    continuous:  连续 RPS5 ≥ lo 的天数(在潜力区间蓄势多久)
+    """
+    hi = hi or RPS_THRESHOLD
+    if not rps_history:
+        return []
+    dates = sorted(rps_history.keys())
+    today = dates[-1]
+    prev = dates[-2] if len(dates) >= 2 else None
+    out = []
+    for ind, v in rps_history[today].items():
+        r = v.get("RPS5")
+        if r is None or pd.isna(r) or not (lo <= float(r) < hi):
+            continue
+        st = (stock_rps50 or {}).get(ind) or {}
+        rank5 = v.get("rank5")
+        prev_rank = rps_history[prev].get(ind, {}).get("rank5") if prev else None
+        rank_chg = (prev_rank - rank5) if (rank5 is not None and prev_rank is not None) else None
+        cont = 0
+        for d in reversed(dates):  # 从今天向前连续 RPS5 ≥ lo
+            dv = rps_history[d].get(ind, {}).get("RPS5")
+            if dv is not None and not pd.isna(dv) and float(dv) >= lo:
+                cont += 1
+            else:
+                break
+        out.append({
+            "name": ind,
+            "stock_count": int(st.get("stock_count") or 0),
+            "rps50_above_90": int(st.get("rps50_above_90") or 0),
+            "rank5": float(rank5) if rank5 is not None else None,
+            "rank_change": float(rank_chg) if rank_chg is not None else None,
+            "continuous": cont,
+        })
+    out.sort(key=lambda x: -(x["rank5"] if x["rank5"] is not None else 0))
+    return out
+
+
+def _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, rps20_records,
+                      out_list_names=None, review_data=None):
+    """周度推荐(中线波段): 每周五收盘后更新 1 次
+    幂等: 周一~周四本周已生成则跳过(以上周五收盘版为准); 周五强制用当日最新收盘数据重新生成
+    (修复: 旧逻辑按 ISO 周判幂等, 周一生成后周五被误跳过, 导致周度推荐停留周一数据)
+    状态校验: 当日 rps_calc 未执行成功(success=False 或 update_date≠latest_date) → 跳过周推荐,
+    避免周五 RPS 计算失败仍拿旧 json 输出错误结果。
     rps20_records: RPS20 档位入选板块记录(含 name + continuous + stocks 成分股)
     """
     if not rps20_records:
         print("  ⏭️ 无 RPS20 入选板块, 跳过周度推荐")
         return False
+    # 状态校验: rps_calc 当日成功是周推荐的前置条件 (防止周五 RPS 失败仍输出旧结果)
+    _st = load_run_status()
+    if _st is None or not _st.get("success") or str(_st.get("update_date", "")) != str(latest_date):
+        _d = _st.get("update_date", "无") if _st else "无"
+        print(f"  ⏭️ 当日 RPS 计算状态异常(date={_d}, success={_st.get('success') if _st else '未知'}), "
+              f"跳过周度推荐(避免基于过期/损坏 rps_data 输出)")
+        return False
     try:
         import recommend_weekly
-        wk_file = recommend_weekly.WEEKLY_REC_FILE
+        run_mode = recommend_weekly.CONFIG_WEEKLY.get("run_mode", {})
+        orig_on = run_mode.get("ORIGINAL_MOMENTUM", True)
+        early_on = run_mode.get("EARLY_STAGE_START", True)
+        # 幂等判断: 原版周度文件存在则基于它; 原版关闭时基于早期文件
+        wk_file = recommend_weekly.WEEKLY_REC_FILE if orig_on else recommend_weekly.WEEKLY_EARLY_REC_FILE
         if wk_file.exists():
             try:
                 with open(wk_file, encoding="utf-8") as f:
                     _wk = json.load(f)
-                if _wk.get("week") == _current_iso_week():
-                    print("  ⏭️ 周度推荐本周已生成, 跳过(每周五运行1次)")
+                # 周一~周四(weekday 0-3): 本周已有结果则跳过; 周五(weekday 4): 重新生成本周最终版
+                if datetime.now().weekday() != 4 and _wk.get("week") == _current_iso_week():
+                    print("  ⏭️ 周度推荐本周已生成, 跳过(每周五收盘后更新)")
                     return True
             except Exception:
                 pass
-        rec_list = recommend_weekly.recommend_weekly_stocks(
-            industry_df, daily_map, latest_date, rps20_records)
-        recommend_weekly.save_weekly_recommendations(rec_list, latest_date, prev_date)
+        if orig_on:
+            rec_list = recommend_weekly.recommend_weekly_stocks(
+                industry_df, daily_map, latest_date, rps20_records,
+                out_list_names=out_list_names, review_data=review_data)
+            recommend_weekly.save_weekly_recommendations(rec_list, latest_date, prev_date)
+        if early_on:
+            rec_early = recommend_weekly.recommend_weekly_early_stocks(
+                industry_df, daily_map, latest_date, rps20_records,
+                out_list_names=out_list_names, review_data=review_data)
+            recommend_weekly.save_weekly_early_recommendations(rec_early, latest_date, prev_date)
         return True
     except Exception as e:
         print(f"  ⚠️ 周度推荐生成失败(不阻断主流程): {str(e)[:80]}")
         return False
 
 
-def _maybe_run_review():
+def _maybe_run_review(potential_stats=None):
     """每日复盘(动量视角量化复盘): 读取 rps_data/rps_history 生成 json+md, 失败不阻断主流程
+    potential_stats: 临界潜力板块成分股统计(build_potential_stats 产出), 供早期启动挖掘
     daily_review.main() 自带幂等: 当日已生成则跳过
     """
     try:
         import daily_review
-        daily_review.main(force=False)
+        daily_review.main(force=False, potential_stats=potential_stats)
     except Exception as e:
         print(f"  ⚠️ 每日复盘生成失败(不阻断主流程): {str(e)[:80]}")
 
@@ -1004,6 +1145,8 @@ def main():
             pass
     if skip:
         print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且当天已完整计算，跳过计算（保持调入/调出对比基准）")
+        # 幂等跳过但 rps_data.json 完整可用 → 标记运行成功 (下游可正常消费)
+        write_run_status(True, latest_td, mode="skip", message="数据已最新, 幂等跳过计算")
         # 每日推荐与 RPS 计算解耦: 即使 RPS 被幂等跳过, 仍独立加载 daily_map 生成推荐
         # (recommend 不修改 rps_data.json/last_result.json, 不影响调入/调出对比基准)
         try:
@@ -1020,13 +1163,35 @@ def main():
                 for _k in ("rps5", "rps10", "rps20"):
                     # 完整入选板块记录(含 name + stocks 成分股), 供板块共振计数
                     in_list_records.extend(_data.get(_k, {}).get("in_list", []))
+            # 复盘先行: 每日复盘(动量量化复盘) → daily_review.json 含 potential_sectors
+            # (早期启动推荐的候选池依赖该字段; 幂等: 当日已生成则跳过)
+            _review = load_review_data()
+            try:
+                _hist = {}
+                if RPS_HISTORY_FILE.exists():
+                    with open(RPS_HISTORY_FILE, encoding="utf-8") as f:
+                        _hist = json.load(f)
+                _stock_rps50 = calc_stock_rps50_by_industry(dm, ind_df, trade_days)
+                _maybe_run_review(build_potential_stats(_hist, _stock_rps50))
+            except Exception as _e:
+                print(f"  ⚠️ 复盘前置数据构建失败(不阻断): {str(_e)[:80]}")
+                _maybe_run_review()
+            _review = load_review_data()
+            # 复盘驱动选股: 当日调出板块剔除 + daily_review 成熟疲劳/danger 评分扣分
+            _out_list = load_out_list_names(_data)
+            run_mode = recommend.CONFIG["run_mode"]
             # 五层漏斗: 候选池 100% 来自入选板块成分股 + 板块共振计数
-            rec_list = recommend.recommend_stocks(ind_df, dm, ld, in_list_records)
-            recommend.save_recommendations(rec_list, ld, pd_)
+            if run_mode.get("ORIGINAL_MOMENTUM", True):
+                rec_list = recommend.recommend_stocks(ind_df, dm, ld, in_list_records,
+                                                      out_list_names=_out_list, review_data=_review)
+                recommend.save_recommendations(rec_list, ld, pd_)
+            if run_mode.get("EARLY_STAGE_START", True):
+                rec_early = recommend.recommend_early_stocks(ind_df, dm, ld, in_list_records,
+                                                             out_list_names=_out_list, review_data=_review)
+                recommend.save_early_recommendations(rec_early, ld, pd_)
             # 周度推荐(中线波段): 每周运行1次, 已生成当周结果则跳过
-            _maybe_run_weekly(ind_df, dm, ld, pd_, _data.get("rps20", {}).get("in_list", []))
-            # 每日复盘(动量量化复盘): 复用 rps_data/rps_history 自动生成, 幂等
-            _maybe_run_review()
+            _maybe_run_weekly(ind_df, dm, ld, pd_, _data.get("rps20", {}).get("in_list", []),
+                              out_list_names=_out_list, review_data=_review)
         except Exception as e:
             print(f"  ⚠️ 推荐生成失败(不阻断): {str(e)[:80]}")
         return
@@ -1040,11 +1205,13 @@ def main():
     daily_map = fetch_daily_batch(trade_days)
     print(f"  {len(daily_map)}/{len(trade_days)}天")
     if len(daily_map) < 21:
+        write_run_status(False, latest_td, mode="error", message="日线数据不足(<21天)")
         print("❌ 数据不足"); return
 
     print("\n[4/5] 全量 RPS 历史计算...")
     result = calc_full_rps_history(daily_map, industry_df, trade_days)
     if result is None:
+        write_run_status(False, latest_td, mode="error", message="RPS 历史计算失败")
         print("❌ 计算失败"); return
     df_rps, rps_history = result
     print(f"  {len(df_rps)}个行业参与计算")
@@ -1065,7 +1232,7 @@ def main():
     print("\n[5/5] 生成看板数据...")
     last_data = {"rps5_names": set(), "rps10_names": set(), "rps20_names": set()}
     if os.path.exists(LAST_RESULT_FILE):
-        with open(LAST_RESULT_FILE, "r") as f:
+        with open(LAST_RESULT_FILE, "r", encoding="utf-8") as f:
             raw = json.load(f)
             last_data = {
                 "rps5_names": set(raw.get("rps5_names", [])),
@@ -1109,6 +1276,8 @@ def main():
     }
     with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2, default=str)
+    # 计算成功并完整落盘 → 标记运行成功 (下游 recommend/daily_review/weekly 前置校验)
+    write_run_status(True, latest_date, mode="calc", message="RPS 全量计算成功")
 
     save_last = {
         "date": latest_date,
@@ -1119,22 +1288,38 @@ def main():
     with open(LAST_RESULT_FILE, "w", encoding="utf-8") as f:
         json.dump(save_last, f, ensure_ascii=False, indent=2)
 
+    # ===== 每日复盘先行(动量视角量化复盘) → daily_review.json 含 potential_sectors
+    # (早期启动推荐的候选池依赖该字段; 幂等: 当日已生成则跳过) =====
+    try:
+        _maybe_run_review(build_potential_stats(rps_history, stock_rps50))
+    except Exception as e:
+        print(f"  ⚠️ 复盘前置数据构建失败(不阻断): {str(e)[:80]}")
+        _maybe_run_review()
+
     # ===== 每日推荐股票(五层漏斗筛选 + 综合评分, 复用 daily_map/industry_df) =====
     # 失败不阻断主流程, 推荐 JSON 仍输出上次结果或空
+    # 复盘联动: 当日调出板块名 + daily_review.json(成熟疲劳/danger 板块 → 选股评分扣分降级)
+    _out_list = load_out_list_names(output)
+    _review = load_review_data()
     try:
         import recommend
         # 完整入选板块记录(含 name + stocks 成分股), 跨 RPS5/10/20 汇总, 供板块共振计数
         in_list_records = [rec for res in (res5, res10, res20) for rec in res["in_list"]]
-        rec_list = recommend.recommend_stocks(industry_df, daily_map, latest_date, in_list_records)
-        recommend.save_recommendations(rec_list, latest_date, prev_date)
+        run_mode = recommend.CONFIG["run_mode"]
+        if run_mode.get("ORIGINAL_MOMENTUM", True):
+            rec_list = recommend.recommend_stocks(industry_df, daily_map, latest_date, in_list_records,
+                                                  out_list_names=_out_list, review_data=_review)
+            recommend.save_recommendations(rec_list, latest_date, prev_date)
+        if run_mode.get("EARLY_STAGE_START", True):
+            rec_early = recommend.recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
+                                                         out_list_names=_out_list, review_data=_review)
+            recommend.save_early_recommendations(rec_early, latest_date, prev_date)
     except Exception as e:
         print(f"  ⚠️ 推荐股票生成失败(不阻断主流程): {str(e)[:80]}")
 
     # ===== 每周推荐股票(中线波段, 周线五层漏斗, 复用 RPS20 入选板块成分股) =====
-    _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, res20["in_list"])
-
-    # ===== 每日复盘(动量视角量化复盘, 复用 rps_data/rps_history, 幂等) =====
-    _maybe_run_review()
+    _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, res20["in_list"],
+                      out_list_names=_out_list, review_data=_review)
 
     print(f"\n{'='*55}")
     print(f"  ✅ 完成!")

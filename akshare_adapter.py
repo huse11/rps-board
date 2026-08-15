@@ -6,7 +6,6 @@ AKShare 数据源适配层 v2.0 (服务器实测后定版)
 - 五大维度对应接口:
   * 指数日线  → stock_zh_index_daily_em        (东财kline, 服务器可达)
   * 个股资金  → stock_zh_a_spot_tx.zljlr        (腾讯, 替代 moneyflow 全市场批量)
-  * 北向资金  → stock_hsgt_hist_em              (东财datacenter, 近期港交所限披露可能NaN)
   * 实时行情  → stock_zh_a_spot_tx              (腾讯, 替代 daily_basic: PE/换手率/量比/流通市值)
   * 大盘资金  → stock_market_fund_flow          (东财datacenter, 大盘主力净流入按日)
 - 返回结构与 recommend.py 中 fetch_*_em 函数一致, 可直接替换
@@ -197,45 +196,7 @@ def fetch_moneyflow_ak(latest_date):
 
 
 # ============================================================
-# 3. 北向资金 (替代 moneyflow_hsgt)
-# ============================================================
-def fetch_hsgt_ak(latest_date, n_days=5):
-    """AKShare 北向资金历史 → {trade_date: {"buy_value": 净流入元}}
-    港交所2024年8月起暂停实时北向披露, 近期值可能NaN→0
-    失败返回 {}
-    """
-    if not _AK_OK:
-        return {}
-    try:
-        df = ak.stock_hsgt_hist_em(symbol="北向资金")
-    except Exception:
-        return {}
-    if df is None or len(df) == 0:
-        return {}
-    date_col = _pick_col(df, ["日期", "date", "trade_date"])
-    # 优先 "当日成交净买额", 其次 "当日资金流入"
-    net_col = _pick_col(df, ["当日成交净买额", "当日资金流入", "当日资金净流入", "资金净流入"])
-    if date_col is None or net_col is None:
-        return {}
-    rows = []
-    for _, r in df.iterrows():
-        try:
-            td = str(r[date_col])[:10].replace("-", "")
-            if not td:
-                continue
-            net = _safe_float(r[net_col])  # 元
-            rows.append((td, net))
-        except Exception:
-            continue
-    rows = sorted(rows, key=lambda x: x[0])[-n_days:]
-    cache = {}
-    for td, net in rows:
-        cache[td] = {"buy_value": net}
-    return cache
-
-
-# ============================================================
-# 4. 实时行情指标 (替代 daily_basic) — 腾讯全市场批量
+# 3. 实时行情指标 (替代 daily_basic) — 腾讯全市场批量
 # ============================================================
 def fetch_daily_basic_ak(latest_date):
     """腾讯实时行情 (替代 fetch_daily_basic_em)
@@ -284,41 +245,55 @@ def fetch_daily_basic_ak(latest_date):
 
 
 # ============================================================
-# 5. 大盘资金流向 (新增, 强化大盘环境评估)
+# 4. 大盘资金流向 (强化大盘环境评估, 替代已停披露的北向资金)
 # ============================================================
 def fetch_market_fund_flow_ak(n_days=5):
     """大盘主力净流入历史 → {trade_date: {"main_net": 元, "main_pct": %}}
     用于强化大盘环境评估 (主力净流入正=资金做多)
+    主源: 东财大盘资金流历史 (push2his, 部分网络被拒)
+    兜底: 腾讯全市场主力净流入求和 (最新交易日真实值, 万→元), 覆盖 push2his 被拒场景
     失败返回 {}
     """
     if not _AK_OK:
         return {}
+    cache = {}
     try:
         df = ak.stock_market_fund_flow()
     except Exception:
-        return {}
-    if df is None or len(df) == 0:
-        return {}
-    date_col = _pick_col(df, ["日期", "date"])
-    net_col = _pick_col(df, ["主力净流入-净额", "主力净流入"])
-    pct_col = _pick_col(df, ["主力净流入-净占比"])
-    if date_col is None or net_col is None:
-        return {}
-    rows = []
-    for _, r in df.iterrows():
-        try:
-            td = str(r[date_col])[:10].replace("-", "")
-            if not td:
-                continue
-            net = _safe_float(r[net_col])  # 元
-            pct = _safe_float(r[pct_col]) if pct_col else 0.0
-            rows.append((td, net, pct))
-        except Exception:
-            continue
-    rows = sorted(rows, key=lambda x: x[0])[-n_days:]
-    cache = {}
-    for td, net, pct in rows:
-        cache[td] = {"main_net": net, "main_pct": pct}
+        df = None
+    if df is not None and len(df) > 0:
+        date_col = _pick_col(df, ["日期", "date"])
+        net_col = _pick_col(df, ["主力净流入-净额", "主力净流入"])
+        pct_col = _pick_col(df, ["主力净流入-净占比"])
+        if date_col is not None and net_col is not None:
+            rows = []
+            for _, r in df.iterrows():
+                try:
+                    td = str(r[date_col])[:10].replace("-", "")
+                    if not td:
+                        continue
+                    net = _safe_float(r[net_col])  # 元
+                    pct = _safe_float(r[pct_col]) if pct_col else 0.0
+                    rows.append((td, net, pct))
+                except Exception:
+                    continue
+            rows = sorted(rows, key=lambda x: x[0])[-n_days:]
+            for td, net, pct in rows:
+                cache[td] = {"main_net": net, "main_pct": pct}
+    if cache:
+        return cache
+    # 兜底: 腾讯全市场主力净流入求和 (最新交易日真实值, 万→元)
+    try:
+        spot = _fetch_spot_tx()
+        if spot is not None and "zljlr" in spot.columns and len(spot) > 100:
+            d = datetime.now()
+            while d.weekday() >= 5:  # 周末回退到周五
+                d -= timedelta(days=1)
+            td = d.strftime("%Y%m%d")
+            total = float(pd.to_numeric(spot["zljlr"], errors="coerce").sum()) * 1e4  # 万元 → 元
+            cache[td] = {"main_net": total, "main_pct": 0.0}
+    except Exception:
+        pass
     return cache
 
 
@@ -354,13 +329,7 @@ if __name__ == "__main__":
         for c, v in top:
             print(f"  {c}: 主力净流入 {v[0]['buy_sm_amount']/1e8:.2f}亿")
 
-    print(f"\n=== 3. 北向资金 ===")
-    hsgt = fetch_hsgt_ak("20260808", n_days=5)
-    print(f"  {'✅ ' + str(len(hsgt)) + ' 日' if hsgt else '❌ 失败'}")
-    for td, v in sorted(hsgt.items()):
-        print(f"  {td}: 北向 {v['buy_value']/1e8:.2f}亿")
-
-    print(f"\n=== 4. 实时行情 ===")
+    print(f"\n=== 3. 实时行情 ===")
     db = fetch_daily_basic_ak("20260808")
     print(f"  {'✅ ' + str(len(db)) + ' 只' if db else '❌ 失败'}")
     # 取茅台校验
@@ -368,7 +337,7 @@ if __name__ == "__main__":
     if mt_db:
         print(f"  茅台: PE={mt_db['pe_ttm']}, 流通市值={mt_db['circ_mv']/1e4:.1f}亿, 换手={mt_db['turnover_rate']}, 量比={mt_db['volume_ratio']}")
 
-    print(f"\n=== 5. 大盘资金流向 ===")
+    print(f"\n=== 4. 大盘资金流向 ===")
     mff = fetch_market_fund_flow_ak(n_days=5)
     print(f"  {'✅ ' + str(len(mff)) + ' 日' if mff else '❌ 失败'}")
     for td, v in sorted(mff.items()):
