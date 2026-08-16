@@ -27,9 +27,13 @@
     }
 
     function stockRowHtml(s) {
+        var code = s.ts_code || '';
+        var nameHtml = code
+            ? '<a class="stock-link" onclick="openStockDetail(\'' + code + '\')">' + dash(s.name) + '</a>'
+            : dash(s.name);
         return '<tr>' +
             '<td>' + dash(s.ts_code) + '</td>' +
-            '<td style="text-align:left;">' + dash(s.name) + '</td>' +
+            '<td style="text-align:left;">' + nameHtml + '</td>' +
             '<td>' + fmtStockPct(s.pct_chg) + '</td>' +
             '<td>' + fmtStockNum(s.price) + '</td>' +
             '<td>' + (s.consec_up || 0) + '</td>' +
@@ -46,7 +50,6 @@
             '<td>' + fmtStockNum(s.pre_close) + '</td>' +
             '<td>' + fmtStockNum(s.vol_ratio) + '</td>' +
             '<td style="text-align:left;">' + dash(s.industry) + '</td>' +
-            '<td><span class="rec-toggle-btn" onclick="openStockDetail(\'' + (s.ts_code || '') + '\')">个股</span></td>' +
             '</tr>';
     }
 

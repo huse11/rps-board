@@ -8,7 +8,7 @@
     <meta http-equiv="Expires" content="0">
     <title>板块RPS监测看板</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="render.js?v=8"></script>
+    <script src="render.js?v=9"></script>
     <!-- klinecharts: 移动端多副图K线(主图BOLL + 副图擒龙启爆 + 主力捉妖当日资金卡片), 支持缩放/十字光标; 加载失败时详情页K线区降级提示 -->
     <script src="https://cdn.jsdelivr.net/npm/klinecharts@9.8.8/dist/umd/klinecharts.min.js"
             onerror="window.__KC_LOAD_ERR__ = true;"></script>
@@ -281,6 +281,7 @@
         .rec-detail-box .dl .k { color: #64748b; }
         .rec-detail-box .dl .v { font-weight: 600; color: #1e293b; }
         .rec-toggle-btn { cursor: pointer; color: #2563eb; font-weight: 700; user-select: none; }
+        .stock-link { color: #2563eb; font-weight: 700; text-decoration: underline; cursor: pointer; user-select: none; }
         .rec-disclaimer {
             background: #fef3c7; border-left: 3px solid #f59e0b;
             padding: 5px 10px; font-size: 11px; color: #92400e;
@@ -578,9 +579,9 @@
                     <thead><tr>
                         <th>代码</th><th>名称</th><th>涨幅%</th><th>现价</th><th>连涨天</th><th>涨跌</th>
                         <th>买价</th><th>卖价</th><th>总量</th><th>现量</th><th>涨速</th><th>换手%</th>
-                        <th>今开</th><th>最高</th><th>最低</th><th>昨收</th><th>量比</th><th>细分行业</th><th>个股</th>
+                        <th>今开</th><th>最高</th><th>最低</th><th>昨收</th><th>量比</th><th>细分行业</th>
                     </tr></thead>
-                    <tbody id="stockTableBody"><tr><td colspan="19" class="empty-msg">暂无成分股数据</td></tr></tbody>
+                    <tbody id="stockTableBody"><tr><td colspan="18" class="empty-msg">暂无成分股数据</td></tr></tbody>
                 </table>
             </div>
         </div>
@@ -984,7 +985,7 @@ function openStockModal(name) {
     document.getElementById('modalTitle').textContent = name + ' 成分股（' + stocks.length + '只）';
     const tbody = document.getElementById('stockTableBody');
     if (!stocks.length) {
-        tbody.innerHTML = '<tr><td colspan="19" class="empty-msg">暂无成分股数据</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="18" class="empty-msg">暂无成分股数据</td></tr>';
     } else {
         tbody.innerHTML = stocks.map(stockRowHtml).join('');
     }
@@ -1279,7 +1280,7 @@ function renderRecommendTable(data) {
         const pd = s.prediction || {};
         html += '<tr class="' + cls + '">' +
             '<td>' + (s.ts_code || '--') + '</td>' +
-            '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
+            '<td style="text-align:left;"><a class="stock-link" onclick="openStockDetail(\'' + (s.ts_code || '') + '\')">' + (s.name || '--') + '</a></td>' +
             '<td style="text-align:left;">' + ((s.sectors || []).join('、') || '--') + '</td>' +
             '<td>' + fmtScore(s.score_total) + '</td>' +
             '<td>' + fmtOrDash(s.price) + '</td>' +
@@ -1289,8 +1290,7 @@ function renderRecommendTable(data) {
             '<td>' + fmtPredStop(pd) + '</td>' +
             '<td>' + fmtPredConf(pd.confidence) + '</td>' +
             '<td style="text-align:left;">' + fmtRecTags(s) + '</td>' +
-            '<td><span class="rec-toggle-btn" onclick="toggleRecDetail(\'' + s.ts_code + '\')">详情</span>' +
-            ' <span class="rec-toggle-btn" onclick="openStockDetail(\'' + s.ts_code + '\')">个股</span></td>' +
+            '<td><span class="rec-toggle-btn" onclick="toggleRecDetail(\'' + s.ts_code + '\')">详情</span></td>' +
             '</tr>';
         if (_recOpenDetail[s.ts_code]) {
             html += '<tr class="rec-detail-row"><td colspan="12">' + recDetailHtml(s) + '</td></tr>';
@@ -1390,14 +1390,13 @@ function renderWeeklyTable(data) {
         const cls = recRowClass(Number(s.score_total));
         html += '<tr class="' + cls + '">' +
             '<td>' + (s.ts_code || '--') + '</td>' +
-            '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
+            '<td style="text-align:left;"><a class="stock-link" onclick="openStockDetail(\'' + (s.ts_code || '') + '\')">' + (s.name || '--') + '</a></td>' +
             '<td style="text-align:left;">' + ((s.sectors || []).join('、') || '--') + '</td>' +
             '<td style="text-align:left;">' + fmtWeeklyTags(s) + '</td>' +
             '<td>' + fmtScore(s.score_total) + '</td>' +
             '<td>' + fmtOrDash(s.price) + '</td>' +
             '<td>' + fmtStockPct(s.pct_chg_week) + '</td>' +
-            '<td><span class="rec-toggle-btn" onclick="toggleWeeklyDetail(\'' + s.ts_code + '\')">详情</span>' +
-            ' <span class="rec-toggle-btn" onclick="openStockDetail(\'' + s.ts_code + '\')">个股</span></td>' +
+            '<td><span class="rec-toggle-btn" onclick="toggleWeeklyDetail(\'' + s.ts_code + '\')">详情</span></td>' +
             '</tr>';
         if (_wkOpenDetail[s.ts_code]) {
             html += '<tr class="rec-detail-row"><td colspan="8">' + weeklyRecDetailHtml(s) + '</td></tr>';
@@ -1516,7 +1515,7 @@ function renderEarlyTable(data) {
         const form = e.platform_start ? '<span style="color:#059669;font-weight:700;">平台刚启动</span>' : '普通';
         html += '<tr class="' + cls + '">' +
             '<td>' + (s.ts_code || '--') + '</td>' +
-            '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
+            '<td style="text-align:left;"><a class="stock-link" onclick="openStockDetail(\'' + (s.ts_code || '') + '\')">' + (s.name || '--') + '</a></td>' +
             '<td style="text-align:left;">' + ((s.sectors || []).join('、') || '--') + '</td>' +
             '<td>' + form + '</td>' +
             '<td>' + fmtScore(s.score_total) + '</td>' +
@@ -1525,8 +1524,7 @@ function renderEarlyTable(data) {
             '<td>' + fmtOrDash(e.rps50, 0) + '</td>' +
             '<td>' + fmtOrDash(e.ma60_dev, 1) + '</td>' +
             '<td style="text-align:left;">' + fmtEarlyTags(s) + '</td>' +
-            '<td><span class="rec-toggle-btn" onclick="toggleEarlyDetail(\'' + s.ts_code + '\')">详情</span>' +
-            ' <span class="rec-toggle-btn" onclick="openStockDetail(\'' + s.ts_code + '\')">个股</span></td>' +
+            '<td><span class="rec-toggle-btn" onclick="toggleEarlyDetail(\'' + s.ts_code + '\')">详情</span></td>' +
             '</tr>';
         if (_earlyOpenDetail[s.ts_code]) {
             html += '<tr class="rec-detail-row"><td colspan="11">' + earlyRecDetailHtml(s) + '</td></tr>';
@@ -1610,15 +1608,14 @@ function renderEarlyWeeklyTable(data) {
         const cls = recRowClass(Number(s.score_total));
         html += '<tr class="' + cls + '">' +
             '<td>' + (s.ts_code || '--') + '</td>' +
-            '<td style="text-align:left;">' + (s.name || '--') + '</td>' +
+            '<td style="text-align:left;"><a class="stock-link" onclick="openStockDetail(\'' + (s.ts_code || '') + '\')">' + (s.name || '--') + '</a></td>' +
             '<td style="text-align:left;">' + ((s.sectors || []).join('、') || '--') + '</td>' +
             '<td style="text-align:left;">' + fmtWeeklyTags(s) + '</td>' +
             '<td>' + fmtScore(s.score_total) + '</td>' +
             '<td>' + fmtOrDash(s.price) + '</td>' +
             '<td>' + fmtStockPct(s.pct_chg_week) + '</td>' +
             '<td>' + fmtOrDash(s.chg8_week, 1) + '</td>' +
-            '<td><span class="rec-toggle-btn" onclick="toggleEarlyWkDetail(\'' + s.ts_code + '\')">详情</span>' +
-            ' <span class="rec-toggle-btn" onclick="openStockDetail(\'' + s.ts_code + '\')">个股</span></td>' +
+            '<td><span class="rec-toggle-btn" onclick="toggleEarlyWkDetail(\'' + s.ts_code + '\')">详情</span></td>' +
             '</tr>';
         if (_earlyWkOpenDetail[s.ts_code]) {
             html += '<tr class="rec-detail-row"><td colspan="9">' + fmtWeeklyEarlyDetail(s) + '</td></tr>';

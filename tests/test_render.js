@@ -72,7 +72,7 @@ function countCells(html) {
     return (html.match(/<td/g) || []).length;
 }
 
-test('stockRowHtml: 输出19列(含个股详情按钮列)', () => {
+test('stockRowHtml: 输出18列(名称列即个股超链接, 无独立按钮列)', () => {
     const s = {
         ts_code: '300711.SZ', name: '广哈通信', pct_chg: 3.5, price: 19.92,
         consec_up: 2, change: 0.67, bid: 19.92, ask: 19.93,
@@ -81,8 +81,11 @@ test('stockRowHtml: 输出19列(含个股详情按钮列)', () => {
         vol_ratio: 1.61, industry: '通信设备'
     };
     const html = R.stockRowHtml(s);
-    assert.equal(countCells(html), 19);
-    assert.ok(html.includes('openStockDetail'), '含个股详情按钮');
+    assert.equal(countCells(html), 18);
+    assert.ok(html.includes('stock-link'), '名称列为超链接');
+    assert.ok(html.includes("onclick=\"openStockDetail('300711.SZ')\""), '名称超链接打开个股详情');
+    assert.ok(html.includes('广哈通信'), '名称保留');
+    assert.ok(!html.includes('>个股<'), '不再有独立个股按钮');
 });
 
 test('stockRowHtml: 四列有值时正确渲染', () => {
@@ -115,7 +118,7 @@ test('stockRowHtml: 北交所/涨停卖价为--时行仍完整', () => {
         high: 34.43, low: 31.2, pre_close: 31.3, vol_ratio: 2.1, industry: '铅锌'
     };
     const html = R.stockRowHtml(s);
-    assert.equal(countCells(html), 19);
+    assert.equal(countCells(html), 18);
     assert.ok(html.includes('<td>--</td>'), '卖价空显示--');
     assert.ok(html.includes('0.00'), '涨速0显示0.00');
 });
