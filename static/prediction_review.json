@@ -1,0 +1,185 @@
+{
+  "update_date": "20260817",
+  "horizon": 3,
+  "summary": {
+    "samples": 16,
+    "hit_rate": 0.5,
+    "avg_gain": 2.4,
+    "avg_up_prob": 81.9,
+    "prev_dates": [
+      "20260812"
+    ]
+  },
+  "by_confidence": {
+    "高": {
+      "samples": 10,
+      "hit_rate": 0.4,
+      "avg_gain": 3.86
+    },
+    "中": {
+      "samples": 6,
+      "hit_rate": 0.667,
+      "avg_gain": -0.02
+    }
+  },
+  "by_sector_count": {
+    "2": {
+      "samples": 16,
+      "hit_rate": 0.5,
+      "avg_gain": 2.4
+    }
+  },
+  "recent": [
+    {
+      "pred_date": "20260812",
+      "code": "001696.SZ",
+      "name": "宗申动力",
+      "up_prob": 88,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": -2.43,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "002520.SZ",
+      "name": "日发精机",
+      "up_prob": 84,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": -0.76,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "002552.SZ",
+      "name": "宝鼎科技",
+      "up_prob": 77,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": 3.21,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "002685.SZ",
+      "name": "华东重机",
+      "up_prob": 74,
+      "confidence": "中",
+      "sector_count": 2,
+      "gain": -5.64,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "300196.SZ",
+      "name": "长海股份",
+      "up_prob": 83,
+      "confidence": "中",
+      "sector_count": 2,
+      "gain": 2.35,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "300395.SZ",
+      "name": "菲利华",
+      "up_prob": 80,
+      "confidence": "中",
+      "sector_count": 2,
+      "gain": 0.27,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "300566.SZ",
+      "name": "激智科技",
+      "up_prob": 88,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": 9.95,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "300809.SZ",
+      "name": "华辰装备",
+      "up_prob": 82,
+      "confidence": "中",
+      "sector_count": 2,
+      "gain": -6.48,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "301183.SZ",
+      "name": "东田微",
+      "up_prob": 74,
+      "confidence": "中",
+      "sector_count": 2,
+      "gain": 7.47,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "301282.SZ",
+      "name": "金禄电子",
+      "up_prob": 83,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": 32.97,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "601865.SH",
+      "name": "福莱特",
+      "up_prob": 76,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": -6.24,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "601882.SH",
+      "name": "海天精工",
+      "up_prob": 86,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": -0.51,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "603626.SH",
+      "name": "科森科技",
+      "up_prob": 84,
+      "confidence": "中",
+      "sector_count": 2,
+      "gain": 1.93,
+      "hit": true
+    },
+    {
+      "pred_date": "20260812",
+      "code": "603980.SH",
+      "name": "吉华集团",
+      "up_prob": 88,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": -2.22,
+      "hit": false
+    },
+    {
+      "pred_date": "20260812",
+      "code": "688305.SH",
+      "name": "科德数控",
+      "up_prob": 83,
+      "confidence": "高",
+      "sector_count": 2,
+      "gain": 5.62,
+      "hit": true
+    }
+  ],
+  "note": "每日校准: 命中=预测后3个交易日收盘价≥预测日现价; 分维度胜率用于动态调整因子权重"
+}
