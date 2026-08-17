@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 3982.654,
-   "ma20": 3879.7142,
+   "close": 4157.9845,
+   "ma20": 4113.655830000001,
    "above": true,
    "days": 132
   },
-  "note": "上证指数站上20日线(3880点)"
+  "note": "上证指数站上20日线(4114点)"
  },
  "resonance": {
   "core": [
@@ -468,12 +468,7 @@
    "纺织机械",
    "染料涂料"
   ],
-  "critical": [
-   {
-    "name": "专用机械",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "铅锌",
    "铜",
@@ -482,11 +477,11 @@
   ]
  },
  "sentiment": {
-  "phase": "发酵期",
+  "phase": "冰点期",
   "seed_n": 5,
   "out_n": 5,
   "core_n": 6,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {

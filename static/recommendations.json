@@ -5072,7 +5072,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 56.8,
       "pct_chg": 4.03,
-      "pe_ttm": 191.38,
+      "pe_ttm": 52.7,
       "circ_mv": 306.37,
       "score_total": 79,
       "score_sector": 40,
@@ -5099,7 +5099,7 @@
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 83,
+        "up_prob": 86,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -5118,7 +5118,7 @@
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
-          "fundamental": 53
+          "fundamental": 56
         },
         "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
         "regime": "偏强"
