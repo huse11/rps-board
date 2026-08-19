@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 3894.422,
-   "ma20": 3887.3804500000006,
-   "above": true,
+   "close": 4015.7464,
+   "ma20": 4110.899040000001,
+   "above": false,
    "days": 132
   },
-  "note": "上证指数站上20日线(3887点)"
+  "note": "上证指数跌破20日线(4111点)"
  },
  "resonance": {
   "core": [
@@ -575,16 +575,7 @@
    "港口",
    "石油开采"
   ],
-  "critical": [
-   {
-    "name": "中成药",
-    "rps5": 89.1
-   },
-   {
-    "name": "黄金",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "乳制品",
    "公共交通",
@@ -599,11 +590,11 @@
   ]
  },
  "sentiment": {
-  "phase": "退潮期",
+  "phase": "冰点期",
   "seed_n": 7,
   "out_n": 7,
   "core_n": 1,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
