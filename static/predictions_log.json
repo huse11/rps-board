@@ -195,5 +195,30 @@
     }
   ],
   "20260813": [],
-  "20260819": []
+  "20260820": [
+    {
+      "code": "000506.SZ",
+      "name": "招金黄金",
+      "price": 19.45,
+      "up_prob": 88,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "高",
+      "sector_count": 3,
+      "hit_count": 5,
+      "net_inflow_3d": 224161699.99999997
+    },
+    {
+      "code": "000019.SZ",
+      "name": "深粮控股",
+      "price": 6.86,
+      "up_prob": 87,
+      "expected_gain": 9.0,
+      "horizon": 3,
+      "confidence": "高",
+      "sector_count": 2,
+      "hit_count": 6,
+      "net_inflow_3d": 739500.0
+    }
+  ]
 }

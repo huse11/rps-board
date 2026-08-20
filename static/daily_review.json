@@ -1,23 +1,23 @@
 {
- "update_date": "20260819",
- "prev_date": "20260818",
+ "update_date": "20260820",
+ "prev_date": "20260819",
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "弱",
-  "high5": 0,
-  "high10": 0,
-  "high20": 0,
+  "tone": "中性",
+  "high5": 11,
+  "high10": 11,
+  "high20": 11,
   "diff5": 0,
-  "avg_high": 0,
+  "avg_high": 11.0,
   "index": {
    "ok": true,
-   "close": 4015.7464,
-   "ma20": 4110.899040000001,
-   "above": false,
-   "days": 132
+   "close": 3903.721,
+   "ma20": 3888.7276500000007,
+   "above": true,
+   "days": 133
   },
-  "note": "上证指数跌破20日线(4111点)"
+  "note": "上证指数站上20日线(3889点)"
  },
  "resonance": {
   "core": [
@@ -26,10 +26,30 @@
     "RPS5": 99.1,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 2,
-    "ratio": 44.4,
+    "continuous": 3,
+    "ratio": 38.9,
     "stock_count": 18,
-    "rps50_above_90": 8
+    "rps50_above_90": 7
+   },
+   {
+    "name": "黄金",
+    "RPS5": 98.2,
+    "rank": 2,
+    "rank_change": 11,
+    "continuous": 1,
+    "ratio": 100.0,
+    "stock_count": 9,
+    "rps50_above_90": 9
+   },
+   {
+    "name": "生物制药",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": 30,
+    "continuous": 1,
+    "ratio": 70.0,
+    "stock_count": 80,
+    "rps50_above_90": 56
    }
   ],
   "pulse": [
@@ -37,71 +57,61 @@
     "name": "水运",
     "RPS5": 97.3,
     "rank": 3,
-    "rank_change": 17,
-    "continuous": 1,
-    "ratio": 36.8,
+    "rank_change": 0,
+    "continuous": 2,
+    "ratio": 31.6,
     "stock_count": 19,
-    "rps50_above_90": 7
+    "rps50_above_90": 6
    },
    {
-    "name": "银行",
+    "name": "焦炭加工",
     "RPS5": 96.4,
     "rank": 4,
-    "rank_change": 69,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 42,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "农业综合",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 4,
+    "rank_change": -2,
     "continuous": 2,
-    "ratio": 20.5,
-    "stock_count": 39,
-    "rps50_above_90": 8
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
    },
    {
     "name": "农药化肥",
     "RPS5": 93.6,
     "rank": 7,
-    "rank_change": 20,
-    "continuous": 1,
-    "ratio": 21.1,
+    "rank_change": 0,
+    "continuous": 2,
+    "ratio": 8.8,
     "stock_count": 57,
-    "rps50_above_90": 12
+    "rps50_above_90": 5
    },
    {
-    "name": "港口",
+    "name": "煤炭开采",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": -2,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 25,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "银行",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": 74,
-    "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
-    "rps50_above_90": 1
+    "rank_change": -5,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 42,
+    "rps50_above_90": 0
    },
    {
-    "name": "石油开采",
+    "name": "商品城",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 80,
+    "rank_change": 23,
     "continuous": 1,
-    "ratio": 30.0,
-    "stock_count": 20,
-    "rps50_above_90": 6
-   },
-   {
-    "name": "食品",
-    "RPS5": 90.0,
-    "rank": 11,
-    "rank_change": -1,
-    "continuous": 2,
-    "ratio": 11.1,
-    "stock_count": 90,
-    "rps50_above_90": 10
+    "ratio": 25.0,
+    "stock_count": 4,
+    "rps50_above_90": 1
    }
   ],
   "diverge": [
@@ -126,7 +136,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "公共交通",
+    "name": "化学制药",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -136,7 +146,17 @@
     "rps50_above_90": 0
    },
    {
-    "name": "化学制药",
+    "name": "医疗保健",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "医药商业",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -176,7 +196,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "林业",
+    "name": "日用化工",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -186,17 +206,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "染料涂料",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "生物制药",
+    "name": "机床制造",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -224,26 +234,6 @@
     "ratio": 0.0,
     "stock_count": 0,
     "rps50_above_90": 0
-   },
-   {
-    "name": "软饮料",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "黄金",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
    }
   ]
  },
@@ -254,112 +244,112 @@
     "RPS5": 99.1,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 2,
-    "ratio": 44.4,
+    "continuous": 3,
+    "ratio": 38.9,
     "stock_count": 18,
-    "rps50_above_90": 8
+    "rps50_above_90": 7
    },
    {
-    "name": "焦炭加工",
+    "name": "黄金",
     "RPS5": 98.2,
     "rank": 2,
-    "rank_change": 83,
+    "rank_change": 11,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 7,
-    "rps50_above_90": 0
+    "ratio": 100.0,
+    "stock_count": 9,
+    "rps50_above_90": 9
    },
    {
     "name": "水运",
     "RPS5": 97.3,
     "rank": 3,
-    "rank_change": 17,
-    "continuous": 1,
-    "ratio": 36.8,
+    "rank_change": 0,
+    "continuous": 2,
+    "ratio": 31.6,
     "stock_count": 19,
-    "rps50_above_90": 7
+    "rps50_above_90": 6
    },
    {
-    "name": "银行",
+    "name": "焦炭加工",
     "RPS5": 96.4,
     "rank": 4,
-    "rank_change": 69,
-    "continuous": 1,
+    "rank_change": -2,
+    "continuous": 2,
     "ratio": 0.0,
-    "stock_count": 42,
+    "stock_count": 7,
     "rps50_above_90": 0
    },
    {
     "name": "农业综合",
     "RPS5": 95.5,
     "rank": 5,
-    "rank_change": 4,
-    "continuous": 2,
+    "rank_change": 0,
+    "continuous": 3,
     "ratio": 20.5,
     "stock_count": 39,
     "rps50_above_90": 8
    },
    {
-    "name": "煤炭开采",
+    "name": "生物制药",
     "RPS5": 94.5,
     "rank": 6,
-    "rank_change": 83,
+    "rank_change": 30,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 25,
-    "rps50_above_90": 0
+    "ratio": 70.0,
+    "stock_count": 80,
+    "rps50_above_90": 56
    },
    {
     "name": "农药化肥",
     "RPS5": 93.6,
     "rank": 7,
-    "rank_change": 20,
-    "continuous": 1,
-    "ratio": 21.1,
+    "rank_change": 0,
+    "continuous": 2,
+    "ratio": 8.8,
     "stock_count": 57,
-    "rps50_above_90": 12
+    "rps50_above_90": 5
    },
    {
-    "name": "渔业",
+    "name": "煤炭开采",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": -3,
+    "rank_change": -2,
     "continuous": 2,
     "ratio": 0.0,
-    "stock_count": 7,
+    "stock_count": 25,
     "rps50_above_90": 0
    },
    {
-    "name": "港口",
+    "name": "银行",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": 74,
-    "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
-    "rps50_above_90": 1
+    "rank_change": -5,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 42,
+    "rps50_above_90": 0
    },
    {
-    "name": "石油开采",
+    "name": "商品城",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 80,
+    "rank_change": 23,
     "continuous": 1,
-    "ratio": 30.0,
-    "stock_count": 20,
-    "rps50_above_90": 6
+    "ratio": 25.0,
+    "stock_count": 4,
+    "rps50_above_90": 1
    }
   ],
   "tier2": [
    {
-    "name": "食品",
+    "name": "染料涂料",
     "RPS5": 90.0,
     "rank": 11,
-    "rank_change": -1,
-    "continuous": 2,
-    "ratio": 11.1,
-    "stock_count": 90,
-    "rps50_above_90": 10
+    "rank_change": 11,
+    "continuous": 1,
+    "ratio": 14.3,
+    "stock_count": 35,
+    "rps50_above_90": 5
    }
   ],
   "tier3": []
@@ -367,278 +357,229 @@
  "rotation": {
   "new_in": [
    {
-    "name": "焦炭加工",
+    "name": "黄金",
     "RPS5": 98.2,
     "rank": 2,
-    "rank_change": 83,
+    "rank_change": 11,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 7,
-    "rps50_above_90": 0
+    "ratio": 100.0,
+    "stock_count": 9,
+    "rps50_above_90": 9
    },
    {
-    "name": "水运",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": 17,
-    "continuous": 1,
-    "ratio": 36.8,
-    "stock_count": 19,
-    "rps50_above_90": 7
-   },
-   {
-    "name": "银行",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 69,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 42,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "煤炭开采",
+    "name": "生物制药",
     "RPS5": 94.5,
     "rank": 6,
-    "rank_change": 83,
+    "rank_change": 30,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 25,
-    "rps50_above_90": 0
+    "ratio": 70.0,
+    "stock_count": 80,
+    "rps50_above_90": 56
    },
    {
-    "name": "农药化肥",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 20,
+    "name": "商品城",
+    "RPS5": 90.9,
+    "rank": 10,
+    "rank_change": 23,
     "continuous": 1,
-    "ratio": 21.1,
-    "stock_count": 57,
-    "rps50_above_90": 12
-   },
-   {
-    "name": "港口",
-    "RPS5": 91.8,
-    "rank": 9,
-    "rank_change": 74,
-    "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
+    "ratio": 25.0,
+    "stock_count": 4,
     "rps50_above_90": 1
    },
    {
-    "name": "石油开采",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 80,
+    "name": "染料涂料",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": 11,
     "continuous": 1,
-    "ratio": 30.0,
-    "stock_count": 20,
-    "rps50_above_90": 6
+    "ratio": 14.3,
+    "stock_count": 35,
+    "rps50_above_90": 5
    }
   ],
   "rank_jump": [
    {
-    "name": "焦炭加工",
-    "RPS5": 98.2,
-    "rank": 2,
-    "rank_change": 83,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 7,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "煤炭开采",
+    "name": "生物制药",
     "RPS5": 94.5,
     "rank": 6,
-    "rank_change": 83,
+    "rank_change": 30,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 25,
-    "rps50_above_90": 0
+    "ratio": 70.0,
+    "stock_count": 80,
+    "rps50_above_90": 56
    },
    {
-    "name": "石油开采",
+    "name": "商品城",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 80,
+    "rank_change": 23,
     "continuous": 1,
-    "ratio": 30.0,
-    "stock_count": 20,
-    "rps50_above_90": 6
-   },
-   {
-    "name": "港口",
-    "RPS5": 91.8,
-    "rank": 9,
-    "rank_change": 74,
-    "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
+    "ratio": 25.0,
+    "stock_count": 4,
     "rps50_above_90": 1
    },
    {
-    "name": "银行",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 69,
+    "name": "黄金",
+    "RPS5": 98.2,
+    "rank": 2,
+    "rank_change": 11,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 42,
-    "rps50_above_90": 0
+    "ratio": 100.0,
+    "stock_count": 9,
+    "rps50_above_90": 9
+   },
+   {
+    "name": "染料涂料",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": 11,
+    "continuous": 1,
+    "ratio": 14.3,
+    "stock_count": 35,
+    "rps50_above_90": 5
    }
   ],
   "out_all": [
-   "矿物制品",
-   "元器件",
-   "专用机械",
-   "装修装饰",
-   "半导体",
-   "电器仪表",
-   "通信设备",
-   "机床制造",
-   "玻璃",
-   "纺织机械",
-   "铅锌",
-   "陶瓷"
+   "石油开采",
+   "港口",
+   "食品",
+   "渔业",
+   "染料涂料",
+   "焦炭加工",
+   "煤炭开采",
+   "摩托车",
+   "软饮料",
+   "林业",
+   "公共交通"
   ],
-  "out_count": 12
+  "out_count": 11
  },
  "health": {
   "expand": [
    {
     "name": "种植业",
-    "ratio": 44.4
+    "ratio": 38.9
+   },
+   {
+    "name": "黄金",
+    "ratio": 100.0
    },
    {
     "name": "水运",
-    "ratio": 36.8
+    "ratio": 31.6
    },
    {
-    "name": "石油开采",
-    "ratio": 30.0
+    "name": "生物制药",
+    "ratio": 70.0
    }
   ],
   "mature": [],
   "seed": [
-   "焦炭加工",
-   "水运",
-   "银行",
-   "煤炭开采",
-   "农药化肥",
-   "港口",
-   "石油开采"
+   "黄金",
+   "生物制药",
+   "商品城",
+   "染料涂料"
   ]
  },
  "risk": {
-  "batch_out": {
-   "其他": 3,
-   "科技": 3,
-   "制造": 1
-  },
+  "batch_out": {},
   "diverge": [
    {
     "name": "焦炭加工",
     "ratio": 0.0
    },
    {
-    "name": "银行",
-    "ratio": 0.0
+    "name": "农药化肥",
+    "ratio": 8.8
    },
    {
     "name": "煤炭开采",
     "ratio": 0.0
    },
    {
-    "name": "渔业",
+    "name": "银行",
     "ratio": 0.0
-   },
-   {
-    "name": "港口",
-    "ratio": 6.7
    }
   ],
   "momentum_decay": false,
   "warnings": [
-   "批量调出预警: 今日调出7个板块, 集中在「其他」(3个), 该方向短期回避",
    "高位顶背离: 焦炭加工 排名靠前但内部个股达标率低(0%), 指数虚高警惕回落"
   ]
  },
  "watch": {
   "seed": [
-   "焦炭加工",
-   "水运",
-   "银行",
-   "煤炭开采",
-   "农药化肥",
-   "港口",
-   "石油开采"
+   "黄金",
+   "生物制药",
+   "商品城",
+   "染料涂料"
   ],
-  "critical": [],
+  "critical": [
+   {
+    "name": "铜",
+    "rps5": 89.1
+   }
+  ],
   "diverge_watch": [
    "乳制品",
-   "公共交通",
+   "元器件",
    "房产服务",
    "摩托车",
-   "林业",
-   "染料涂料",
+   "机床制造",
    "电器仪表",
-   "装修装饰",
-   "软饮料",
-   "黄金"
+   "装修装饰"
   ]
  },
  "sentiment": {
-  "phase": "冰点期",
-  "seed_n": 7,
-  "out_n": 7,
-  "core_n": 1,
-  "high_n": 0
+  "phase": "发酵期",
+  "seed_n": 4,
+  "out_n": 4,
+  "core_n": 3,
+  "high_n": 11
  },
  "style": {
   "rps5": {
-   "其他": 5,
-   "金融": 1,
-   "消费": 2,
+   "其他": 6,
    "周期": 2,
-   "公用": 1
+   "消费": 1,
+   "医药": 1,
+   "金融": 1
   },
   "rps10": {
-   "其他": 5,
-   "科技": 2,
+   "医药": 4,
+   "其他": 2,
    "周期": 2,
-   "医药": 2
+   "科技": 2,
+   "消费": 1
   },
   "rps20": {
-   "其他": 8,
    "周期": 1,
-   "消费": 1,
-   "公用": 1
+   "其他": 8,
+   "医药": 1,
+   "科技": 1
   }
  },
  "market_status_rec": {
-  "is_safe": false,
+  "is_safe": true,
   "rule": "至少 1 个指数站上 20 日线",
-  "reason": "跌停 380 家 > 50 家 (极端普跌)",
+  "reason": "",
   "indexes": [
    {
     "code": "000001.SH",
     "name": "上证指数",
-    "close": 3894.42,
-    "ma": 3887.38,
+    "close": 3903.72,
+    "ma": 3888.73,
     "above": true
    },
    {
     "code": "399006.SZ",
     "name": "创业板指",
-    "close": 3473.49,
-    "ma": 3508.34,
+    "close": 3495.59,
+    "ma": 3504.35,
     "above": false
    }
   ],
-  "advance_ratio": 0.08,
-  "limit_down_count": 380,
-  "note": "大盘环境不合格, 终止选股"
+  "advance_ratio": 0.75,
+  "limit_down_count": 25,
+  "note": "大盘环境合格, 继续选股"
  }
 }
