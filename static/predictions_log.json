@@ -205,7 +205,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 7,
       "net_inflow_3d": 186770800.00000003
     },
     {
@@ -217,7 +217,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 89150500.0
     },
     {
@@ -229,19 +229,19 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 78195200.0
     },
     {
       "code": "000506.SZ",
       "name": "招金黄金",
       "price": 20.77,
-      "up_prob": 87,
+      "up_prob": 88,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 115197099.99999999
     },
     {
@@ -260,12 +260,12 @@
       "code": "600547.SH",
       "name": "山东黄金",
       "price": 37.05,
-      "up_prob": 83,
+      "up_prob": 88,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 505457400.0
     },
     {
@@ -277,7 +277,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 4,
+      "hit_count": 5,
       "net_inflow_3d": 21605900.0
     },
     {
@@ -301,20 +301,8 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 364162400.0
-    },
-    {
-      "code": "600338.SH",
-      "name": "西藏珠峰",
-      "price": 13.85,
-      "up_prob": 76,
-      "expected_gain": 9.0,
-      "horizon": 3,
-      "confidence": "中",
-      "sector_count": 2,
-      "hit_count": 3,
-      "net_inflow_3d": 53320800.0
     },
     {
       "code": "601975.SH",
@@ -349,7 +337,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 45976000.0
     },
     {
@@ -361,7 +349,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 39913400.0
     },
     {
@@ -392,12 +380,12 @@
       "code": "000688.SZ",
       "name": "国城矿业",
       "price": 33.28,
-      "up_prob": 77,
+      "up_prob": 75,
       "expected_gain": 9.0,
       "horizon": 3,
-      "confidence": "高",
+      "confidence": "中",
       "sector_count": 2,
-      "hit_count": 4,
+      "hit_count": 3,
       "net_inflow_3d": 23566200.0
     },
     {
@@ -437,51 +425,27 @@
       "net_inflow_3d": 55778500.0
     },
     {
-      "code": "000060.SZ",
-      "name": "中金岭南",
-      "price": 6.68,
-      "up_prob": 74,
-      "expected_gain": 7.0,
-      "horizon": 3,
-      "confidence": "中",
-      "sector_count": 2,
-      "hit_count": 3,
-      "net_inflow_3d": 93693500.0
-    },
-    {
       "code": "002038.SZ",
       "name": "双鹭药业",
       "price": 7.08,
-      "up_prob": 79,
+      "up_prob": 84,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 71061000.0
-    },
-    {
-      "code": "002815.SZ",
-      "name": "崇达技术",
-      "price": 13.82,
-      "up_prob": 67,
-      "expected_gain": 5.5,
-      "horizon": 3,
-      "confidence": "中",
-      "sector_count": 1,
-      "hit_count": 3,
-      "net_inflow_3d": 140778900.0
     },
     {
       "code": "301129.SZ",
       "name": "瑞纳智能",
       "price": 25.55,
-      "up_prob": 81,
+      "up_prob": 83,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 30234200.0
     },
     {
@@ -500,24 +464,24 @@
       "code": "601083.SH",
       "name": "锦江航运",
       "price": 11.92,
-      "up_prob": 87,
+      "up_prob": 88,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 2794200.0
     },
     {
       "code": "603619.SH",
       "name": "中曼石油",
       "price": 23.48,
-      "up_prob": 76,
+      "up_prob": 81,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "中",
       "sector_count": 1,
-      "hit_count": 5,
+      "hit_count": 6,
       "net_inflow_3d": 37565700.0
     }
   ]

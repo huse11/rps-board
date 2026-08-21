@@ -26,7 +26,7 @@
     "limit_down_count": 29,
     "note": "大盘环境合格, 继续选股"
   },
-  "multi_sector_count": 24,
+  "multi_sector_count": 22,
   "prediction_status": {
     "regime": "震荡市",
     "note": "震荡市, 动量因子权重最高",
@@ -34,7 +34,7 @@
     "warning": false
   },
   "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
-  "count": 27,
+  "count": 24,
   "stocks": [
     {
       "ts_code": "001337.SZ",
@@ -47,7 +47,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 51.47,
       "pct_chg": 5.97,
-      "pe_ttm": 31.34,
+      "pe_ttm": 31.3399,
       "circ_mv": 216.17,
       "score_total": 91,
       "score_sector": 40,
@@ -66,8 +66,75 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 7
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 88,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "个股RPS50≥90",
+          "技术7项共振7/7"
+        ],
+        "factors": {
+          "momentum": 67,
+          "technical": 65,
+          "capital": 64,
+          "sector": 67,
+          "sentiment": 55,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002237.SZ",
+      "name": "恒邦股份",
+      "industry": "黄金",
+      "sectors": [
+        "黄金"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 15.45,
+      "pct_chg": 3.0,
+      "pe_ttm": 22.2306,
+      "circ_mv": 184.22,
+      "score_total": 91,
+      "score_sector": 40,
+      "score_fundamental": 15,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 672473516.31,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.48,
+        "vol_ratio": 1.78,
+        "amount": 816046706.0,
+        "net_inflow_3d": 89150500.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
@@ -92,72 +159,7 @@
         ],
         "factors": {
           "momentum": 67,
-          "technical": 62,
-          "capital": 64,
-          "sector": 67,
-          "sentiment": 55,
-          "fundamental": 56
-        },
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
-        "regime": "震荡市"
-      }
-    },
-    {
-      "ts_code": "002237.SZ",
-      "name": "恒邦股份",
-      "industry": "黄金",
-      "sectors": [
-        "黄金"
-      ],
-      "sector_count": 3,
-      "tags": "3板块共振 + 20日新高 + 量价齐升",
-      "price": 15.45,
-      "pct_chg": 3.0,
-      "pe_ttm": 22.23,
-      "circ_mv": 184.22,
-      "score_total": 91,
-      "score_sector": 40,
-      "score_fundamental": 15,
-      "score_capital": 16,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": 672473516.31,
-        "debt_to_assets": null
-      },
-      "capital": {
-        "turnover": 4.48,
-        "vol_ratio": 1.78,
-        "amount": 816046706.0,
-        "net_inflow_3d": 89150500.0
-      },
-      "technical": {
-        "hits": [
-          "MACD多头",
-          "20日新高",
-          "量价齐升",
-          "RPS50强势",
-          "均线支撑"
-        ],
-        "hit_count": 5
-      },
-      "prediction": {
-        "horizon": 3,
-        "up_prob": 88,
-        "expected_gain": 9.0,
-        "gain_range": [
-          5.0,
-          13.0
-        ],
-        "stop_loss": -9.0,
-        "confidence": "高",
-        "logic": [
-          "三档RPS共振",
-          "个股RPS50≥90",
-          "技术多指标共振5/7"
-        ],
-        "factors": {
-          "momentum": 67,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 55,
@@ -178,7 +180,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 32.07,
       "pct_chg": 3.79,
-      "pe_ttm": 30.1,
+      "pe_ttm": 30.0968,
       "circ_mv": 284.52,
       "score_total": 89,
       "score_sector": 40,
@@ -197,13 +199,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -222,7 +225,7 @@
         ],
         "factors": {
           "momentum": 65,
-          "technical": 60,
+          "technical": 65,
           "capital": 60,
           "sector": 67,
           "sentiment": 55,
@@ -243,7 +246,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 20.77,
       "pct_chg": 6.79,
-      "pe_ttm": 56.59,
+      "pe_ttm": 56.5921,
       "circ_mv": 192.89,
       "score_total": 86,
       "score_sector": 40,
@@ -262,17 +265,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 87,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -283,11 +287,11 @@
         "logic": [
           "三档RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 62,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 55,
@@ -308,7 +312,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 36.61,
       "pct_chg": 10.01,
-      "pe_ttm": 29.63,
+      "pe_ttm": 29.6331,
       "circ_mv": 244.08,
       "score_total": 85,
       "score_sector": 30,
@@ -372,7 +376,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 37.05,
       "pct_chg": 4.96,
-      "pe_ttm": 33.11,
+      "pe_ttm": 33.1078,
       "circ_mv": 1339.15,
       "score_total": 83,
       "score_sector": 40,
@@ -391,17 +395,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 83,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -416,7 +421,7 @@
         ],
         "factors": {
           "momentum": 60,
-          "technical": 60,
+          "technical": 65,
           "capital": 60,
           "sector": 67,
           "sentiment": 55,
@@ -434,10 +439,10 @@
         "生物制药"
       ],
       "sector_count": 2,
-      "tags": "2板块共振 + MACD多头 + RPS50强势",
+      "tags": "2板块共振 + MACD多头 + 均线多头",
       "price": 56.5,
       "pct_chg": -6.32,
-      "pe_ttm": 29.78,
+      "pe_ttm": 29.7818,
       "circ_mv": 68.69,
       "score_total": 81,
       "score_sector": 30,
@@ -456,12 +461,13 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 4
+        "hit_count": 5
       },
       "prediction": {
         "horizon": 3,
@@ -476,11 +482,11 @@
         "logic": [
           "双RPS共振",
           "个股RPS50≥90",
-          "主力资金连续流入"
+          "技术多指标共振5/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 58,
+          "technical": 60,
           "capital": 64,
           "sector": 62,
           "sentiment": 55,
@@ -501,7 +507,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 13.9,
       "pct_chg": 6.19,
-      "pe_ttm": 18.55,
+      "pe_ttm": 18.5492,
       "circ_mv": 168.09,
       "score_total": 81,
       "score_sector": 30,
@@ -565,7 +571,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 27.18,
       "pct_chg": 3.07,
-      "pe_ttm": 20.99,
+      "pe_ttm": 20.9939,
       "circ_mv": 1317.5,
       "score_total": 80,
       "score_sector": 40,
@@ -584,13 +590,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -605,76 +612,13 @@
         "logic": [
           "三档RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
-          "sentiment": 55,
-          "fundamental": 57
-        },
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
-        "regime": "震荡市"
-      }
-    },
-    {
-      "ts_code": "600338.SH",
-      "name": "西藏珠峰",
-      "industry": "铅锌",
-      "sectors": [
-        "铅锌"
-      ],
-      "sector_count": 2,
-      "tags": "2板块共振 + 量价齐升 + MACD多头",
-      "price": 13.85,
-      "pct_chg": 5.73,
-      "pe_ttm": 22.36,
-      "circ_mv": 126.62,
-      "score_total": 79,
-      "score_sector": 30,
-      "score_fundamental": 13,
-      "score_capital": 16,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": null,
-        "debt_to_assets": null
-      },
-      "capital": {
-        "turnover": 6.31,
-        "vol_ratio": 1.8,
-        "amount": 786960731.0,
-        "net_inflow_3d": 53320800.0
-      },
-      "technical": {
-        "hits": [
-          "MACD多头",
-          "量价齐升",
-          "均线支撑"
-        ],
-        "hit_count": 3
-      },
-      "prediction": {
-        "horizon": 3,
-        "up_prob": 76,
-        "expected_gain": 9.0,
-        "gain_range": [
-          5.0,
-          13.0
-        ],
-        "stop_loss": -9.0,
-        "confidence": "中",
-        "logic": [
-          "双RPS共振",
-          "主力资金连续流入",
-          "量能温和放大"
-        ],
-        "factors": {
-          "momentum": 57,
-          "technical": 56,
-          "capital": 64,
-          "sector": 62,
           "sentiment": 55,
           "fundamental": 57
         },
@@ -693,7 +637,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 3.97,
       "pct_chg": 5.3,
-      "pe_ttm": 12.74,
+      "pe_ttm": 12.7379,
       "circ_mv": 185.81,
       "score_total": 79,
       "score_sector": 30,
@@ -757,7 +701,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 40.88,
       "pct_chg": 6.02,
-      "pe_ttm": 27.21,
+      "pe_ttm": 27.2114,
       "circ_mv": 725.7,
       "score_total": 78,
       "score_sector": 30,
@@ -823,7 +767,7 @@
       "tags": "3板块共振 + 20日新高 + 量价齐升",
       "price": 28.58,
       "pct_chg": 2.44,
-      "pe_ttm": 20.89,
+      "pe_ttm": 20.8941,
       "circ_mv": 721.13,
       "score_total": 78,
       "score_sector": 40,
@@ -842,13 +786,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -863,11 +808,11 @@
         "logic": [
           "三档RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 55,
@@ -888,7 +833,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 12.34,
       "pct_chg": 4.4,
-      "pe_ttm": 18.82,
+      "pe_ttm": 18.8181,
       "circ_mv": 52.12,
       "score_total": 78,
       "score_sector": 30,
@@ -907,13 +852,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -928,11 +874,11 @@
         "logic": [
           "双RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 65,
-          "technical": 60,
+          "technical": 62,
           "capital": 64,
           "sector": 62,
           "sentiment": 55,
@@ -953,7 +899,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 5.14,
       "pct_chg": 4.26,
-      "pe_ttm": 73.24,
+      "pe_ttm": 73.2425,
       "circ_mv": 83.04,
       "score_total": 77,
       "score_sector": 30,
@@ -1017,7 +963,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 19.58,
       "pct_chg": 6.94,
-      "pe_ttm": 19.47,
+      "pe_ttm": 19.4701,
       "circ_mv": 749.52,
       "score_total": 75,
       "score_sector": 30,
@@ -1082,7 +1028,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 33.28,
       "pct_chg": 8.19,
-      "pe_ttm": 57.44,
+      "pe_ttm": 57.4409,
       "circ_mv": 394.39,
       "score_total": 74,
       "score_sector": 30,
@@ -1103,21 +1049,20 @@
         "hits": [
           "MACD多头",
           "20日新高",
-          "量价齐升",
-          "均线支撑"
+          "量价齐升"
         ],
-        "hit_count": 4
+        "hit_count": 3
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 77,
+        "up_prob": 75,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
           13.0
         ],
         "stop_loss": -9.0,
-        "confidence": "高",
+        "confidence": "中",
         "logic": [
           "双RPS共振",
           "创20日新高",
@@ -1125,7 +1070,7 @@
         ],
         "factors": {
           "momentum": 59,
-          "technical": 58,
+          "technical": 56,
           "capital": 62,
           "sector": 62,
           "sentiment": 55,
@@ -1146,7 +1091,7 @@
       "tags": "铜热点 + 20日新高 + 量价齐升",
       "price": 16.22,
       "pct_chg": 6.99,
-      "pe_ttm": 34.92,
+      "pe_ttm": 37.878,
       "circ_mv": 53.73,
       "score_total": 73,
       "score_sector": 20,
@@ -1211,7 +1156,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 10.12,
       "pct_chg": 3.79,
-      "pe_ttm": 42.41,
+      "pe_ttm": 42.4083,
       "circ_mv": 510.09,
       "score_total": 73,
       "score_sector": 30,
@@ -1274,7 +1219,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 86.49,
       "pct_chg": 5.04,
-      "pe_ttm": 50.04,
+      "pe_ttm": 50.0371,
       "circ_mv": 96.67,
       "score_total": 72,
       "score_sector": 30,
@@ -1328,69 +1273,6 @@
       }
     },
     {
-      "ts_code": "000060.SZ",
-      "name": "中金岭南",
-      "industry": "铅锌",
-      "sectors": [
-        "铅锌"
-      ],
-      "sector_count": 2,
-      "tags": "2板块共振 + 量价齐升 + MACD多头",
-      "price": 6.68,
-      "pct_chg": 2.61,
-      "pe_ttm": 28.74,
-      "circ_mv": 296.67,
-      "score_total": 71,
-      "score_sector": 30,
-      "score_fundamental": 13,
-      "score_capital": 8,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": null,
-        "debt_to_assets": null
-      },
-      "capital": {
-        "turnover": 2.6,
-        "vol_ratio": 1.21,
-        "amount": 764060591.0,
-        "net_inflow_3d": 93693500.0
-      },
-      "technical": {
-        "hits": [
-          "MACD多头",
-          "量价齐升",
-          "均线支撑"
-        ],
-        "hit_count": 3
-      },
-      "prediction": {
-        "horizon": 3,
-        "up_prob": 74,
-        "expected_gain": 7.0,
-        "gain_range": [
-          3.9,
-          10.2
-        ],
-        "stop_loss": -8.4,
-        "confidence": "中",
-        "logic": [
-          "双RPS共振",
-          "主力资金连续流入",
-          "量能温和放大"
-        ],
-        "factors": {
-          "momentum": 57,
-          "technical": 56,
-          "capital": 62,
-          "sector": 62,
-          "sentiment": 55,
-          "fundamental": 57
-        },
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
-        "regime": "震荡市"
-      }
-    },
-    {
       "ts_code": "002038.SZ",
       "name": "双鹭药业",
       "industry": "生物制药",
@@ -1420,17 +1302,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 79,
+        "up_prob": 84,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1441,78 +1324,15 @@
         "logic": [
           "双RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 62,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 62,
           "sentiment": 55,
           "fundamental": 53
-        },
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
-        "regime": "震荡市"
-      }
-    },
-    {
-      "ts_code": "002815.SZ",
-      "name": "崇达技术",
-      "industry": "元器件",
-      "sectors": [
-        "元器件"
-      ],
-      "sector_count": 1,
-      "tags": "元器件热点 + 量价齐升 + MACD多头",
-      "price": 13.82,
-      "pct_chg": 6.88,
-      "pe_ttm": 70.73,
-      "circ_mv": 107.4,
-      "score_total": 71,
-      "score_sector": 20,
-      "score_fundamental": 11,
-      "score_capital": 20,
-      "score_technical": 20,
-      "fundamental": {
-        "net_profit": null,
-        "debt_to_assets": null
-      },
-      "capital": {
-        "turnover": 9.61,
-        "vol_ratio": 1.71,
-        "amount": 1030111792.0,
-        "net_inflow_3d": 140778900.0
-      },
-      "technical": {
-        "hits": [
-          "MACD多头",
-          "量价齐升",
-          "均线支撑"
-        ],
-        "hit_count": 3
-      },
-      "prediction": {
-        "horizon": 3,
-        "up_prob": 67,
-        "expected_gain": 5.5,
-        "gain_range": [
-          3.0,
-          8.0
-        ],
-        "stop_loss": -9.0,
-        "confidence": "中",
-        "logic": [
-          "主力资金连续流入",
-          "量能温和放大",
-          "资金埋伏(流入+滞涨)"
-        ],
-        "factors": {
-          "momentum": 55,
-          "technical": 56,
-          "capital": 64,
-          "sector": 57,
-          "sentiment": 55,
-          "fundamental": 55
         },
         "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
         "regime": "震荡市"
@@ -1529,7 +1349,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 25.55,
       "pct_chg": 6.55,
-      "pe_ttm": 27.28,
+      "pe_ttm": 27.278,
       "circ_mv": 17.24,
       "score_total": 71,
       "score_sector": 30,
@@ -1548,17 +1368,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 81,
+        "up_prob": 83,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1568,12 +1389,12 @@
         "confidence": "高",
         "logic": [
           "双RPS共振",
-          "技术多指标共振5/7",
+          "技术7项共振6/7",
           "主力资金连续流入"
         ],
         "factors": {
           "momentum": 60,
-          "technical": 60,
+          "technical": 62,
           "capital": 62,
           "sector": 62,
           "sentiment": 55,
@@ -1594,7 +1415,7 @@
       "tags": "2板块共振 + 量价齐升 + MACD多头",
       "price": 22.14,
       "pct_chg": 4.09,
-      "pe_ttm": 21.22,
+      "pe_ttm": 21.2171,
       "circ_mv": 181.54,
       "score_total": 71,
       "score_sector": 30,
@@ -1658,7 +1479,7 @@
       "tags": "2板块共振 + 20日新高 + 量价齐升",
       "price": 11.92,
       "pct_chg": 2.58,
-      "pe_ttm": 10.43,
+      "pe_ttm": 10.4311,
       "circ_mv": 23.14,
       "score_total": 71,
       "score_sector": 30,
@@ -1677,17 +1498,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 87,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1698,11 +1520,11 @@
         "logic": [
           "双RPS共振",
           "连涨5日动量延续",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 64,
-          "technical": 60,
+          "technical": 65,
           "capital": 64,
           "sector": 62,
           "sentiment": 55,
@@ -1723,7 +1545,7 @@
       "tags": "石油开采热点 + 20日新高 + 量价齐升",
       "price": 23.48,
       "pct_chg": 4.54,
-      "pe_ttm": 34.86,
+      "pe_ttm": 34.8584,
       "circ_mv": 108.56,
       "score_total": 71,
       "score_sector": 20,
@@ -1742,17 +1564,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
           "20日新高",
           "量价齐升",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 76,
+        "up_prob": 81,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1761,13 +1584,13 @@
         "stop_loss": -9.0,
         "confidence": "中",
         "logic": [
-          "技术多指标共振5/7",
-          "创20日新高",
+          "技术7项共振6/7",
+          "突破20日新高+放量+均线多头",
           "主力资金连续流入"
         ],
         "factors": {
           "momentum": 59,
-          "technical": 60,
+          "technical": 65,
           "capital": 64,
           "sector": 57,
           "sentiment": 55,
