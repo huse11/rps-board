@@ -4,12 +4,12 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
    "close": 3882.008,
@@ -466,16 +466,7 @@
    "保险",
    "港口"
   ],
-  "critical": [
-   {
-    "name": "路桥",
-    "rps5": 89.1
-   },
-   {
-    "name": "红黄酒",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "乳制品",
    "公共交通",
@@ -488,11 +479,11 @@
   ]
  },
  "sentiment": {
-  "phase": "震荡期",
+  "phase": "冰点期",
   "seed_n": 3,
   "out_n": 3,
   "core_n": 2,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
