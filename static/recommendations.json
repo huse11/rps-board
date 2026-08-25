@@ -10,14 +10,14 @@
       {
         "code": "000001.SH",
         "name": "上证指数",
-        "close": 3889.45,
+        "close": 3889.44,
         "ma": 3898.27,
         "above": false
       },
       {
         "code": "399006.SZ",
         "name": "创业板指",
-        "close": 3397.51,
+        "close": 3397.52,
         "ma": 3503.16,
         "above": false
       }
