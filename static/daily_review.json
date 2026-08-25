@@ -1,23 +1,23 @@
 {
- "update_date": "20260824",
- "prev_date": "20260821",
+ "update_date": "20260825",
+ "prev_date": "20260824",
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "弱",
-  "high5": 0,
-  "high10": 0,
-  "high20": 0,
+  "tone": "中性",
+  "high5": 11,
+  "high10": 11,
+  "high20": 11,
   "diff5": 0,
-  "avg_high": 0,
+  "avg_high": 11.0,
   "index": {
    "ok": true,
-   "close": 3882.008,
-   "ma20": 3894.4660500000005,
+   "close": 3889.445,
+   "ma20": 3898.2725500000006,
    "above": false,
    "days": 132
   },
-  "note": "上证指数跌破20日线(3894点)"
+  "note": "上证指数跌破20日线(3898点)"
  },
  "resonance": {
   "core": [
@@ -26,55 +26,95 @@
     "RPS5": 99.1,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 3,
-    "ratio": 100.0,
+    "continuous": 4,
+    "ratio": 88.9,
     "stock_count": 9,
-    "rps50_above_90": 9
-   },
-   {
-    "name": "种植业",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": -1,
-    "continuous": 5,
-    "ratio": 38.9,
-    "stock_count": 18,
-    "rps50_above_90": 7
+    "rps50_above_90": 8
    }
   ],
   "pulse": [
    {
     "name": "保险",
-    "RPS5": 92.7,
-    "rank": 8,
-    "rank_change": 6,
-    "continuous": 1,
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": 4,
+    "continuous": 2,
     "ratio": 0.0,
     "stock_count": 5,
     "rps50_above_90": 0
    },
    {
-    "name": "港口",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 5,
+    "name": "旅游服务",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": 19,
     "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "石油加工",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 0,
+    "continuous": 3,
+    "ratio": 7.1,
+    "stock_count": 14,
     "rps50_above_90": 1
    },
    {
-    "name": "石油开采",
+    "name": "银行",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": -2,
+    "continuous": 5,
+    "ratio": 2.4,
+    "stock_count": 42,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "房产服务",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": 46,
+    "continuous": 1,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "酒店餐饮",
+    "RPS5": 90.9,
+    "rank": 10,
+    "rank_change": 12,
+    "continuous": 1,
+    "ratio": 11.1,
+    "stock_count": 9,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "旅游景点",
     "RPS5": 90.0,
     "rank": 11,
-    "rank_change": -5,
-    "continuous": 2,
-    "ratio": 25.0,
-    "stock_count": 20,
-    "rps50_above_90": 5
+    "rank_change": 10,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 18,
+    "rps50_above_90": 0
    }
   ],
   "diverge": [
+   {
+    "name": "专用机械",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
    {
     "name": "乳制品",
     "RPS5": 0.0,
@@ -86,7 +126,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "公共交通",
+    "name": "元器件",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -96,7 +136,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "半导体",
+    "name": "农业综合",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -116,26 +156,6 @@
     "rps50_above_90": 0
    },
    {
-    "name": "机床制造",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "染料涂料",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
     "name": "渔业",
     "RPS5": 0.0,
     "rank": 0,
@@ -146,7 +166,27 @@
     "rps50_above_90": 0
    },
    {
+    "name": "生物制药",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
+   {
     "name": "电器仪表",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "种植业",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -184,6 +224,26 @@
     "ratio": 0.0,
     "stock_count": 0,
     "rps50_above_90": 0
+   },
+   {
+    "name": "钢加工",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "铅锌",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
    }
   ]
  },
@@ -194,112 +254,112 @@
     "RPS5": 99.1,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 3,
-    "ratio": 100.0,
+    "continuous": 4,
+    "ratio": 88.9,
     "stock_count": 9,
-    "rps50_above_90": 9
+    "rps50_above_90": 8
    },
    {
     "name": "焦炭加工",
     "RPS5": 98.2,
     "rank": 2,
-    "rank_change": 6,
-    "continuous": 4,
+    "rank_change": 0,
+    "continuous": 5,
     "ratio": 0.0,
     "stock_count": 7,
     "rps50_above_90": 0
    },
    {
-    "name": "种植业",
+    "name": "煤炭开采",
     "RPS5": 97.3,
     "rank": 3,
-    "rank_change": -1,
-    "continuous": 5,
-    "ratio": 38.9,
-    "stock_count": 18,
-    "rps50_above_90": 7
-   },
-   {
-    "name": "水运",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": -1,
-    "continuous": 4,
-    "ratio": 47.4,
-    "stock_count": 19,
-    "rps50_above_90": 9
-   },
-   {
-    "name": "煤炭开采",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 11,
-    "continuous": 1,
-    "ratio": 8.0,
-    "stock_count": 25,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "银行",
-    "RPS5": 94.5,
-    "rank": 6,
-    "rank_change": 4,
-    "continuous": 4,
-    "ratio": 2.4,
-    "stock_count": 42,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "石油加工",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": -3,
+    "rank_change": 2,
     "continuous": 2,
-    "ratio": 7.1,
-    "stock_count": 14,
-    "rps50_above_90": 1
+    "ratio": 24.0,
+    "stock_count": 25,
+    "rps50_above_90": 6
    },
    {
     "name": "保险",
-    "RPS5": 92.7,
-    "rank": 8,
-    "rank_change": 6,
-    "continuous": 1,
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": 4,
+    "continuous": 2,
     "ratio": 0.0,
     "stock_count": 5,
     "rps50_above_90": 0
    },
    {
-    "name": "铅锌",
-    "RPS5": 91.8,
-    "rank": 9,
-    "rank_change": -4,
-    "continuous": 2,
-    "ratio": 21.4,
-    "stock_count": 14,
-    "rps50_above_90": 3
+    "name": "旅游服务",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": 19,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
    },
    {
-    "name": "港口",
+    "name": "水运",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": -2,
+    "continuous": 5,
+    "ratio": 31.6,
+    "stock_count": 19,
+    "rps50_above_90": 6
+   },
+   {
+    "name": "石油加工",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 0,
+    "continuous": 3,
+    "ratio": 7.1,
+    "stock_count": 14,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "银行",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": -2,
+    "continuous": 5,
+    "ratio": 2.4,
+    "stock_count": 42,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "房产服务",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": 46,
+    "continuous": 1,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "酒店餐饮",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 5,
+    "rank_change": 12,
     "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
+    "ratio": 11.1,
+    "stock_count": 9,
     "rps50_above_90": 1
    }
   ],
   "tier2": [
    {
-    "name": "石油开采",
+    "name": "旅游景点",
     "RPS5": 90.0,
     "rank": 11,
-    "rank_change": -5,
-    "continuous": 2,
-    "ratio": 25.0,
-    "stock_count": 20,
-    "rps50_above_90": 5
+    "rank_change": 10,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 18,
+    "rps50_above_90": 0
    }
   ],
   "tier3": []
@@ -307,124 +367,135 @@
  "rotation": {
   "new_in": [
    {
-    "name": "煤炭开采",
+    "name": "旅游服务",
     "RPS5": 95.5,
     "rank": 5,
-    "rank_change": 11,
+    "rank_change": 19,
     "continuous": 1,
-    "ratio": 8.0,
-    "stock_count": 25,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "保险",
-    "RPS5": 92.7,
-    "rank": 8,
-    "rank_change": 6,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 5,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "港口",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 5,
-    "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
-    "rps50_above_90": 1
-   }
-  ],
-  "rank_jump": [
-   {
-    "name": "煤炭开采",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 11,
-    "continuous": 1,
-    "ratio": 8.0,
-    "stock_count": 25,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "焦炭加工",
-    "RPS5": 98.2,
-    "rank": 2,
-    "rank_change": 6,
-    "continuous": 4,
     "ratio": 0.0,
     "stock_count": 7,
     "rps50_above_90": 0
    },
    {
-    "name": "保险",
-    "RPS5": 92.7,
-    "rank": 8,
-    "rank_change": 6,
+    "name": "房产服务",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": 46,
+    "continuous": 1,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "酒店餐饮",
+    "RPS5": 90.9,
+    "rank": 10,
+    "rank_change": 12,
+    "continuous": 1,
+    "ratio": 11.1,
+    "stock_count": 9,
+    "rps50_above_90": 1
+   },
+   {
+    "name": "旅游景点",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": 10,
     "continuous": 1,
     "ratio": 0.0,
-    "stock_count": 5,
+    "stock_count": 18,
+    "rps50_above_90": 0
+   }
+  ],
+  "rank_jump": [
+   {
+    "name": "房产服务",
+    "RPS5": 91.8,
+    "rank": 9,
+    "rank_change": 46,
+    "continuous": 1,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "旅游服务",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": 19,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 7,
     "rps50_above_90": 0
    },
    {
-    "name": "港口",
+    "name": "酒店餐饮",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 5,
+    "rank_change": 12,
     "continuous": 1,
-    "ratio": 6.7,
-    "stock_count": 15,
+    "ratio": 11.1,
+    "stock_count": 9,
     "rps50_above_90": 1
    },
    {
-    "name": "银行",
-    "RPS5": 94.5,
-    "rank": 6,
+    "name": "旅游景点",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": 10,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 18,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "保险",
+    "RPS5": 96.4,
+    "rank": 4,
     "rank_change": 4,
-    "continuous": 4,
-    "ratio": 2.4,
-    "stock_count": 42,
-    "rps50_above_90": 1
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 5,
+    "rps50_above_90": 0
    }
   ],
   "out_all": [
-   "农业综合",
-   "农药化肥",
-   "铜",
-   "渔业",
+   "港口",
+   "石油开采",
+   "铅锌",
+   "种植业",
+   "石油加工",
+   "银行",
+   "电器仪表",
+   "半导体",
    "染料涂料",
-   "日用化工",
-   "纺织机械",
-   "生物制药",
-   "元器件",
-   "陶瓷"
+   "渔业",
+   "公共交通",
+   "机床制造"
   ],
-  "out_count": 10
+  "out_count": 12
  },
  "health": {
   "expand": [
    {
     "name": "黄金",
-    "ratio": 100.0
-   },
-   {
-    "name": "种植业",
-    "ratio": 38.9
+    "ratio": 88.9
    },
    {
     "name": "水运",
-    "ratio": 47.4
+    "ratio": 31.6
    }
   ],
   "mature": [
-   "种植业"
+   "焦炭加工",
+   "水运",
+   "银行"
   ],
   "seed": [
-   "煤炭开采",
-   "保险",
-   "港口"
+   "旅游服务",
+   "房产服务",
+   "酒店餐饮",
+   "旅游景点"
   ]
  },
  "risk": {
@@ -435,24 +506,24 @@
     "ratio": 0.0
    },
    {
-    "name": "煤炭开采",
-    "ratio": 8.0
+    "name": "保险",
+    "ratio": 0.0
    },
    {
-    "name": "银行",
-    "ratio": 2.4
+    "name": "旅游服务",
+    "ratio": 0.0
    },
    {
     "name": "石油加工",
     "ratio": 7.1
    },
    {
-    "name": "保险",
-    "ratio": 0.0
+    "name": "银行",
+    "ratio": 2.4
    },
    {
-    "name": "港口",
-    "ratio": 6.7
+    "name": "酒店餐饮",
+    "ratio": 11.1
    }
   ],
   "momentum_decay": false,
@@ -462,47 +533,56 @@
  },
  "watch": {
   "seed": [
-   "煤炭开采",
-   "保险",
-   "港口"
+   "旅游服务",
+   "房产服务",
+   "酒店餐饮",
+   "旅游景点"
   ],
-  "critical": [],
+  "critical": [
+   {
+    "name": "其他商业",
+    "rps5": 88.2
+   }
+  ],
   "diverge_watch": [
+   "专用机械",
    "乳制品",
-   "公共交通",
+   "元器件",
    "摩托车",
-   "机床制造",
-   "染料涂料",
-   "渔业",
+   "生物制药",
    "电器仪表",
-   "纺织机械"
+   "种植业",
+   "纺织机械",
+   "装修装饰",
+   "铅锌"
   ]
  },
  "sentiment": {
-  "phase": "冰点期",
-  "seed_n": 3,
-  "out_n": 3,
-  "core_n": 2,
-  "high_n": 0
+  "phase": "启动期",
+  "seed_n": 4,
+  "out_n": 4,
+  "core_n": 1,
+  "high_n": 11
  },
  "style": {
   "rps5": {
-   "周期": 4,
-   "其他": 4,
+   "周期": 3,
+   "其他": 3,
    "金融": 2,
-   "公用": 1
+   "消费": 3
   },
   "rps10": {
-   "周期": 3,
-   "其他": 6,
-   "金融": 1,
-   "科技": 1
+   "其他": 7,
+   "周期": 2,
+   "消费": 2
   },
   "rps20": {
    "周期": 1,
-   "其他": 8,
-   "公用": 1,
-   "消费": 1
+   "其他": 6,
+   "消费": 1,
+   "科技": 1,
+   "制造": 1,
+   "医药": 1
   }
  },
  "market_status_rec": {
@@ -513,20 +593,20 @@
    {
     "code": "000001.SH",
     "name": "上证指数",
-    "close": 3882.01,
-    "ma": 3894.47,
+    "close": 3889.45,
+    "ma": 3898.27,
     "above": false
    },
    {
     "code": "399006.SZ",
     "name": "创业板指",
-    "close": 3431.89,
-    "ma": 3499.64,
+    "close": 3397.51,
+    "ma": 3503.16,
     "above": false
    }
   ],
-  "advance_ratio": 0.27,
-  "limit_down_count": 39,
+  "advance_ratio": 0.77,
+  "limit_down_count": 7,
   "note": "大盘环境不合格, 终止选股"
  }
 }

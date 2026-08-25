@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "update_date": "20260824",
-  "prev_date": "20260821",
+  "update_date": "20260825",
+  "prev_date": "20260824",
   "market_status": {
     "is_safe": false,
     "rule": "至少 1 个指数站上 20 日线",
@@ -10,28 +10,28 @@
       {
         "code": "000001.SH",
         "name": "上证指数",
-        "close": 3882.01,
-        "ma": 3894.47,
+        "close": 3889.45,
+        "ma": 3898.27,
         "above": false
       },
       {
         "code": "399006.SZ",
         "name": "创业板指",
-        "close": 3431.89,
-        "ma": 3499.64,
+        "close": 3397.51,
+        "ma": 3503.16,
         "above": false
       }
     ],
-    "advance_ratio": 0.27,
-    "limit_down_count": 39,
+    "advance_ratio": 0.77,
+    "limit_down_count": 7,
     "note": "大盘环境不合格, 终止选股"
   },
   "multi_sector_count": 0,
   "prediction_status": {
-    "regime": "偏弱",
-    "note": "上涨占比<40%, 赚钱效应弱, 预测胜率下降, 注意控制仓位",
+    "regime": "震荡市",
+    "note": "震荡市, 动量因子权重最高",
     "horizon": 3,
-    "warning": true
+    "warning": false
   },
   "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
   "count": 0,
