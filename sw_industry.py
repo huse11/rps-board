@@ -82,7 +82,68 @@ def _fetch_sw_map():
         "stock_name": stock_name,
         "board_stocks": board_stocks,
         "board_count": {n: len(v) for n, v in board_stocks.items()},
+        "board_parent": _build_board_parent(ak, board_stocks),  # 一级板块归类
     }
+
+
+def _build_board_parent(ak, boards):
+    """三级行业名 → 一级行业名 映射（一级板块归类）
+    方法: 拉取申万一级行业成分股(index_component_sw), 与三级板块成分股求交集,
+          交集股票数最多的父级一级行业即为归类结果(如 医疗研发外包 → 医药生物)。
+    任一一级行业拉取失败仅跳过该行业; 全部失败返回 {} (前端显示 '--')。
+    """
+    first_members = {}  # 一级行业名 -> set(ts_code)
+    try:
+        info = ak.sw_index_first_info()
+    except Exception as e:
+        print(f"  ⚠️ 申万一级行业列表拉取失败: {str(e)[:80]}")
+        return {}
+    for _, row in info.iterrows():
+        code6 = str(row["行业代码"]).split(".")[0]
+        name = str(row["行业名称"])
+        try:
+            cons = ak.index_component_sw(symbol=code6)
+        except Exception:
+            continue
+        members = set()
+        for _, c in cons.iterrows():
+            ts = to_ts_code(c["证券代码"])
+            if ts is not None:
+                members.add(ts)
+        first_members[name] = members
+    if not first_members:
+        return {}
+    board_parent = {}
+    for bname, bmembers in boards.items():
+        bset = set(bmembers)
+        best, best_cnt = "", 0
+        for fname, fset in first_members.items():
+            cnt = len(bset & fset)
+            if cnt > best_cnt:
+                best, best_cnt = fname, cnt
+        board_parent[bname] = best
+    return board_parent
+
+
+def _ensure_board_parent(cache):
+    """旧缓存缺 board_parent 字段时补全(仅需额外拉一级成分股, 不重拉三级);
+    补全失败不影响原缓存返回"""
+    if cache.get("board_parent"):
+        return cache
+    try:
+        board_parent = _build_board_parent(_get_ak(), cache.get("board_stocks", {}))
+        if board_parent:
+            cache["board_parent"] = board_parent
+            try:
+                os.makedirs(STATIC_DIR, exist_ok=True)
+                with open(SW_CACHE_FILE, "w", encoding="utf-8") as f:
+                    json.dump(cache, f, ensure_ascii=False)
+                print(f"  ✅ 一级板块归类补全: {len(board_parent)}个三级板块映射父级")
+            except Exception:
+                pass
+    except Exception as e:
+        print(f"  ⚠️ 一级板块归类补全失败(前端显示'--'): {str(e)[:80]}")
+    return cache
 
 
 def build_sw_industry_map(force=False):
@@ -93,7 +154,7 @@ def build_sw_industry_map(force=False):
                 cache = json.load(f)
             fd = str(cache.get("fetch_date", ""))
             if len(fd) == 8 and (datetime.now() - datetime.strptime(fd, "%Y%m%d")).days <= CACHE_MAX_DAYS:
-                return cache
+                return _ensure_board_parent(cache)
         except Exception:
             pass
     try:
@@ -103,7 +164,8 @@ def build_sw_industry_map(force=False):
         os.makedirs(STATIC_DIR, exist_ok=True)
         with open(SW_CACHE_FILE, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False)
-        print(f"  ✅ 申万三级板块池: {len(data['board_stocks'])}个细分板块, 覆盖{len(data['stock_industry'])}只股票")
+        print(f"  ✅ 申万三级板块池: {len(data['board_stocks'])}个细分板块, 覆盖{len(data['stock_industry'])}只股票"
+              f", 一级板块归类{len(data.get('board_parent', {}))}个")
         return data
     except Exception as e:
         print(f"  ⚠️ 申万三级映射拉取失败: {str(e)[:80]}")
@@ -111,7 +173,7 @@ def build_sw_industry_map(force=False):
         if os.path.exists(SW_CACHE_FILE):
             try:
                 with open(SW_CACHE_FILE, encoding="utf-8") as f:
-                    return json.load(f)
+                    return _ensure_board_parent(json.load(f))
             except Exception:
                 return None
         return None

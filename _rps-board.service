@@ -1,0 +1,16 @@
+[Unit]
+Description=RPS Board Web Server (uvicorn production)
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/rps-board
+ExecStart=/opt/rps-board/venv/bin/python -m uvicorn web_server:app --host 0.0.0.0 --port 8000 --workers 1
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/rps_web.log
+StandardError=append:/var/log/rps_web.log
+
+[Install]
+WantedBy=multi-user.target

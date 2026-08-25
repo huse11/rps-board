@@ -23,7 +23,7 @@ TUSHARE_TOKENS = [
     "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
 RPS_THRESHOLD = 90
-SCHEMA_VERSION = 5  # v5=股票池剔除ST/*ST/退市 (幂等判断用, 改公式/格式/板块池需+1强制重算)
+SCHEMA_VERSION = 6  # v6=板块记录新增 parent(一级板块归类) (幂等判断用, 改公式/格式/板块池需+1强制重算)
 STATIC_DIR = Path(__file__).parent / "static"
 DATA_FILE = STATIC_DIR / "rps_data.json"
 LAST_RESULT_FILE = STATIC_DIR / "last_result.json"
@@ -359,18 +359,23 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
     daily_rps_history = {}
     # 实际有数据的交易日（应对个别日期获取失败）
     available_days = [d for d in trade_days if d in daily_map]
+    # 预构建 行业×日期 收益率矩阵 (性能: 避免双重循环内对全表做布尔过滤)
+    df_pivot = df_ind_daily.pivot_table(index="industry", columns="trade_date",
+                                        values="daily_chg", aggfunc="mean")
     for i, date in enumerate(available_days[19:], 19):  # 从第20天开始(需要20日数据)
-        # 获取截至该日、实际有数据的前20个交易日
-        date_idx = available_days.index(date)
-        lookback = available_days[max(0, date_idx-19):date_idx+1]
-        
+        # 获取截至该日、实际有数据的前20个交易日 (i 即该日在 available_days 中的索引)
+        lookback = available_days[max(0, i - 19):i + 1]
+
         day_scores = {}
+        # 窗口内实际存在的日期列 (防御: 个别日期 merge 为空不在矩阵中)
+        win = df_pivot[[c for c in lookback if c in df_pivot.columns]]
         for ind in industries:
-            ind_data = df_ind_daily[(df_ind_daily["industry"] == ind) & 
-                                     (df_ind_daily["trade_date"].isin(lookback))]
-            ind_data = ind_data.sort_values("trade_date")
-            chgs = ind_data["daily_chg"].values / 100.0
-            
+            # 该行业窗口内有数据的日期序列, 语义与旧实现 filter+sort_values 一致
+            if ind in win.index:
+                chgs = win.loc[ind].dropna().values / 100.0
+            else:
+                chgs = np.array([])
+
             scores = {}
             for period, col in [(5, "chg5"), (10, "chg10"), (20, "chg20")]:
                 if len(chgs) >= period:
@@ -424,6 +429,8 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
     
     # 构建结果
     result_list = []
+    # 预排序历史日期一次 (供连续天数/60日计数复用, 避免每次调用重复 sorted)
+    hist_dates = sorted(daily_rps_history.keys())
     for ind in industries:
         t_rps = today_rps.get(ind, {})
         p_rps = prev_rps.get(ind, {})
@@ -447,14 +454,14 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         rank_chg20 = (prev_rank20 - rank20) if (prev_rank20 is not None and rank20 is not None) else None
 
         # 连续天数：从今天往前数，连续 RPS ≥ 阈值的交易日
-        con5 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS5", today)
-        con10 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS10", today)
-        con20 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS20", today)
+        con5 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS5", today, hist_dates)
+        con10 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS10", today, hist_dates)
+        con20 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS20", today, hist_dates)
 
         # 60日RPS≥90统计：过去60个交易日中，RPS ≥ 阈值的次数
-        cnt5 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS5", today, 60)
-        cnt10 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS10", today, 60)
-        cnt20 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS20", today, 60)
+        cnt5 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS5", today, 60, hist_dates)
+        cnt10 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS10", today, 60, hist_dates)
+        cnt20 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS20", today, 60, hist_dates)
 
         result_list.append({
             "industry": ind,
@@ -488,9 +495,10 @@ def _safe_get_int(df, ind, col):
     return None
 
 
-def calc_consecutive(rps_history, trade_days, industry, rps_col, today):
+def calc_consecutive(rps_history, trade_days, industry, rps_col, today, dates=None):
     """计算连续 RPS≥90 的天数"""
-    dates = sorted(rps_history.keys())
+    if dates is None:
+        dates = sorted(rps_history.keys())
     if today not in rps_history:
         return 0
     ind_rps = rps_history[today].get(industry, {}).get(rps_col)
@@ -508,9 +516,10 @@ def calc_consecutive(rps_history, trade_days, industry, rps_col, today):
     return count
 
 
-def count_above_threshold(rps_history, trade_days, industry, rps_col, today, lookback):
+def count_above_threshold(rps_history, trade_days, industry, rps_col, today, lookback, dates=None):
     """统计过去N个交易日中 RPS ≥ 阈值的次数"""
-    dates = sorted(rps_history.keys())
+    if dates is None:
+        dates = sorted(rps_history.keys())
     count = 0
     for date in dates:
         if date > today:
@@ -521,9 +530,10 @@ def count_above_threshold(rps_history, trade_days, industry, rps_col, today, loo
     return count
 
 
-def calc_stock_rps50_by_industry(daily_map, industry_df, trade_days):
+def calc_stock_rps50_by_industry(daily_map, industry_df, trade_days, return_map=False):
     """
     计算每只个股的RPS50，按行业聚合：总成分股数 + RPS50≥90计数
+    return_map=True 时额外返回 {ts_code: RPS50} (供四级下钻成分股列表附加 rps50 字段)
     """
     if len(trade_days) < 50:
         print("  ⚠️ 交易日不足50，跳过RPS50计算")
@@ -580,6 +590,9 @@ def calc_stock_rps50_by_industry(daily_map, industry_df, trade_days):
         above = int((grp["RPS50"] >= 90).sum())
         result[ind] = {"stock_count": total, "rps50_above_90": above}
     print(f"    完成: {len(result)}个行业聚合")
+    if return_map:
+        rps50_map = {r["ts_code"]: round(float(r["RPS50"]), 1) for _, r in df_stock.iterrows()}
+        return result, rps50_map
     return result
 
 
@@ -670,7 +683,22 @@ def calc_industry_rps50_60day_count(daily_map, industry_df, trade_days):
     return count_results
 
 
-def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col, stock_rps50, industry_rps50_count, last_in_names):
+def get_board_parent_map():
+    """三级板块名 → 一级板块名 映射 (申万一级归类, 如 医疗研发外包→医药生物)
+    数据源: sw_industry 缓存 board_parent (构建/补全失败返回 {}, 前端显示 '--')
+    与 get_stock_industry 共用同一份缓存, 确保与板块池一致"""
+    import sw_industry
+    try:
+        cache = sw_industry.load_sw_industry_map()
+        if cache:
+            cache = sw_industry._ensure_board_parent(cache)
+            return cache.get("board_parent", {}) or {}
+    except Exception:
+        pass
+    return {}
+
+
+def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col, stock_rps50, industry_rps50_count, last_in_names, board_parent=None):
     """拆分入选/调出，标记状态，生成看板字段"""
     df_in = df_rps[df_rps[rps_col].notna() & (df_rps[rps_col] >= threshold)].copy()
     df_in = df_in.sort_values(rps_col, ascending=False).reset_index(drop=True)
@@ -682,11 +710,13 @@ def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col,
 
     def make_records(df, status_val):
         records = []
+        bp = board_parent or {}
         for _, row in df.iterrows():
             ind = row["industry"]
             sr = (stock_rps50 or {}).get(ind, {})
             records.append({
                 "name": ind,
+                "parent": bp.get(ind, "") or "",  # 一级板块归类(如 医疗研发外包→医药生物)
                 "status": status_val,
                 rps_col: round(row[rps_col], 1) if pd.notna(row.get(rps_col)) else None,
                 "chg5": round(row["chg5"], 2) if pd.notna(row.get("chg5")) else None,
@@ -908,11 +938,12 @@ def fetch_realtime_quotes(codes, latest_date):
     return result
 
 
-def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
+def build_sector_stocks(industry_df, daily_map, latest_date, target_industries, stock_rps50_map=None):
     """
     为行业板块构建成分股列表（含最近交易日行情）
     字段: 代码/名称/涨幅/现价/连涨天/涨跌/买价/卖价/总量/现量/涨速/换手/今开/最高/最低/昨收/量比/细分行业
     买价/卖价/现量/涨速 来自东方财富/腾讯实时快照（Tushare免费版无实时行情）
+    stock_rps50_map: {ts_code: RPS50} 有则附加 rps50 字段 (供四级下钻成分股列)
     """
     result = {ind: [] for ind in target_industries}
     members = industry_df[industry_df["industry"].isin(target_industries)]
@@ -993,6 +1024,7 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries):
                 "ask": rt.get("ask"),
                 "vol_now": rt.get("vol_now"),
                 "speed": rt.get("speed"),
+                "rps50": fround(stock_rps50_map.get(code), 1) if stock_rps50_map else None,
             })
         stocks.sort(key=lambda s: s["pct_chg"] if s["pct_chg"] is not None else -9999, reverse=True)
         result[ind] = stocks
@@ -1116,6 +1148,22 @@ def _maybe_run_review(potential_stats=None):
         print(f"  ⚠️ 每日复盘生成失败(不阻断主流程): {str(e)[:80]}")
 
 
+def _maybe_run_weekly_review():
+    """每周复盘(周度量化复盘): 只在周日自然日运行 1 次, 失败不阻断主流程
+    weekly_review.main() 自带幂等: 本周 week_id 已生成则跳过
+    周日 A 股休市, rps_calc 走幂等跳过路径, 复用周五最新数据生成周度复盘;
+    服务器 cron 需包含周日(如 30 18 * * 0)以触发本逻辑
+    """
+    if datetime.now().weekday() != 6:  # 6 = 周日
+        print("  ⏭️ 今日非周日, 跳过每周复盘(每周日仅运行1次)")
+        return
+    try:
+        import weekly_review
+        weekly_review.main(force=False)
+    except Exception as e:
+        print(f"  ⚠️ 每周复盘生成失败(不阻断主流程): {str(e)[:80]}")
+
+
 def main():
     print("=" * 55)
     print("  A股板块 RPS 引擎 v3.0（全量历史回溯）")
@@ -1141,12 +1189,42 @@ def main():
                     and int(exist.get("schema_version", 0)) >= SCHEMA_VERSION
                     and last_date == latest_td):
                 skip = True
-        except Exception:
-            pass
+        except Exception as e:
+            # 幂等校验异常(rps_data.json/last_result.json 损坏): 保守跳过而非静默重算
+            # 重算会覆盖 last_result.json 对比基准, 导致"调出板块"数据丢失(项目硬约束)
+            import traceback
+            traceback.print_exc()
+            print(f"  ❌ 幂等校验异常({e}), 保守跳过计算以保护调入/调出对比基准")
+            write_run_status(False, latest_td, mode="error",
+                             message="幂等校验异常, 保守跳过(保护调出板块数据)")
+            return
     if skip:
         print(f"  ⏭️ 数据已是最新交易日 {latest_td} 且当天已完整计算，跳过计算（保持调入/调出对比基准）")
         # 幂等跳过但 rps_data.json 完整可用 → 标记运行成功 (下游可正常消费)
         write_run_status(True, latest_td, mode="skip", message="数据已最新, 幂等跳过计算")
+        # 四级下钻层级数据: 从静态文件重新派生(幂等: 同日已生成跳过); 失败不阻断
+        try:
+            import level_hierarchy
+            level_hierarchy.build_and_save()
+        except Exception as e:
+            print(f"  ⚠️ 层级下钻数据生成失败(不阻断): {str(e)[:80]}")
+        # 短路: 当日日度/早期推荐 + 每日复盘均已生成 → 无需重读60天缓存重新生成
+        # (recommend 不修改 rps_data.json/last_result.json, 不影响调入/调出对比基准)
+        try:
+            import recommend
+            rec_ok = (recommend.REC_FILE.exists()
+                      and str(json.load(open(recommend.REC_FILE, encoding="utf-8")).get("update_date", "")) == latest_td)
+            early_ok = (recommend.EARLY_REC_FILE.exists()
+                        and str(json.load(open(recommend.EARLY_REC_FILE, encoding="utf-8")).get("update_date", "")) == latest_td)
+            review_ok = ((STATIC_DIR / "daily_review.json").exists()
+                         and str(json.load(open(STATIC_DIR / "daily_review.json", encoding="utf-8")).get("update_date", "")) == latest_td)
+            if rec_ok and early_ok and review_ok:
+                print("  ⏭️ 当日推荐/复盘均已生成, 跳过推荐重生成")
+                # 每周复盘: 只在周日运行1次 (短路 return 前也必须执行, 否则周日永不触发)
+                _maybe_run_weekly_review()
+                return
+        except Exception:
+            pass
         # 每日推荐与 RPS 计算解耦: 即使 RPS 被幂等跳过, 仍独立加载 daily_map 生成推荐
         # (recommend 不修改 rps_data.json/last_result.json, 不影响调入/调出对比基准)
         try:
@@ -1192,6 +1270,8 @@ def main():
             # 周度推荐(中线波段): 每周运行1次, 已生成当周结果则跳过
             _maybe_run_weekly(ind_df, dm, ld, pd_, _data.get("rps20", {}).get("in_list", []),
                               out_list_names=_out_list, review_data=_review)
+            # 每周复盘: 只在周日运行1次(周日 A 股休市走此幂等路径, 复用周五数据)
+            _maybe_run_weekly_review()
         except Exception as e:
             print(f"  ⚠️ 推荐生成失败(不阻断): {str(e)[:80]}")
         return
@@ -1217,7 +1297,7 @@ def main():
     print(f"  {len(df_rps)}个行业参与计算")
 
     # 个股RPS50按行业聚合
-    stock_rps50 = calc_stock_rps50_by_industry(daily_map, industry_df, trade_days)
+    stock_rps50, stock_rps50_map = calc_stock_rps50_by_industry(daily_map, industry_df, trade_days, return_map=True)
     
     # 行业RPS50近60日≥90天数
     industry_rps50_60day = calc_industry_rps50_60day_count(daily_map, industry_df, trade_days)
@@ -1230,6 +1310,8 @@ def main():
         print(f"    {row['industry']}: RPS5={row.get('RPS5',0):.1f} 连续{c}天 60日直击{d}次")
 
     print("\n[5/5] 生成看板数据...")
+    # 一级板块归类映射(三级→一级, 如 医疗研发外包→医药生物); 失败为空则前端显示 '--'
+    board_parent_map = get_board_parent_map()
     last_data = {"rps5_names": set(), "rps10_names": set(), "rps20_names": set()}
     if os.path.exists(LAST_RESULT_FILE):
         with open(LAST_RESULT_FILE, "r", encoding="utf-8") as f:
@@ -1240,9 +1322,9 @@ def main():
                 "rps20_names": set(raw.get("rps20_names", [])),
             }
 
-    res5 = split_in_out(df_rps, RPS_THRESHOLD, "RPS5", "rank5", "rank_chg5", "consecutive5", stock_rps50, industry_rps50_60day, last_data["rps5_names"])
-    res10 = split_in_out(df_rps, RPS_THRESHOLD, "RPS10", "rank10", "rank_chg10", "consecutive10", stock_rps50, industry_rps50_60day, last_data["rps10_names"])
-    res20 = split_in_out(df_rps, RPS_THRESHOLD, "RPS20", "rank20", "rank_chg20", "consecutive20", stock_rps50, industry_rps50_60day, last_data["rps20_names"])
+    res5 = split_in_out(df_rps, RPS_THRESHOLD, "RPS5", "rank5", "rank_chg5", "consecutive5", stock_rps50, industry_rps50_60day, last_data["rps5_names"], board_parent_map)
+    res10 = split_in_out(df_rps, RPS_THRESHOLD, "RPS10", "rank10", "rank_chg10", "consecutive10", stock_rps50, industry_rps50_60day, last_data["rps10_names"], board_parent_map)
+    res20 = split_in_out(df_rps, RPS_THRESHOLD, "RPS20", "rank20", "rank_chg20", "consecutive20", stock_rps50, industry_rps50_60day, last_data["rps20_names"], board_parent_map)
 
     available_days = [d for d in trade_days if d in daily_map]
     latest_date = available_days[-1]
@@ -1254,7 +1336,7 @@ def main():
     for res in (res5, res10, res20):
         for rec in res["in_list"] + res["out_list"]:
             all_ind_names.add(rec["name"])
-    stocks_by_ind = build_sector_stocks(industry_df, daily_map, latest_date, all_ind_names)
+    stocks_by_ind = build_sector_stocks(industry_df, daily_map, latest_date, all_ind_names, stock_rps50_map)
     for res in (res5, res10, res20):
         for rec in res["in_list"] + res["out_list"]:
             rec["stocks"] = stocks_by_ind.get(rec["name"], [])
@@ -1278,6 +1360,13 @@ def main():
         json.dump(output, f, ensure_ascii=False, indent=2, default=str)
     # 计算成功并完整落盘 → 标记运行成功 (下游 recommend/daily_review/weekly 前置校验)
     write_run_status(True, latest_date, mode="calc", message="RPS 全量计算成功")
+
+    # 四级下钻层级数据 (一级/二级 RPS + 全成分股; 读刚写入的静态文件, 失败不阻断)
+    try:
+        import level_hierarchy
+        level_hierarchy.build_and_save()
+    except Exception as e:
+        print(f"  ⚠️ 层级下钻数据生成失败(不阻断): {str(e)[:80]}")
 
     save_last = {
         "date": latest_date,
@@ -1320,6 +1409,9 @@ def main():
     # ===== 每周推荐股票(中线波段, 周线五层漏斗, 复用 RPS20 入选板块成分股) =====
     _maybe_run_weekly(industry_df, daily_map, latest_date, prev_date, res20["in_list"],
                       out_list_names=_out_list, review_data=_review)
+
+    # ===== 每周复盘: 只在周日运行1次(周日 A 股休市, 复用周五最新数据) =====
+    _maybe_run_weekly_review()
 
     print(f"\n{'='*55}")
     print(f"  ✅ 完成!")

@@ -1,7 +1,18 @@
 # RPS 看板系统 — 更新日志与维护手册
 
 > 本文档记录系统的**选股逻辑**、**缓存回退机制**与**历次更新**，供后续维护参考。
-> 更新时间：2026-08-13（数据绑定交易日 20260813）
+> 更新时间：2026-08-25（数据绑定交易日 20260825）
+
+---
+
+## 〇、更新概要（2026-08-25）
+
+| 模块 | 变更 | 原因 |
+|---|---|---|
+| 复盘 | 每日/每周复盘新增**推荐准确率分析**（命中率/平均涨幅/分置信度胜率/最佳最差个股），数据来自 prediction_review.json | 复盘要能评估日度推荐质量 |
+| 复盘 | 每日复盘文字全面精简（去冗余分位说明/条件括号解释/超长 note），并修复 daily_review.md 底部 AUTO_GEN_END 标记重复累积 | 复盘太长、可读性差 |
+| 看板 | RPS5/10/20 三档表格**删除 RPS 列**，改显示各档实际周期涨幅（5日/10日/20日涨幅，红涨绿跌） | RPS 为排名百分位（各档 Top20 序列必然相同），真实涨幅才能体现各档强弱差异 |
+| 部署 | **彻底移除代码中全部 GitHub 相关引用**（index.html 提示文案/注释），仅保留阿里云服务器部署（47.99.178.225:8000） | 不再需要 GitHub 服务器 |
 
 ---
 
@@ -87,7 +98,7 @@
 | `index_cache/*.json` 指数日线 | recommend | **≥ 60 条且已含最新交易日才复用**，否则重拉；**统一按日期升序存储**（Tushare 返回降序需重排） | Tushare index_daily → AKShare → 东财（失败默认安全） |
 | `fina_indicator_cache.json` 财务 | recommend | **`_fetched_date` == 最新交易日才复用**，跨季度/披露期变化清空重建 | Tushare → 东财（失败降级 PE>0） |
 | `moneyflow_cache.json` 主力资金 | recommend | 按交易日增量补齐缺失日期 | Tushare → 近似估算 → AKShare → 东财 |
-| `market_fund_flow_cache.json` 大盘主力资金 | recommend | 按日增量 | AKShare `stock_market_fund_flow`（东财 push2his 被拒时）→ 腾讯全市场 `zljlr` 求和兜底（真实值）；北向 2024 年起停披露，链路已移除 |
+| `moneyflow_hsgt_cache.json` 北向 | recommend | 按日增量 | 失败跳过（加分项，不影响否决；北向 2024 年起停止每日披露） |
 | `daily_basic` 行情 | recommend | 当日拉取 | Tushare → AKShare 腾讯 → 东财 |
 
 ### 3.2 stock_basic 缓存回退策略（2026-08-13 新增）
@@ -126,16 +137,6 @@ cron: 工作日 18:30 → /opt/rps-board/cron_rps.sh
 ---
 
 ## 五、历史更新日志（近期）
-
-### 2026-08-15 — 数据源 100% 补全（财务 F10 全覆盖 + 大盘主力资金替换北向）
-- **数据源全面梳理**：审查全程序 10 类 A 股数据源，识别 3 个真实缺失——①财务指标覆盖不足且缺资产负债率真实值 ②北向资金为死代码（港交所 2024-08 起停每日披露）③财务数据候选股覆盖仅 32 只（无候选股感知）
-- **财务 100% 覆盖**：新增 `fetch_fina_f10_em`（东财 `RPT_F10_FINANCE_MAINFINADATA` 免费接口），**逐报告期过滤**（从最新已结束季度往前回溯 8 期）替代单一"最新期"方案——披露季（8 月）各公司最新披露期不同，逐期过滤可 100% 覆盖全市场 5842 只；字段含真实值 `ZCFZL` 资产负债率 / 归母净利 / 归母同比 / 扣非净利 / 扣非同比（`_f10_float` 缺失返 None，绝不伪造 0）；批量响应按 `^\d{6}\.(SH|SZ|BJ)$` 过滤非个股（指数 A20007.SH 等）
-- **双通道策略**：Tushare `fina_indicator` 有权限时官方优先；无权限（服务器现状）自动降级东财 F10，财务缓存不再写死 `debt_to_assets=None`
-- **候选股感知提前退出**：`fetch_fina_indicator_batch` 东财路径传入候选股集合，找齐即停（不再拉全市场）
-- **北向资金移除**：删除 `fetch_hsgt_flow` / `fetch_hsgt_em` / `fetch_hsgt_ak` 死代码（港交所停披露后无真实值来源）
-- **大盘主力资金接入**：新增 `fetch_market_fund_flow`（缓存 `market_fund_flow_cache.json`），主源 AKShare `stock_market_fund_flow`（东财 push2his 在服务器被拒）→ 兜底腾讯全市场 spot `zljlr` 求和（`pd.to_numeric` 转数值，万元→元），实测 20260814 = **-104.7 亿元真实值**
-- **大盘判定接入**：`check_market_env` 新增可选参数 `market_flow=None`，market_status 输出 `main_flow`（days/neg_days/total_net_yi/verdict），连续 2 日净流出仅**提示不否决**（`main_flow_warn_neg=2`）
-- **验证**：本地 230 Python（+10）+ 43 Node（+10）测试全过；服务器 force 重跑——fina_cache 5842 只覆盖、负债率非空 5841 只、33 只推荐均含真实财务（如 002396 星网锐捷 debt_to_assets=49.98）
 
 ### 2026-08-15 — 每日复盘 v2 大升级（daily_review.py + render.js 双端）
 - **市场定调双约束**：强度 = 变化量 + 绝对水位（diff≥+3 且高分≥20 且站上 20 日线 → 全面强；高分≥25 且允许沪指破线 → 结构性强；弱需 diff≤-5 AND 高分≤14），消除只看 diff 误判；新增高分板块数近 120 日历史分位
@@ -203,7 +204,7 @@ cron: 工作日 18:30 → /opt/rps-board/cron_rps.sh
 3. **服务器部署**：默认只推阿里云服务器。改代码后执行 `python _upload_file.py <本地> /opt/rps-board/<远程>`，然后 `python _ssh_run.py "systemctl restart rps-board.service"`。切勿恢复 GitHub 推送。
 4. **服务器必装文件**：`akshare_adapter.py` 与 `sw_industry.py` 必须与 `rps_calc.py`/`recommend.py` 同在 /opt/rps-board/（缺失则 AKShare 数据源/申万板块池不可用）。服务器需安装 akshare（≥1.18）。
 5. **缓存数据不入库**：`rps_data.json` / `last_result.json` / `rps_history.json` / `index_cache/` / `sw_industry_cache.json` 等在 .gitignore 中，GitHub 分支已停用，数据只在阿里云服务器生成。
-6. **测试**：改逻辑后跑 `python -m unittest discover -s tests`（230 项，Windows 下需 `PYTHONIOENCODING=utf-8` 避免 GBK emoji 报错）+ `node --test tests/test_render.js`（43 项）。
+6. **测试**：改逻辑后跑 `python -m unittest discover -s tests`（194 项，Windows 下需 `PYTHONIOENCODING=utf-8` 避免 GBK emoji 报错）+ `node --test tests/test_render.js`（33 项）。
 7. **大盘终止选股是设计行为**：上涨占比 < 30% 或跌停 > 50 家时输出 0 只推荐，前端显示"大盘环境不满足"，非数据故障。
 8. **Tushare 免费 token 无 premium 接口权限**（fina_indicator / moneyflow / index_daily / stock_basic），全部依赖降级策略兜底，属正常预期。
 9. **细分板块特性**：208 个申万三级板块中部分成分股少（8-15 只），少数大盘股可撬动板块 RPS 虚高；"调入/种子"增多且多为一两日行情，需结合板块内多数个股是否同步走强判断。

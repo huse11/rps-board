@@ -183,11 +183,11 @@ test('fmtReviewSector: 精简板块条目带RPS/排名/达标率, 兼容旧RPS5'
     assert.equal(R.fmtReviewSector({ name: '铅锌' }), '铅锌');
 });
 
-test('fmtReviewTone: v2六档带色(全面强/结构性强/中性偏强/中性/中性偏弱/弱), 空值--', () => {
+test('fmtReviewTone: v2六档带色(浅色主题白底深字), 空值--', () => {
     assert.ok(R.fmtReviewTone('全面强').includes('#059669'));
-    assert.ok(R.fmtReviewTone('结构性强').includes('#10b981'));
-    assert.ok(R.fmtReviewTone('中性偏强').includes('#3b82f6'));
-    assert.ok(R.fmtReviewTone('中性').includes('#2563eb'));
+    assert.ok(R.fmtReviewTone('结构性强').includes('#059669'));
+    assert.ok(R.fmtReviewTone('中性偏强').includes('#0284c7'));
+    assert.ok(R.fmtReviewTone('中性').includes('#0284c7'));
     assert.ok(R.fmtReviewTone('中性偏弱').includes('#d97706'));
     assert.ok(R.fmtReviewTone('弱').includes('#dc2626'));
     assert.ok(R.fmtReviewTone('强').includes('#059669'));
@@ -414,6 +414,104 @@ test('reviewChartMkt: 三档数量条形图 + 总计, 空数据空串', () => {
     assert.equal(R.reviewChartMkt(null), '');
 });
 
+// ---------- 每日复盘图表化 (v2.1) ----------
+test('reviewChartResonance: 主线构成四档数量, 空数据空串', () => {
+    const html = R.reviewChartResonance({
+        core: [{ name: '黄金' }, { name: '半导体' }],
+        tough: [{ name: '中药' }],
+        pulse: [{ name: '脉冲X' }],
+        diverge: []
+    });
+    assert.ok(html.includes('主线构成'), '标题');
+    assert.ok(html.includes('硬核主线') && html.includes('韧性主线'), '档位标签');
+    assert.ok(html.includes('2条'), '核心数量');
+    assert.equal(R.reviewChartResonance(null), '');
+    assert.equal(R.reviewChartResonance({ core: [], tough: [], pulse: [], diverge: [] }), '');
+});
+
+test('reviewChartTier: 一档/二档按达标率降序, 空数据空串', () => {
+    const html = R.reviewChartTier({
+        tier1: [{ name: '医疗外包', ratio: 93.1 }, { name: '黄金', ratio: 80 }],
+        tier2: [{ name: '模拟芯片', ratio: 26.5 }]
+    });
+    assert.ok(html.includes('板块梯队达标率'), '标题');
+    assert.ok(html.includes('93.1%') && html.includes('26.5%'), '达标率百分比');
+    assert.ok(html.indexOf('医疗外包') < html.indexOf('模拟芯片'), '按达标率降序');
+    assert.equal(R.reviewChartTier(null), '');
+    assert.equal(R.reviewChartTier({ tier1: [], tier2: [] }), '');
+});
+
+test('reviewChartRotation: 轮动数量对比, 空数据空串', () => {
+    const html = R.reviewChartRotation({
+        new_in: [1, 2], rank_jump: [1], out_count: 5, repeat: []
+    });
+    assert.ok(html.includes('轮动动向'), '标题');
+    assert.ok(html.includes('新调入') && html.includes('排名跃升') && html.includes('调出'), '类别');
+    assert.ok(html.includes('2个') && html.includes('5个'), '数量');
+    assert.equal(R.reviewChartRotation(null), '');
+    assert.equal(R.reviewChartRotation({}), '');
+});
+
+test('reviewChartHealth: 种子/扩散/疲劳达标率, 空数据空串', () => {
+    const html = R.reviewChartHealth({
+        seed_high: [{ name: '印制电路板', ratio: 24.4 }],
+        expand: [{ name: '医疗外包', ratio: 93.1 }],
+        mature_fatigue: [{ name: '培训教育', ratio: 55 }]
+    });
+    assert.ok(html.includes('扩散/种子达标率'), '标题');
+    assert.ok(html.includes('24.4%') && html.includes('93.1%'), '达标率');
+    assert.equal(R.reviewChartHealth(null), '');
+    assert.equal(R.reviewChartHealth({}), '');
+});
+
+test('reviewChartRisk: 批量调出构成按数量降序, 空数据空串', () => {
+    const html = R.reviewChartRisk({ batch_out: { 医药: 3, 未归类: 8, 科技: 1 } });
+    assert.ok(html.includes('批量调出板块构成'), '标题');
+    assert.ok(html.includes('未归类') && html.includes('8个'), '最大风格');
+    assert.equal(R.reviewChartRisk(null), '');
+    assert.equal(R.reviewChartRisk({}), '');
+});
+
+test('reviewChartWatch: 跟踪池构成数量, 空数据空串', () => {
+    const html = R.reviewChartWatch({
+        seed_high: [{ name: 'A' }], seed_pulse: [{ name: 'B' }, { name: 'C' }],
+        critical: [], diverge_watch: [], diverge_dropped: []
+    });
+    assert.ok(html.includes('次日跟踪池构成'), '标题');
+    assert.ok(html.includes('高质量种子') && html.includes('脉冲种子'), '池标签');
+    assert.ok(html.includes('2只'), '数量');
+    assert.equal(R.reviewChartWatch(null), '');
+    assert.equal(R.reviewChartWatch({}), '');
+});
+
+test('buildReviewHtml: 复盘图表化(六大方向各含图表)', () => {
+    const data = {
+        update_date: '20260814', total_industries: 208,
+        market: { tone: '中性', high5: 20, high10: 20, high20: 20, diff5: 0, note: '上证指数站上20日线' },
+        resonance: { core: [{ name: '黄金', RPS: 100, rank: 1, ratio: 80 }], tough: [],
+                     pulse: [{ name: '脉冲X', RPS: 92, rank: 12, ratio: 10 }], diverge: [] },
+        tier: { tier1: [{ name: '黄金', ratio: 80 }], tier2: [{ name: '模拟芯片', ratio: 26.5 }] },
+        rotation: { new_in: [{ name: '分立器件' }], rank_jump: [{ name: '中成药', rank_change: 43, rank: 10 }],
+                    out_count: 3, exits: [{ name: '半导体', continuous: 5, exit_type: 'mainline_exit' }], repeat: [] },
+        health: { expand: [{ name: '医疗外包', ratio: 93.1 }], mature: [], mature_fatigue: [],
+                  seed_high: [{ name: '印制电路板', ratio: 24.4 }], seed_pulse: [] },
+        risk: { batch_out: { 医药: 2 }, warnings: [{ text: '批量调出预警', level: 'warning' }], level: 'warning' },
+        watch: { seed_high: [{ name: '印制电路板', ratio: 24.4 }], seed_pulse: [{ name: '分立器件' }], critical: [],
+                 diverge_watch: [{ name: '摩托车', drop_days: 1 }], diverge_dropped: [] },
+        sentiment: { main: '发酵期', signal: [], seed_n: 0, out_n: 1, core_n: 1, high_n: 20 },
+        style: { rps5: { 科技: { count: 3, pct: 27.3 } } },
+        consistency: { conflict: false, warning: '' }
+    };
+    const html = R.buildReviewHtml(data);
+    for (const chart of ['三档入选数量', '主线构成', '板块梯队达标率', '轮动动向',
+        '扩散/种子达标率', '批量调出板块构成', '次日跟踪池构成']) {
+        assert.ok(html.includes(chart), '缺少图表: ' + chart);
+    }
+    assert.ok(html.includes('摩托车'), '跟踪池文本保留');
+    assert.ok(html.includes('调出分类'), '调出分类文本保留');
+    assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});
+
 test('buildReviewHtml: 图文集成(市场定调含图表, 进阶含情绪周期图)', () => {
     const data = {
         update_date: '20260814', total_industries: 208,
@@ -435,6 +533,35 @@ test('buildReviewHtml: 图文集成(市场定调含图表, 进阶含情绪周期
     assert.ok(html.includes('发酵期'), '情绪周期激活档');
     assert.ok(html.includes('风格归因'), '进阶观察含风格图');
     assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});
+
+test('复盘深色主题: 面板/卡片深色 + 图表浅色文字', () => {
+    const data = {
+        update_date: '20260814', total_industries: 208,
+        market: { tone: '中性', high5: 20, high10: 20, high20: 20, diff5: 0, note: '' },
+        resonance: { core: [{ name: '黄金', RPS: 100, rank: 1, ratio: 80 }], tough: [],
+                     pulse: [{ name: '脉冲X', RPS: 92, rank: 12, ratio: 10 }], diverge: [] },
+        tier: { tier1: [{ name: '黄金', ratio: 80 }], tier2: [] },
+        rotation: { new_in: [{ name: 'A' }], rank_jump: [], out_count: 1, repeat: [] },
+        health: { expand: [{ name: '医疗外包', ratio: 93.1 }], mature: [], mature_fatigue: [],
+                  seed_high: [], seed_pulse: [] },
+        risk: { batch_out: {}, warnings: [], level: 'safe' },
+        watch: { seed_high: [], seed_pulse: [], critical: [], diverge_watch: [], diverge_dropped: [] },
+        sentiment: { main: '发酵期', signal: [], seed_n: 0, out_n: 0, core_n: 1, high_n: 20 },
+        style: { rps5: { 科技: { count: 3, pct: 27.3 } } },
+        consistency: { conflict: false, warning: '' }
+    };
+    const html = R.buildReviewHtml(data);
+    // 白色面板容器 + 浅灰蓝卡片 (白底深字)
+    assert.ok(html.includes('background:#ffffff'), '面板白底');
+    assert.ok(html.includes('#f8fafc'), '卡片浅灰蓝背景');
+    // 深色文字 (白底可读)
+    assert.ok(html.includes('#64748b'), '图表标签中灰');
+    assert.ok(html.includes('#334155'), '图表数值/章节文字深色');
+    // 金融配色: 红涨绿健康
+    assert.ok(html.includes('#dc2626'), '金融红');
+    assert.ok(html.includes('#059669'), '金融绿');
+    assert.ok(!html.includes('background:#0b1120'), '不再深色面板');
 });
 
 // ---------- fmtEarlyNum: 早期数字格式化 ----------
@@ -463,6 +590,34 @@ test('fmtEarlyTags: 平台刚启动绿色/板块红色/属性蓝色', () => {
 test('fmtEarlyTags: 空标签显示 --', () => {
     assert.equal(R.fmtEarlyTags({ tags: '', sectors: [] }), '--');
     assert.equal(R.fmtEarlyTags({ sectors: undefined }), '--');
+});
+
+// ---------- _tagCls: 标签样式归类 (精准度增强) ----------
+test('_tagCls: 风险标签 warn/danger, 平台/板块/常规各归其位', () => {
+    const sectors = ['半导体'];
+    assert.equal(R._tagCls('反弹未反转', sectors), 'warn');
+    assert.equal(R._tagCls('超跌反弹', sectors), 'warn');
+    assert.equal(R._tagCls('高估值', sectors), 'warn');
+    assert.equal(R._tagCls('涨停追高风险', sectors), 'danger');
+    assert.equal(R._tagCls('龙虎榜出货', sectors), 'danger'); // 上榜出货警示 (2026-08-23)
+    assert.equal(R._tagCls('业绩预减', sectors), 'danger');   // 业绩预告负面 (2026-08-23)
+    assert.equal(R._tagCls('首亏预警', sectors), 'danger');   // 首亏预警 (2026-08-23)
+    assert.equal(R._tagCls('现金流为负', sectors), 'danger'); // 盈利质量防御 (2026-08-23)
+    assert.equal(R._tagCls('利润质量存疑', sectors), 'danger'); // 利润质量存疑 (2026-08-23)
+    assert.equal(R._tagCls('龙虎榜买入', sectors), 'tech');   // 净买入保持常规
+    assert.equal(R._tagCls('业绩预增', sectors), 'tech');     // 业绩预告正面保持常规 (2026-08-23)
+    assert.equal(R._tagCls('扭亏为盈', sectors), 'tech');     // 扭亏为盈保持常规 (2026-08-23)
+    assert.equal(R._tagCls('平台刚启动', sectors), 'platform');
+    assert.equal(R._tagCls('半导体', sectors), 'sector');
+    assert.equal(R._tagCls('贴近新高', sectors), 'tech'); // 正面信号保持蓝色
+    assert.equal(R._tagCls('短线优选', sectors), 'tech');
+});
+
+test('fmtEarlyTags: 高估值/涨停追高风险带 warn/danger 样式', () => {
+    const s = { tags: '高估值 + 涨停追高风险 + 半导体', sectors: ['半导体'] };
+    const html = R.fmtEarlyTags(s);
+    assert.ok(html.includes('tag-rec warn'), '高估值用 warn 样式');
+    assert.ok(html.includes('tag-rec danger'), '涨停追高风险用 danger 样式');
 });
 
 // ---------- fmtEarlyMktLevel: 早期大盘两档 ----------
@@ -558,14 +713,14 @@ test('fmtWan: 亿/万/原值 格式化', () => {
     assert.equal(R.fmtWan(null), '--');
 });
 
-test('fmtDetailHeader: 名称/代码/现价/涨跌/十格数据齐全', () => {
+test('fmtDetailHeader: 名称/代码/现价/涨跌/状态标签/行情格齐全', () => {
     const rt = {
         name: '华钰矿业', code: '601020.SH',
         price: 21.94, change: 0.03, changePercent: 0.14,
         open: 21.82, high: 22.23, low: 21.5, preClose: 21.91,
-        volumeRatio: 0.52, turnover: 2.63,
-        totalAmount: 4.72e8, totalMarket: 1.799e10,
-        pe_ttm: 147.18, afterPrice: 21.94,
+        volumeRatio: 0.52, turnover: 2.63, amplitude: 3.33,
+        totalAmount: 4.72e8, totalMarket: 1.799e10, circ_mv: 8.5e9,
+        pe_ttm: 147.18, afterPrice: 21.94, marketStatus: '收盘',
     };
     const html = R.fmtDetailHeader(rt);
     assert.ok(html.includes('华钰矿业'), '名称');
@@ -576,13 +731,25 @@ test('fmtDetailHeader: 名称/代码/现价/涨跌/十格数据齐全', () => {
     assert.ok(html.includes('最高'), '最高');
     assert.ok(html.includes('最低'), '最低');
     assert.ok(html.includes('量比'), '量比');
+    assert.ok(html.includes('振幅'), '振幅');
     assert.ok(html.includes('换手'), '换手');
     assert.ok(html.includes('总额'), '总额');
     assert.ok(html.includes('总市值'), '总市值');
-    assert.ok(html.includes('市盈'), '市盈');
-    assert.ok(html.includes('盘后价'), '盘后价');
+    assert.ok(html.includes('流通市值'), '流通市值');
+    assert.ok(html.includes('市盈TTM'), '市盈TTM');
     assert.ok(html.includes('179.90亿'), '总市值格式化');
+    assert.ok(html.includes('85.00亿'), '流通市值格式化(8.5e9=85亿)');
+    assert.ok(html.includes('dh-status'), '状态标签');
+    assert.ok(html.includes('收盘'), '状态=收盘');
+    assert.ok(html.includes('onclick="copyStockInfo()"'), '名称代码可复制');
+    assert.ok(!html.includes('盘后价'), '不再显示盘后价');
     assert.equal(R.fmtDetailHeader(null), '');
+});
+
+test('fmtDetailHeader: 停牌状态给提示文案', () => {
+    const html = R.fmtDetailHeader({ name: 'X', code: '600000.SH', marketStatus: '停牌', price: null, volume: 0 });
+    assert.ok(html.includes('停牌'), '停牌标签');
+    assert.ok(html.includes('该股当前停牌'), '停牌提示文案');
 });
 
 test('fmtDetailScore: 环形SVG评分 + 打败比例 + 排名 + AI解盘', () => {
@@ -629,32 +796,6 @@ test('fmtDetailImpression: 个股/行业/沪深300 阶段涨幅对比', () => {
     assert.ok(html.includes('8.37%'), '行业涨幅');
     assert.ok(html.includes('-2.53%'), '沪深300');
     assert.equal(R.fmtDetailImpression(null), '');
-});
-
-test('fmtDetailTechbao: K线形态/筹码成本区/获利比例', () => {
-    const tb = { klineForm: '平台突破', chip: { avgCost: '18.94-25.34', profitRate: '43.89%' }, yujia: ['业绩预增50%'] };
-    const html = R.fmtDetailTechbao(tb);
-    assert.ok(html.includes('平台突破'), 'K线形态');
-    assert.ok(html.includes('18.94-25.34'), '筹码成本区');
-    assert.ok(html.includes('43.89%'), '获利比例');
-    assert.ok(html.includes('业绩预增50%'), '业绩预增标签');
-    assert.equal(R.fmtDetailTechbao(null), '');
-});
-
-test('fmtDetailFundtrack: 市场/北上/两融/龙虎 四卡片', () => {
-    const ft = {
-        market: { netInTxt: '1136.0万', mainNetTxt: '-1860.7万' },
-        north: { netBuy: '-350.21万' },
-        margin: { marginNet: '-1141.4万', total: '16.16亿' },
-        dragon: { lastDate: '2026-06-16' },
-    };
-    const html = R.fmtDetailFundtrack(ft);
-    assert.ok(html.includes('市场资金'), '市场资金卡片');
-    assert.ok(html.includes('北上资金'), '北上卡片');
-    assert.ok(html.includes('两融余额'), '两融卡片');
-    assert.ok(html.includes('龙虎榜单'), '龙虎卡片');
-    assert.ok(html.includes('-1860.7万'), '主力净流入');
-    assert.equal(R.fmtDetailFundtrack(null), '');
 });
 
 test('fmtDetailZhuoyao: 当日主力/游资/散户净流入卡片 + 无信号', () => {
@@ -735,6 +876,396 @@ test('fmtDetailTechnical: MACD/KDJ/RSI/BOLL 当前值', () => {
     assert.ok(html.includes('RSI'), 'RSI');
     assert.ok(html.includes('BOLL'), 'BOLL');
     assert.ok(html.includes('0.120'), 'DIF值');
+    assert.ok(html.includes('ft-grid'), '2x2指标卡片布局');
+    assert.ok(html.includes('ft-card'), '指标卡片');
     assert.equal(R.fmtDetailTechnical(null), '');
 });
+
+test('explainTag: 已知标签返回说明, 未知返回通用文案', () => {
+    assert.ok(R.explainTag('流动性风险').includes('成交活跃度'), '已知标签说明');
+    assert.ok(R.explainTag('任意自定义标签').includes('不构成投资建议'), '未知标签通用文案');
+});
+
+test('fmtDetailBacktest: 胜率占比条形图', () => {
+    const html = R.fmtDetailBacktest({ days: 120, riseRate: '57.14%', avgIncrease: '1.29%' });
+    assert.ok(html.includes('bt-bar'), '胜率条形图');
+    assert.ok(html.includes('57.1%'), '上涨占比');
+    assert.ok(html.includes('42.9%'), '下跌占比');
+    assert.equal(R.fmtDetailBacktest(null), '');
+});
+
+test('fmtDetailValue: 支持 1/3/5 年区间切换按钮', () => {
+    const hist = [];
+    for (let i = 0; i < 300; i++) hist.push({ time: '2026-01-01', value: 10 + (i % 50) });
+    const va = { pePercent: 25, peHistory: hist, growth: [] };
+    const html = R.fmtDetailValue(va, 1);
+    assert.ok(html.includes('pe-range'), '区间切换按钮');
+    assert.ok(html.includes('近1年'), '近1年按钮');
+    assert.ok(html.includes('近3年'), '近3年按钮');
+    assert.ok(html.includes('近5年'), '近5年按钮');
+    assert.ok(html.includes('近1年'), '默认激活近1年');
+    const html3 = R.fmtDetailValue(va, 3);
+    assert.ok(html3.includes('近3年'), '3年激活');
+    assert.equal(R.fmtDetailValue(null), '');
+});
+
+test('fmtDetailImpression: 阶段涨幅小折线 + 三栏对比', () => {
+    const imp = {
+        stageRise: { stock: '16.58%', industry: '8.37%', hs300: '-2.53%' },
+        stageDetail: { stock5: 2.1, stock20: 8.4, stock60: 16.58 },
+    };
+    const html = R.fmtDetailImpression(imp);
+    assert.ok(html.includes('stage-spark'), '小折线图');
+    assert.ok(html.includes('<svg'), 'SVG折线');
+    assert.ok(html.includes('16.58%'), '个股涨幅');
+    assert.ok(html.includes('8.37%'), '行业涨幅');
+    assert.ok(html.includes('-2.53%'), '沪深300');
+    assert.equal(R.fmtDetailImpression(null), '');
+});
+
+test('fmtDetailRisk: 标签可点击弹出说明', () => {
+    const rh = { riskTags: ['流动性风险'], highlightTags: ['资金面回暖'] };
+    const html = R.fmtDetailRisk(rh);
+    assert.ok(html.includes('showTagTip(this)'), '标签点击弹说明');
+    assert.ok(html.includes('data-tag='), '标签原文透传');
+});
+
+// ---------- XSS 防护: 外部可控文本必须转义后进入 innerHTML ----------
+test('XSS: stockRowHtml 个股名含标签被转义', () => {
+    const html = R.stockRowHtml({ ts_code: '600519.SH', name: '<img src=x onerror=alert(1)>', pct_chg: 1.2, price: 10, change: 1.0 });
+    assert.ok(!html.includes('<img'), '不应出现原始 <img 标签');
+    assert.ok(html.includes('&lt;img'), '应输出转义后的 &lt;img');
+});
+
+test('XSS: stockRowHtml onclick 中 ts_code 无法逃逸 JS 字符串', () => {
+    const evil = "000001';alert(1);//";
+    const html = R.stockRowHtml({ ts_code: evil, name: '测试', pct_chg: 1, price: 1, change: 1 });
+    assert.ok(html.includes("\\';alert"), '单引号前有反斜杠转义, alert 无法逃出字符串字面量');
+    assert.ok(!html.includes("');"), '不存在未转义引号直接闭合逃逸');
+});
+
+test('XSS: fmtWeeklyTags/fmtEarlyTags 标签文本被转义', () => {
+    const wk = R.fmtWeeklyTags({ tags: '<script>alert(1)</script>', sectors: [] });
+    assert.ok(!wk.includes('<script>'));
+    assert.ok(wk.includes('&lt;script&gt;'));
+    const early = R.fmtEarlyTags({ tags: '<b>x</b>', sectors: [] });
+    assert.ok(!early.includes('<b>'));
+    assert.ok(early.includes('&lt;b&gt;'));
+});
+
+test('XSS: fmtReviewSector/fmtReviewNames 板块名被转义', () => {
+    const s = R.fmtReviewSector({ name: '<svg onload=alert(1)>', RPS: 95, rank: 1, ratio: 80 });
+    assert.ok(!s.includes('<svg'));
+    assert.ok(s.includes('&lt;svg'));
+    const names = R.fmtReviewNames(['<img src=x onerror=1>', '正常']);
+    assert.ok(!names.includes('<img'));
+    assert.ok(names.includes('&lt;img'));
+});
+
+test('XSS: buildReviewHtml 中 m.note / cons.warning / 跟踪池名称被转义', () => {
+    const data = {
+        update_date: '20260818',
+        market: { tone: '强', note: '<script>alert(2)</script>', high5: 10, diff5: 1 },
+        resonance: {}, tier: {}, rotation: { new_in: [{ name: '<b>evil</b>', RPS: 90 }] },
+        health: {}, risk: {}, watch: { critical: [{ name: '<i>c</i>', rps5: 88 }] },
+        sentiment: {}, style: {}, consistency: { conflict: true, warning: '<img onerror=3>' },
+        total_industries: 100,
+    };
+    const html = R.buildReviewHtml(data);
+    assert.ok(!html.includes('<script>'), 'note 中的 script 应转义');
+    assert.ok(!html.includes('<img'), 'warning 中的 img 应转义');
+    assert.ok(!html.includes('<b>evil</b>'), '板块名不应原样注入');
+    assert.ok(html.includes('&lt;script&gt;') && html.includes('&lt;img'), '应包含转义后的文本');
+});
+
+test('XSS: buildPredictionBox 中 logic/regime/basis 被转义', () => {
+    const html = R.buildPredictionBox({
+        prediction: {
+            horizon: 3, up_prob: 70, expected_gain: 6, gain_range: [3, 9], stop_loss: -4, confidence: '高',
+            regime: '<b>偏强</b>',
+            logic: ['<script>x</script>'],
+            basis: '<iframe src=x>',
+            factors: { momentum: 60, technical: 55, capital: 50, sector: 60, sentiment: 50, fundamental: 50 },
+        },
+    });
+    assert.ok(!html.includes('<script>'), 'logic 应转义');
+    assert.ok(!html.includes('<iframe'), 'basis 应转义');
+    assert.ok(!html.includes('<b>偏强</b>'), 'regime 应转义');
+});
+
+test('XSS: fmtReviewWarnings 文本与 fmtReviewPhase 信号被转义', () => {
+    const w = R.fmtReviewWarnings([{ text: '<div>x</div>', level: 'warning' }]);
+    assert.ok(!w.includes('<div>'));
+    assert.ok(w.includes('&lt;div&gt;'));
+    const p = R.fmtReviewPhase({ main: '高潮期', signal: ['<a>s</a>'], seed_n: 3 });
+    assert.ok(!p.includes('<a>'));
+    assert.ok(p.includes('&lt;a&gt;'));
+});
+
+// ---------- 情绪周期历史趋势图 ----------
+test('reviewChartSentimentHistory: 空输入返回空串', () => {
+    assert.equal(R.reviewChartSentimentHistory(), '');
+    assert.equal(R.reviewChartSentimentHistory([]), '');
+    assert.equal(R.reviewChartSentimentHistory(null), '');
+});
+
+test('reviewChartSentimentHistory: 生成 SVG 并含标题', () => {
+    const html = R.reviewChartSentimentHistory([
+        { date: '20260810', phase: '冰点期', high_n: 6 },
+        { date: '20260811', phase: '震荡期', high_n: 20 },
+    ]);
+    assert.ok(html.includes('情绪周期历史'));
+    assert.ok(html.includes('<svg'));
+    assert.ok(html.includes('<polyline'));
+});
+
+test('reviewChartSentimentHistory: 最多渲染最近 24 条', () => {
+    const rows = [];
+    for (let i = 0; i < 30; i++) rows.push({ date: '2026' + String(i).padStart(4, '0'), phase: '震荡期', high_n: i });
+    const html = R.reviewChartSentimentHistory(rows);
+    assert.ok(html.includes('近24个交易日'));
+    assert.ok(!html.includes('近30个交易日'));
+});
+
+test('reviewChartSentimentHistory: 未知阶段降级不崩溃', () => {
+    const html = R.reviewChartSentimentHistory([{ date: '20260810', phase: '神秘期', high_n: 5 }]);
+    assert.ok(html.includes('<svg'));
+});
+
+// ---------- 板块热度排名图 ----------
+test('reviewChartSectorHeat: 空 tier 返回空串', () => {
+    assert.equal(R.reviewChartSectorHeat(), '');
+    assert.equal(R.reviewChartSectorHeat({}), '');
+    assert.equal(R.reviewChartSectorHeat({ tier1: [], tier2: [] }), '');
+});
+
+test('reviewChartSectorHeat: 合并一/二梯队按 RPS 降序 Top10', () => {
+    const tier = {
+        tier1: [{ name: '甲板块', RPS: 99.2, ratio: 30 }, { name: '乙板块', RPS: 92.0, ratio: 18 }],
+        tier2: [{ name: '丙板块', RPS: 95.5, ratio: 22 }, { name: '丁板块', RPS: 88.1, ratio: 12 }],
+    };
+    const html = R.reviewChartSectorHeat(tier);
+    assert.ok(html.includes('板块热度排名'));
+    // 甲(RPS99.2) 应排第一 → 条形最宽 → 其 x 坐标文本标签在 SVG 序列最前
+    const iA = html.indexOf('甲板块');
+    const iC = html.indexOf('丙板块');
+    const iB = html.indexOf('乙板块');
+    assert.ok(iA !== -1 && iA < iC && iC < iB, '按 RPS 降序排列');
+    assert.ok(html.includes('达标30%') || html.includes('达标 30%'), '行末附达标率');
+});
+
+// ---------- 消息面复盘渲染 (2026-08-23) ----------
+
+test('fmtSignedNum: 带符号数字', () => {
+    assert.equal(R.fmtSignedNum(3), '+3');
+    assert.equal(R.fmtSignedNum(-2), '-2');
+    assert.equal(R.fmtSignedNum(0), '0');
+    assert.equal(R.fmtSignedNum(null), '0');
+    assert.equal(R.fmtSignedNum(undefined), '0');
+});
+
+test('fmtReviewNews: 权威利好偏暖 + 净影响', () => {
+    const html = R.fmtReviewNews({
+        has_news: true, stock_count: 16, hit_count: 3, score_sum: 4, env: '偏暖',
+        official_pos_list: [{ name: '兴业银锡', count: 1, headline: '业绩预增公告' }],
+        official_neg_list: [], rumor_list: [],
+        tags_count: { 利好消息: 3 }, note: '消息面偏暖, 推荐股票中权威利好1只(1条)；净影响+4分'
+    });
+    assert.ok(html.includes('偏暖'));
+    assert.ok(html.includes('权威利好'));
+    assert.ok(html.includes('兴业银锡'));
+    assert.ok(html.includes('业绩预增公告'));
+    assert.ok(html.includes('+4'));
+});
+
+test('fmtReviewNews: 权威利空偏冷 + 传闻 + 主力散户动向', () => {
+    const html = R.fmtReviewNews({
+        has_news: true, stock_count: 10, hit_count: 2, score_sum: -3, env: '偏冷',
+        official_pos_list: [], official_neg_list: [{ name: '某股', count: 1, headline: '' }],
+        rumor_list: [{ name: '传闻股', pos: 1, neg: 1 }],
+        tags_count: { 利空消息: 1, 人气榜TOP: 2, 机构大宗买入: 1, 大宗折价: 1 },
+        note: ''
+    });
+    assert.ok(html.includes('偏冷'));
+    assert.ok(html.includes('权威利空'));
+    assert.ok(html.includes('传闻股'));
+    assert.ok(html.includes('主力/散户动向'));
+    assert.ok(html.includes('人气榜TOP2只'));
+    assert.ok(html.includes('机构大宗买入1只'));
+});
+
+test('fmtReviewNews: 无消息面提示', () => {
+    const html = R.fmtReviewNews(null);
+    assert.ok(html.includes('暂无消息面信号'));
+    assert.ok(R.fmtReviewNews({}).includes('暂无消息面信号'));
+    assert.ok(R.fmtReviewNews({ has_news: false }).includes('暂无消息面信号'));
+});
+
+test('fmtReviewNews: headline 转义防 XSS', () => {
+    const html = R.fmtReviewNews({
+        has_news: true, env: '偏暖', stock_count: 1, hit_count: 1, score_sum: 2,
+        official_pos_list: [{ name: 'A', count: 1, headline: '<script>x</script>' }],
+        official_neg_list: [], rumor_list: [], tags_count: {}, note: ''
+    });
+    assert.ok(!html.includes('<script>'), 'headline 应转义');
+    assert.ok(html.includes('&lt;script&gt;'));
+});
+
+test('buildReviewHtml: 消息面复盘卡片 (偏暖环境)', () => {
+    const data = {
+        update_date: '20260821',
+        market: { tone: '中性', high5: 20, high10: 20, high20: 20, diff5: 1, high_score_count_pct: 50 },
+        resonance: {}, tier: {}, rotation: {}, health: {}, risk: {}, watch: {},
+        sentiment: {}, style: {}, consistency: {},
+        news: {
+            has_news: true, stock_count: 16, hit_count: 3, score_sum: 4, env: '偏暖',
+            official_pos_list: [{ name: '兴业银锡', count: 1, headline: '业绩预增' }],
+            official_neg_list: [], rumor_list: [], tags_count: { 利好消息: 3 }, note: ''
+        }
+    };
+    const html = R.buildReviewHtml(data);
+    assert.ok(html.includes('消息面复盘'), '消息面卡片标题');
+    assert.ok(html.includes('兴业银锡'), '权威利好个股');
+});
+
+test('buildReviewHtml: 消息面卡片无数据降级', () => {
+    const data = {
+        update_date: '20260821',
+        market: { tone: '中性', high5: 20, diff5: 1 }, resonance: {}, tier: {},
+        rotation: {}, health: {}, risk: {}, watch: {}, sentiment: {}, style: {},
+        consistency: {}
+    };
+    const html = R.buildReviewHtml(data);
+    assert.ok(html.includes('消息面复盘'));
+    assert.ok(html.includes('暂无消息面信号'));
+});
+
+// ---------- 每周复盘渲染 (2026-08-23) ----------
+
+test('buildWeeklyReviewHtml: 六大板块齐全', () => {
+    const data = {
+        week_id: '2026W34', update_date: '20260821', days: 5,
+        tone: { series: [{ date: '20260817', high_n: 20 }, { date: '20260818', high_n: 22 },
+                          { date: '20260819', high_n: 25 }, { date: '20260820', high_n: 24 },
+                          { date: '20260821', high_n: 28 }],
+                first: 20, last: 28, avg: 23.8, diff: 8, tone: '周度偏强', note: '周均高分板块24个(首日20→末日28, +8), 周内热度走高' },
+        mainlines: [{ name: '有色金属', days_on: 5, rps5: 95.0, rank: 1 }],
+        rotation: { sustained: [{ name: '有色金属', days_on: 5, rps5: 95 }],
+                    new_in: [{ name: '半导体', days_on: 1, rps5: 92 }],
+                    dropped: [{ name: '乳制品', days_on: 2 }] },
+        sentiment: { series: [{ date: '20260818', phase: '冰点期' }, { date: '20260821', phase: '启动期' }],
+                     start_phase: '冰点期', end_phase: '启动期', trend: '情绪从冰点期到启动期(升温)', phase_change: '升温' },
+        news: { has_news: true, stock_count: 16, hit_count: 3, score_sum: 4, env: '偏暖',
+                official_pos_list: [{ name: '兴业银锡', count: 1, headline: '业绩预增' }],
+                official_neg_list: [], rumor_list: [], tags_count: {}, note: '' },
+        watch: { critical: [{ name: 'X', rps5: 89.5 }], seed_high: [{ name: 'Y', ratio: 80 }],
+                 potential: [{ name: 'P', rps5: 88.5 }], diverge_watch: [{ name: 'Z', drop_days: 2 }] }
+    };
+    const html = R.buildWeeklyReviewHtml(data);
+    for (const sec of ['一、本周定调', '二、本周主线', '三、本周轮动',
+        '四、本周情绪演变', '五、消息面周度快照', '六、下周关注']) {
+        assert.ok(html.includes(sec), '缺少章节: ' + sec);
+    }
+    assert.ok(html.includes('周度偏强'), '周度强度');
+    assert.ok(html.includes('有色金属'), '本周主线');
+    assert.ok(html.includes('本周新晋'), '轮动新晋');
+    assert.ok(html.includes('升温'), '情绪演变');
+    assert.ok(html.includes('兴业银锡'), '消息面快照');
+    assert.ok(html.includes('临界晋级池'), '下周关注');
+    assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});
+
+test('buildWeeklyReviewHtml: 空数据兜底', () => {
+    assert.ok(R.buildWeeklyReviewHtml(null).includes('暂无周度复盘数据'));
+    assert.ok(R.buildWeeklyReviewHtml({}).includes('暂无周度复盘数据'));
+    assert.ok(R.buildWeeklyReviewHtml({ week_id: '2026W34' }).includes('本周定调'));
+});
+
+test('浏览器全局导出: IIFE root 必须暴露全部渲染函数(回归: 每周复盘加载失败修复)', () => {
+    // 模拟浏览器直接 <script src="render.js"> 加载(无 module), 若忘记挂 root 此处立即失败
+    const fs = require('node:fs');
+    const path = require('node:path');
+    const vm = require('node:vm');
+    const code = fs.readFileSync(path.join(__dirname, '../render.js'), 'utf-8');
+    const sandbox = { window: {} };
+    sandbox.window.window = sandbox.window;
+    vm.createContext(sandbox);
+    vm.runInContext(code, sandbox);
+    const root = sandbox.window;
+    for (const f of ['buildWeeklyReviewHtml', 'fmtReviewNews', 'fmtSignedNum',
+        'fmtReviewAccuracy', 'fmtReviewWeekAccuracy']) {
+        assert.strictEqual(typeof root[f], 'function', 'root.' + f + ' 未暴露, 浏览器将报 is not defined');
+    }
+    const html = root.buildWeeklyReviewHtml({
+        week_id: '2026W34', tone: { tone: '周度中性', note: 'x', series: [] },
+        mainlines: [{ name: 'A', days_on: 3, rps5: 95, rank: 2 }],
+        rotation: {}, sentiment: {}, news: null, watch: {}
+    });
+    assert.ok(html.includes('本周定调') && html.includes('A'), '浏览器作用域渲染正常');
+});
+
+// ---------- 推荐准确率复盘渲染 (fmtReviewAccuracy / fmtReviewWeekAccuracy, 2026-08-25) ----------
+
+test('fmtReviewAccuracy: 无数据显示暂无提示', () => {
+    const html = R.fmtReviewAccuracy(null);
+    assert.ok(html.includes('暂无'));
+    assert.ok(R.fmtReviewAccuracy({ has_data: false }).includes('暂无'));
+});
+
+test('fmtReviewAccuracy: 有数据渲染命中率/涨幅/置信度/最佳最差', () => {
+    const acc = {
+        has_data: true, samples: 44, hit_rate: 0.205, avg_gain: -3.68,
+        avg_up_prob: 69.5, today_count: 2, today_avg_prob: 65.5,
+        by_confidence: {
+            '高': { samples: 10, hit_rate: 0.4, avg_gain: 3.86 },
+            '中': { samples: 32, hit_rate: 0.156, avg_gain: -5.73 },
+        },
+        best: [{ name: '士兰微', gain: 2.9 }],
+        worst: [{ name: '祥源新材', gain: -7.74 }],
+        note: '测试说明',
+    };
+    const html = R.fmtReviewAccuracy(acc);
+    assert.ok(html.includes('21%'), '命中率 0.205 → 21%');
+    assert.ok(html.includes('-3.7'), '平均涨幅');
+    assert.ok(html.includes('今日推荐<b>2</b>只'), '今日推荐数');
+    assert.ok(html.includes('65.5%'), '今日平均概率');
+    assert.ok(html.includes('士兰微'), '最佳预测');
+    assert.ok(html.includes('祥源新材'), '最差预测');
+    assert.ok(html.includes('高10样本'), '置信度高');
+});
+
+test('fmtReviewAccuracy: 空推荐 today_count=0 不显示今日行', () => {
+    const acc = { has_data: true, samples: 5, hit_rate: 0.2, avg_gain: 1.0,
+                  avg_up_prob: 60, today_count: 0, today_avg_prob: null,
+                  by_confidence: {}, best: [], worst: [], note: '' };
+    const html = R.fmtReviewAccuracy(acc);
+    assert.ok(!html.includes('今日推荐'), 'today_count=0 不渲染今日行');
+});
+
+test('fmtReviewWeekAccuracy: 无数据显示暂无', () => {
+    assert.ok(R.fmtReviewWeekAccuracy(null).includes('暂无'));
+    assert.ok(R.fmtReviewWeekAccuracy({ has_data: false }).includes('暂无'));
+});
+
+test('fmtReviewWeekAccuracy: 有数据渲染周度命中率/置信度/最佳最差', () => {
+    const acc = {
+        has_data: true, week_samples: 8, week_hit_rate: 0.375,
+        week_avg_gain: -1.5, horizon: 3,
+        by_confidence: {
+            '高': { samples: 3, hit_rate: 0.667, avg_gain: 4.0 },
+            '中': { samples: 5, hit_rate: 0.2, avg_gain: -4.0 },
+        },
+        best: [{ name: '宝鼎科技', gain: 5.0 }],
+        worst: [{ name: '祥源新材', gain: -7.74 }],
+        note: '本周统计',
+    };
+    const html = R.fmtReviewWeekAccuracy(acc);
+    assert.ok(html.includes('8') && html.includes('38%'), '样本数+命中率');
+    assert.ok(html.includes('-1.5'), '平均涨幅');
+    assert.ok(html.includes('宝鼎科技'), '最佳');
+    assert.ok(html.includes('祥源新材'), '最差');
+    assert.ok(html.includes('高3样本'), '置信度高');
+});
+
+
 

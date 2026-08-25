@@ -26,6 +26,11 @@ from pathlib import Path
 
 STATIC_DIR = Path(__file__).parent / "static"
 
+# 情绪周期历史文件: 每日追加一条 (供前端情绪趋势图), 保留最近 N 条
+# 注意: 路径在函数内用 STATIC_DIR 动态构造 (便于测试 mock, 避免模块加载时固化)
+SENTIMENT_HISTORY_NAME = "review_sentiment_history.json"
+SENTIMENT_HISTORY_MAX = 60
+
 # ========================== 配置 ==========================
 CONFIG_REVIEW = {
     "high_rps_threshold": 90,        # RPS≥90 视为高分板块(与看板入选阈值一致)
@@ -120,6 +125,15 @@ def load_history():
 
 def load_recommendations():
     return _load_json(STATIC_DIR / "recommendations.json")
+
+
+def load_early_recommendations():
+    return _load_json(STATIC_DIR / "recommendations_early.json")
+
+
+# 消息面标签白名单(推荐 tags 中含这些标签视为消息面信号, 2026-08-23)
+NEWS_TAG_WHITELIST = ("利好消息", "利空消息", "传闻利好", "消息待证",
+                      "人气榜TOP", "机构大宗买入", "大宗折价")
 
 
 # ========================== 工具 ==========================
@@ -250,15 +264,13 @@ def market_tone(rps_data, history, threshold=90):
     pct = _percentile(c5, high5)
     note = []
     if diff5 > 0:
-        note.append("高分板块数量增加, 市场强度提升")
+        note.append("高分板块数量增加")
     elif diff5 < 0:
-        note.append("高分板块数量减少, 市场强度回落")
-    if pct is not None:
-        note.append("高分板块数处于近%d日历史%.0f%%分位" % (CONFIG_REVIEW["hist_percentile_days"], pct))
+        note.append("高分板块数量减少")
     if idx is not None:
-        note.append("上证指数%s20日线(%.0f点)" % ("站上" if idx["above"] else "跌破", idx["ma20"]))
+        note.append("沪指%s20日线(%.0f点)" % ("站上" if idx["above"] else "跌破", idx["ma20"]))
     if tone == "结构性强":
-        note.append("沪指虽弱, 但板块赚钱效应集中, 属结构性行情")
+        note.append("结构性行情")
     return {"tone": tone, "high5": high5, "high10": high10, "high20": high20,
             "diff5": diff5, "avg_high": avg_high,
             "high_score_count_pct": pct, "index": idx,
@@ -468,10 +480,10 @@ def risk_analysis(rps5, rps10, rps20, history):
         if total >= CONFIG_REVIEW["batch_style_n"]:
             batch_out[st] = total
             if today_style.get(st, 0) > 0 and prev_style.get(st, 0) > 0:
-                text = "批量调出预警: 连续两日「%s」方向累计调出%d个板块, 该方向短期回避" % (st, total)
+                text = "批量调出预警: 「%s」两日调出%d个, 短期回避" % (st, total)
                 warnings.append({"text": text, "level": "warning"})
             else:
-                text = "批量调出异动: 今日「%s」方向调出%d个板块, 单日异动, 观察次日确认" % (st, total)
+                text = "批量调出异动: 「%s」今日调出%d个" % (st, total)
                 warnings.append({"text": text, "level": "hint"})
     # 2) 高位顶背离(排除成分股极少的板块)
     diverge = []
@@ -480,7 +492,7 @@ def risk_analysis(rps5, rps10, rps20, history):
                 and strength_ratio(s) < CONFIG_REVIEW["diverge_ratio"]:
             diverge.append({"name": s["name"], "ratio": round(strength_ratio(s) * 100, 1)})
     if diverge:
-        warnings.append({"text": "高位顶背离: %s 排名靠前但内部个股达标率低(%.0f%%), 指数虚高警惕回落"
+        warnings.append({"text": "高位顶背离: %s 达标率低(%.0f%%), 警惕回落"
                                 % (diverge[0]["name"], diverge[0]["ratio"]), "level": "warning"})
     # 3) 动量衰减(连续3日递减 且 当前高分>15, 低位回落不重复告警)
     c5 = high_rps_counts(history, "RPS5")
@@ -491,7 +503,7 @@ def risk_analysis(rps5, rps10, rps20, history):
         if recent == sorted(recent, reverse=True) and recent[0] > recent[-1] \
                 and recent[0] > CONFIG_REVIEW["decay_high_floor"]:
             momentum_decay = True
-            warnings.append({"text": "动量衰减预警: 高分板块数量连续%d天减少(%s→%s), 市场进入退潮期, 降低仓位"
+            warnings.append({"text": "动量衰减: 高分板块连续%d天减少(%s→%s)"
                                     % (CONFIG_REVIEW["decay_days"] - 1, recent[0], recent[-1]),
                              "level": "warning"})
     # 风险等级汇总: 2+ warning=danger / 1 warning=warning / 仅 hint=hint / 无信号=safe
@@ -723,11 +735,165 @@ def consistency_check(tone, market_status_rec):
     warning = ""
     if is_safe is False and rps_strong:
         conflict = True
-        warning = "一致性校验: RPS 推导环境偏强(%s), 但推荐系统判定大盘不合格, 结论冲突, 注意甄别" % tone
+        warning = "一致性: RPS偏强(%s) vs 推荐系统不合格, 冲突" % tone
     elif is_safe is True and rps_weak:
         conflict = True
-        warning = "一致性校验: RPS 推导环境偏弱(%s), 但推荐系统判定大盘合格, 结论冲突, 注意甄别" % tone
+        warning = "一致性: RPS偏弱(%s) vs 推荐系统合格, 冲突" % tone
     return {"conflict": conflict, "warning": warning}
+
+
+# ========================== 消息面复盘 (2026-08-23 新增) ==========================
+
+def news_review(recs=None, early_recs=None):
+    """消息面复盘: 聚合推荐结果中的新闻/人气/大宗信号
+    数据源: recommendations.json / recommendations_early.json 的 stocks[].news + score_news + tags
+    recs/early_recs 可选传入(便于单测); 缺省自动读取
+    真实性甄别已在推荐阶段完成(official=权威采信计分, rumor=传闻仅标签), 这里只做聚合统计:
+    返回:
+      has_news      推荐中是否含 news 字段(旧版推荐 → False, 前端跳过卡片)
+      stock_count   推荐股票总数
+      hit_count     命中消息面标签的股票数
+      score_sum     消息面对总分的净影响(正=利好推动)
+      env           消息面环境: 偏暖/偏冷/中性偏杂 (None=无消息面)
+      tags_count    {标签: 命中数} (利好消息/利空消息/传闻利好/消息待证/人气榜TOP/机构大宗买入/大宗折价)
+      official_pos_list  权威利好个股 [{name, count, headline}] (按条数降序)
+      official_neg_list  权威利空个股
+      rumor_list         传闻个股 [{name, pos, neg}]
+      note          一句话小结
+    """
+    data_list = []
+    if recs is None:
+        recs = load_recommendations()
+    if early_recs is None:
+        early_recs = load_early_recommendations()
+    for d in (recs, early_recs):
+        if isinstance(d, dict):
+            data_list.append(d)
+    stocks = []
+    for data in data_list:
+        stocks.extend(data.get("stocks") or [])
+    if not stocks:
+        return None
+    stock_count = len(stocks)
+    has_news = any(isinstance(s.get("news"), dict) for s in stocks)
+    if not has_news:
+        return None  # 旧版推荐(无消息面字段), 前端不展示消息面卡片
+    tags_count = {}
+    # 权威利好/利空/传闻个股: 按股票名合并计数 (日度+早期可能同股重复, 2026-08-23)
+    pos_map, neg_map, rumor_map = {}, {}, {}
+    score_sum = 0
+    hit_count = 0
+    for s in stocks:
+        ns = s.get("news") or {}
+        score_sum += _num(s.get("score_news"))
+        # 标签聚合
+        hit_tags = [t for t in str(s.get("tags") or "").split(" + ")
+                    if t in NEWS_TAG_WHITELIST]
+        if hit_tags:
+            hit_count += 1
+        for t in hit_tags:
+            tags_count[t] = tags_count.get(t, 0) + 1
+        # 权威利好/利空个股列表
+        op, on = int(_num(ns.get("official_pos"))), int(_num(ns.get("official_neg")))
+        rp, rn = int(_num(ns.get("rumor_pos"))), int(_num(ns.get("rumor_neg")))
+        name = str(s.get("name") or s.get("ts_code") or "")
+        hl = (ns.get("headlines") or [])
+        headline = ""
+        for h in hl:
+            if isinstance(h, dict) and h.get("title"):
+                headline = str(h["title"])[:40]
+                break
+        if op:
+            item = pos_map.setdefault(name, {"name": name, "count": 0, "headline": ""})
+            item["count"] += op
+            if not item["headline"]:
+                item["headline"] = headline
+        if on:
+            item = neg_map.setdefault(name, {"name": name, "count": 0, "headline": ""})
+            item["count"] += on
+            if not item["headline"]:
+                item["headline"] = headline
+        if rp or rn:
+            item = rumor_map.setdefault(name, {"name": name, "pos": 0, "neg": 0})
+            item["pos"] += rp
+            item["neg"] += rn
+    pos_list = sorted(pos_map.values(), key=lambda x: -x["count"])
+    neg_list = sorted(neg_map.values(), key=lambda x: -x["count"])
+    rumor_list = sorted(rumor_map.values(), key=lambda x: -(x["pos"] + x["neg"]))
+    # 环境评估: 利空优先(防御性)
+    if neg_list:
+        env = "偏冷"
+    elif pos_list:
+        env = "偏暖"
+    elif tags_count:
+        env = "中性偏杂"
+    else:
+        env = None
+    note = ""
+    if env:
+        parts = []
+        if pos_list:
+            parts.append("权威利好%d只(%d条)" % (len(pos_list), sum(x["count"] for x in pos_list)))
+        if neg_list:
+            parts.append("权威利空%d只(%d条)" % (len(neg_list), sum(x["count"] for x in neg_list)))
+        if rumor_list:
+            parts.append("传闻%d只" % len(rumor_list))
+        for t in ("人气榜TOP", "机构大宗买入", "大宗折价"):
+            if tags_count.get(t):
+                parts.append("%s%d只" % (t, tags_count[t]))
+        note = "消息面%s, 推荐股票中%s" % (env, "、".join(parts)) + \
+               ("；净影响%+d分" % int(score_sum) if score_sum else "")
+    return {"has_news": True, "stock_count": stock_count, "hit_count": hit_count,
+            "score_sum": int(score_sum), "env": env, "tags_count": tags_count,
+            "official_pos_list": pos_list[:8], "official_neg_list": neg_list[:8],
+            "rumor_list": rumor_list[:8], "note": note}
+
+
+# ========================== 推荐准确率复盘 ==========================
+
+def rec_accuracy():
+    """日度推荐准确率分析: 读取 prediction_review.json + predictions_log.json + recommendations.json
+    返回推荐预测的命中率/平均涨幅/分置信度胜率/最佳最差个股
+    缺失数据时返回 {"has_data": False, "note": "..."}
+    """
+    review = _load_json(STATIC_DIR / "prediction_review.json")
+    if not review or not review.get("summary"):
+        return {"has_data": False, "note": "暂无预测准确率数据(需运行推荐+校准后生成)"}
+    s = review.get("summary", {})
+    by_conf = review.get("by_confidence") or {}
+    recent = review.get("recent") or []
+    # 今日推荐概况
+    recs = load_recommendations() or {}
+    today_stocks = recs.get("stocks") or []
+    today_count = len(today_stocks)
+    today_probs = [((st.get("prediction") or {}).get("up_prob") or 0) for st in today_stocks]
+    today_avg_prob = round(sum(today_probs) / len(today_probs), 1) if today_probs else None
+    # 最佳/最差个股 (recent 已是验证过的)
+    sorted_hits = sorted(recent, key=lambda x: -x.get("gain", 0))
+    best = sorted_hits[:3]
+    worst = sorted(recent, key=lambda x: x.get("gain", 0))[:3]
+    return {
+        "has_data": True,
+        "update_date": review.get("update_date", ""),
+        "horizon": review.get("horizon", 3),
+        "samples": s.get("samples", 0),
+        "hit_rate": s.get("hit_rate", 0),
+        "avg_gain": s.get("avg_gain", 0),
+        "avg_up_prob": s.get("avg_up_prob", 0),
+        "prev_dates": s.get("prev_dates") or [],
+        "by_confidence": {k: v for k, v in by_conf.items() if v and v.get("samples")},
+        "best": [{"name": x.get("name"), "code": x.get("code"),
+                  "gain": x.get("gain"), "hit": x.get("hit"),
+                  "pred_date": x.get("pred_date"),
+                  "confidence": x.get("confidence")} for x in best],
+        "worst": [{"name": x.get("name"), "code": x.get("code"),
+                   "gain": x.get("gain"), "hit": x.get("hit"),
+                   "pred_date": x.get("pred_date"),
+                   "confidence": x.get("confidence")} for x in worst],
+        "today_count": today_count,
+        "today_avg_prob": today_avg_prob,
+        "note": "命中率=预测后%d日收盘≥预测日现价" % review.get("horizon", 3),
+    }
 
 
 # ========================== 汇总 + 渲染 ==========================
@@ -766,6 +932,9 @@ def build_review_stats(rps_data, history=None, potential_stats=None):
         "style": style_analysis(r5, r10, r20),
         "consistency": consistency_check(mkt["tone"], ms_rec),
         "market_status_rec": ms_rec,
+        # 消息面复盘 (2026-08-23): 聚合日度+早期推荐的新闻信号; 旧版推荐无 news 字段 → None
+        "news": news_review(),
+        "rec_accuracy": rec_accuracy(),
         # 早期启动挖掘: 只追加新字段, 原有字段/md 文档完全不变 (向下兼容)
         "potential_sectors": potential_sectors(history, potential_stats),
         "sector_life_cycle": {"rps5": sector_life_cycle(r5),
@@ -864,9 +1033,9 @@ def render_markdown(stats):
     L.append("")
     # 大盘强度
     L.append("## 【大盘强度】")
-    L.append("今日市场动量**%s**: RPS5≥90 板块 %d 个(较前日 %+d, 近%d日历史%.0f%%分位)、RPS10≥90 %d 个、RPS20≥90 %d 个。%s"
-             % (m["tone"], m["high5"], m["diff5"], CONFIG_REVIEW["hist_percentile_days"],
-                m.get("high_score_count_pct") or 0, m["high10"], m["high20"], m["note"]))
+    L.append("今日市场动量**%s**: RPS5≥90 板块 %d 个(较前日 %+d)、RPS10≥90 %d 个、RPS20≥90 %d 个(近%d日%.0f%%分位)。%s"
+             % (m["tone"], m["high5"], m["diff5"], m["high10"], m["high20"],
+                CONFIG_REVIEW["hist_percentile_days"], m.get("high_score_count_pct") or 0, m["note"]))
     if stats.get("market_status_rec"):
         ms_txt = _fmt_market_status(stats["market_status_rec"])
         if ms_txt:
@@ -875,43 +1044,39 @@ def render_markdown(stats):
     # 主线梯队
     L.append("## 【主线梯队】")
     if res["core"]:
-        L.append("- **硬核主线**(三周期共振 %d 个): %s"
-                 % (len(res["core"]), _fmt_sector_list(res["core"])))
+        L.append("- **硬核主线**(三周期%d): %s" % (len(res["core"]), _fmt_sector_list(res["core"])))
     if res["tough"]:
-        L.append("- **韧性主线**(RPS5仅掉1天 %d 个): %s"
-                 % (len(res["tough"]), _fmt_sector_list(res["tough"])))
+        L.append("- **韧性主线**(%d): %s" % (len(res["tough"]), _fmt_sector_list(res["tough"])))
     if res["mainline_count"]:
         mainlines = "、".join("%s(连%d天,达标%.0f%%)"
                               % (x["name"], _num(x.get("continuous")), strength_ratio(x) * 100)
                               for x in res["mainlines"][:8])
         L.append("- **主线生命周期**: %s" % mainlines)
     if res["pulse"]:
-        L.append("- **短期脉冲**(仅RPS5上榜 %d 个): %s" % (len(res["pulse"]), _fmt_sector_list(res["pulse"])))
+        L.append("- **短期脉冲**(%d): %s" % (len(res["pulse"]), _fmt_sector_list(res["pulse"])))
     if res["diverge"]:
-        L.append("- **主线分歧**(RPS10/20在榜、RPS5回落): %s" % _fmt_sector_list(res["diverge"]))
+        L.append("- **主线分歧**(在榜,RPS5回落): %s" % _fmt_sector_list(res["diverge"]))
     if tier["tier1"]:
-        L.append("- **第一梯队**(Top%d, 达标率≥%d%%): %s"
-                 % (CONFIG_REVIEW["tier1_top"], CONFIG_REVIEW["tier1_min_ratio"] * 100,
-                    _fmt_sector_list(tier["tier1"])))
+        L.append("- **第一梯队**(Top%d): %s"
+                 % (CONFIG_REVIEW["tier1_top"], _fmt_sector_list(tier["tier1"])))
     if tier["tier2"]:
-        L.append("- **第二梯队**(11~%d 支线/补涨): %s" % (CONFIG_REVIEW["tier2_top"], _fmt_sector_list(tier["tier2"])))
+        L.append("- **第二梯队**(11~%d): %s" % (CONFIG_REVIEW["tier2_top"], _fmt_sector_list(tier["tier2"])))
     L.append("")
     # 轮动观察
     L.append("## 【轮动观察】")
     if rot["new_in"]:
-        L.append("- **今日新调入**(%d 个): %s" % (len(rot["new_in"]), _fmt_sector_list(rot["new_in"])))
+        L.append("- **今日新调入**(%d): %s" % (len(rot["new_in"]), _fmt_sector_list(rot["new_in"])))
     if rot["rank_jump"]:
         jumps = "、".join("%s(名次%+d→第%d名)" % (s["name"], int(_num(s.get("rank_change"))), int(_num(s.get("rank"))))
                           for s in rot["rank_jump"])
-        L.append("- **排名大幅跃升Top%d**(≥%d名): %s"
-                 % (CONFIG_REVIEW["jump_top"], CONFIG_REVIEW["jump_min_gain"], jumps))
+        L.append("- **排名跃升Top%d**: %s" % (CONFIG_REVIEW["jump_top"], jumps))
     if rot["exits"]:
         for e in rot["exits"]:
-            et = {"pulse_exit": "脉冲调出(上榜≤2天)", "mainline_exit": "主线调出(上榜≥5天)",
+            et = {"pulse_exit": "脉冲调出", "mainline_exit": "主线调出",
                   "normal_exit": "普通调出"}.get(e["exit_type"], e["exit_type"])
-            L.append("- **%s**: %s(连续%d天)" % (et, e["name"], e["continuous"]))
+            L.append("- **%s**: %s(%d天)" % (et, e["name"], e["continuous"]))
     if rot["repeat"]:
-        L.append("- **反复轮动**(近10日多次调入调出, 持续性差): %s" % _fmt_sector_list(rot["repeat"]))
+        L.append("- **反复轮动**: %s" % _fmt_sector_list(rot["repeat"]))
     if not rot["new_in"] and not rot["rank_jump"] and not rot["exits"] and not rot["repeat"]:
         L.append("- 无明显轮动信号")
     style_top = sorted(style["rps5"].items(), key=lambda x: -x[1]["count"])[:3]
@@ -921,18 +1086,18 @@ def render_markdown(stats):
     # 板块健康扫描
     L.append("## 【板块健康扫描】")
     if heal["seed_high"]:
-        L.append("- **高质量种子**(首日入选+扩散达标): %s"
+        L.append("- **高质量种子**: %s"
                  % "、".join("%s(%.0f%%)" % (x["name"], x["ratio"]) for x in heal["seed_high"][:8]))
     if heal["seed_pulse"]:
-        L.append("- **脉冲种子**(首日入选但扩散不足): %s" % _fmt_sector_list(heal["seed_pulse"]))
+        L.append("- **脉冲种子**: %s" % _fmt_sector_list(heal["seed_pulse"]))
     if heal["expand"]:
-        L.append("- **扩散健康**(达标率≥规模阈值): %s"
+        L.append("- **扩散健康**: %s"
                  % "、".join("%s(%.0f%%)" % (x["name"], x["ratio"]) for x in heal["expand"][:8]))
     if heal["mature"]:
-        L.append("- **成熟主线**(连续上榜≥%d天): %s"
+        L.append("- **成熟主线**(≥%d天): %s"
                  % (CONFIG_REVIEW["mature_continuous"], _fmt_sector_list(heal["mature"])))
     if heal["mature_fatigue"]:
-        L.append("- **成熟疲劳**(连续上榜≥%d天且达标率下滑): %s"
+        L.append("- **成熟疲劳**(≥%d天,回落): %s"
                  % (CONFIG_REVIEW["mature_fatigue_days"],
                     "、".join("%s(%.0f%%)" % (x["name"], x["ratio"]) for x in heal["mature_fatigue"][:6])))
     if not heal["expand"] and not heal["mature"] and not heal["seed_high"]:
@@ -946,21 +1111,77 @@ def render_markdown(stats):
     else:
         L.append("- 无风险信号: 市场结构健康")
     if watch.get("diverge_dropped"):
-        L.append("- **主线衰竭**(RPS5掉榜≥3天, 移出跟踪): %s"
+        L.append("- **主线衰竭**(掉榜≥3天): %s"
                  % "、".join("%s(掉%d天)" % (x["name"], x["drop_days"]) for x in watch["diverge_dropped"][:8]))
+    L.append("")
+    # 消息面复盘 (2026-08-23): 推荐股票中的新闻/人气/大宗信号聚合
+    nws = stats.get("news")
+    L.append("## 【消息面复盘】")
+    if nws and nws.get("has_news"):
+        L.append("消息面环境: **%s**; 推荐%d只中%d只命中消息信号, 净影响%+d分"
+                 % (nws.get("env") or "中性", nws.get("stock_count", 0),
+                    nws.get("hit_count", 0), nws.get("score_sum", 0)))
+        if nws.get("official_pos_list"):
+            L.append("- **权威利好**(真实性采信, +%d分/条): %s"
+                     % (2, "、".join("%s(%d条)" % (x["name"], x["count"]) for x in nws["official_pos_list"])))
+        if nws.get("official_neg_list"):
+            L.append("- **权威利空**(真实性采信, 扣%d分/条): %s"
+                     % (3, "、".join("%s(%d条)" % (x["name"], x["count"]) for x in nws["official_neg_list"])))
+        if nws.get("rumor_list"):
+            L.append("- **传闻消息**(散户平台, 仅提示不采信): %s"
+                     % "、".join("%s(好%d/空%d)" % (x["name"], x["pos"], x["neg"]) for x in nws["rumor_list"]))
+        if nws.get("tags_count"):
+            extra = "；".join("%s%d只" % (t, c) for t, c in nws["tags_count"].items()
+                              if t not in ("利好消息", "利空消息", "传闻利好", "消息待证"))
+            if extra:
+                L.append("- **主力/散户动向**: %s" % extra)
+        if nws.get("note"):
+            L.append("- %s" % nws["note"])
+    else:
+        L.append("- 暂无消息面信号")
+    L.append("")
+    # 推荐准确率复盘 (命中率采用四舍五入, 与前端 toFixed 行为保持一致)
+    acc = stats.get("rec_accuracy") or {}
+    L.append("## 【推荐准确率复盘】")
+    if acc.get("has_data"):
+        hr = acc.get("hit_rate", 0)
+        ag = acc.get("avg_gain", 0)
+        L.append("- 整体命中率: **%d%%**(%d样本), 平均涨幅 **%+.1f%%**; 预测平均概率%.1f%%"
+                 % (int(round(hr * 100 + 0.0001)), acc.get("samples", 0), ag, acc.get("avg_up_prob", 0)))
+        if acc.get("today_count"):
+            tp = acc.get("today_avg_prob")
+            L.append("- 今日推荐%d只, 平均上涨概率%s" % (acc["today_count"],
+                     ("%.1f%%" % tp) if tp is not None else "无"))
+        by_conf = acc.get("by_confidence") or {}
+        conf_parts = []
+        for lv in ("高", "中", "低"):
+            v = by_conf.get(lv)
+            if v and v.get("samples"):
+                conf_parts.append("%s%d样本命中率%d%%(平均%+.1f%%)"
+                                  % (lv, v["samples"], int(round(v["hit_rate"] * 100 + 0.0001)), v["avg_gain"]))
+        if conf_parts:
+            L.append("- 分置信度: %s" % "；".join(conf_parts))
+        if acc.get("best"):
+            L.append("- **最佳预测**: %s" % "、".join("%s(+%.1f%%)" % (x["name"], x["gain"]) for x in acc["best"]))
+        if acc.get("worst"):
+            L.append("- **最差预测**: %s" % "、".join("%s(%.1f%%)" % (x["name"], x["gain"]) for x in acc["worst"]))
+        if acc.get("note"):
+            L.append("- %s" % acc["note"])
+    else:
+        L.append("- 暂无预测准确率数据(需运行推荐+校准后生成)")
     L.append("")
     # 次日跟踪清单
     L.append("## 【次日跟踪清单】")
     if watch["seed_high"]:
-        L.append("- **高质量种子池**(次日连榜则确认强度): %s"
+        L.append("- **高质量种子池**: %s"
                  % "、".join("%s(%.0f%%)" % (x["name"], x["ratio"]) for x in watch["seed_high"][:8]))
     if watch["seed_pulse"]:
-        L.append("- **脉冲种子池**(需扩散确认): %s" % _fmt_sector_list(watch["seed_pulse"]))
+        L.append("- **脉冲种子池**: %s" % _fmt_sector_list(watch["seed_pulse"]))
     if watch["critical"]:
         crit = "、".join("%s(%.0f)" % (c["name"], c["rps5"]) for c in watch["critical"][:8])
-        L.append("- **临界晋级池**(RPS≈阈值且排名连续上升, 达标率达标): %s" % crit)
+        L.append("- **临界晋级池**(RPS≈阈值): %s" % crit)
     if watch["diverge_watch"]:
-        L.append("- **主线分歧池**(RPS20在榜、RPS5掉榜, 良性分歧低吸观察): %s"
+        L.append("- **主线分歧池**(掉榜分歧): %s"
                  % "、".join("%s(掉%d天)" % (x["name"], x["drop_days"]) for x in watch["diverge_watch"][:8]))
     if not watch["seed_high"] and not watch["seed_pulse"] and not watch["critical"] and not watch["diverge_watch"]:
         L.append("- 暂无跟踪标的")
@@ -1007,6 +1228,8 @@ def save_review(stats, md_text):
             old = md_path.read_text(encoding="utf-8")
             if AUTO_GEN_MARKER in old:
                 manual_block = old.split(AUTO_GEN_MARKER, 1)[1]
+                # 清理历史残留的重复标记(旧备注区误含标记本身导致累积)
+                manual_block = manual_block.replace(AUTO_GEN_MARKER, "")
         except Exception:
             manual_block = ""
     with open(json_path, "w", encoding="utf-8") as f:
@@ -1014,6 +1237,34 @@ def save_review(stats, md_text):
     with open(md_path, "w", encoding="utf-8") as f:
         f.write(md_text + manual_block)
     return json_path, md_path
+
+
+def _append_sentiment_history(stats):
+    """追加当日情绪周期到历史文件 (幂等: 同日最后一条则跳过), 供前端情绪趋势图
+    history: [{date, phase, high_n, seed_n, core_n, out_n}] 按日期升序, 保留最近 N 条
+    """
+    sent = stats.get("sentiment") or {}
+    date = stats.get("update_date") or ""
+    if not date:
+        return
+    path = STATIC_DIR / SENTIMENT_HISTORY_NAME
+    history = _load_json(path) or []
+    if not isinstance(history, list):
+        history = []
+    if history and history[-1].get("date") == date:
+        return  # 幂等: 同日已记录
+    history.append({
+        "date": date,
+        "phase": sent.get("main") or sent.get("phase") or "震荡期",
+        "high_n": int(_num(sent.get("high_n"))),
+        "seed_n": int(_num(sent.get("seed_n"))),
+        "core_n": int(_num(sent.get("core_n"))),
+        "out_n": int(_num(sent.get("out_n"))),
+    })
+    history = history[-SENTIMENT_HISTORY_MAX:]
+    STATIC_DIR.mkdir(exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump(history, f, ensure_ascii=False, indent=1, allow_nan=False)
 
 
 def main(force=False, potential_stats=None):
@@ -1038,6 +1289,7 @@ def main(force=False, potential_stats=None):
     stats = build_review_stats(rps_data, history, potential_stats)
     md = render_markdown(stats)
     json_path, md_path = save_review(stats, md)
+    _append_sentiment_history(stats)
     print("  [OK] 每日复盘已生成: %s / %s" % (json_path.name, md_path.name))
     print(md)
 

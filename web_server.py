@@ -2,6 +2,9 @@
 板块 RPS 监测看板 - Web 服务器
 启动后手机浏览器访问 http://你的IP:8000
 """
+import time
+from functools import wraps
+
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
@@ -58,17 +61,52 @@ def _ok(data):
     return JSONResponse(data, headers=NO_CACHE_HEADERS)
 
 
+# ============================================================
+# 详情接口结果级缓存 (解决 5-8 秒慢响应: 重复查看/切Tab 直接命中)
+# 仅缓存成功响应(2xx); 最多保留 N 条防止内存无界增长
+# ============================================================
+_DETAIL_RESULT_MAX = 2000
+_detail_result_cache = {}
+
+
+def _detail_cache(ttl=300, key_fn=None):
+    """装饰详情接口: 按 (函数名:code[:params]) 缓存成功 JSONResponse"""
+    def deco(fn):
+        @wraps(fn)
+        async def wrapper(*args, **kwargs):
+            key = key_fn(*args, **kwargs) if key_fn else (
+                fn.__name__ + ":" + str(kwargs.get("code") or args[0]).upper())
+            now = time.time()
+            hit = _detail_result_cache.get(key)
+            if hit is not None and now - hit[0] < ttl:
+                return hit[1]
+            resp = await fn(*args, **kwargs)
+            if 200 <= resp.status_code < 300:
+                if len(_detail_result_cache) >= _DETAIL_RESULT_MAX:
+                    # 简单清理: 丢弃最早写入的一半
+                    items = sorted(_detail_result_cache.items(), key=lambda kv: kv[1][0])
+                    for k, _ in items[:len(items) // 2]:
+                        del _detail_result_cache[k]
+                _detail_result_cache[key] = (now, resp)
+            return resp
+        return wrapper
+    return deco
+
+
+# 行情(实时)变化快: 短 TTL
 @app.get("/api/stock/realtime")
+@_detail_cache(ttl=30)
 async def api_stock_realtime(code: str):
     return _ok(stock_detail.fetch_realtime(code))
 
 
 @app.get("/api/stock/kline")
-async def api_stock_kline(code: str, period: str = "day"):
-    d = stock_detail.fetch_kline(code, period)
+@_detail_cache(ttl=600, key_fn=lambda code, period="day", fqt="qfq": "kline:%s:%s:%s" % (code, period, fqt))
+async def api_stock_kline(code: str, period: str = "day", fqt: str = "qfq"):
+    d = stock_detail.fetch_kline(code, period, fqt)
     if d is None:
         return JSONResponse({"error": "K线获取失败"}, status_code=502)
-    # 附加指标: BOLL / 主力捉妖 / 擒龙启爆 / B/S 标记 (基于日线或对应周期)
+    # 附加指标: BOLL / 主力捉妖 / 擒龙启爆 / MACD / KDJ / RSI (基于日线或对应周期)
     bars = d.get("bars") or []
     closes = [b["close"] for b in bars]
     highs = [b["high"] for b in bars]
@@ -82,17 +120,20 @@ async def api_stock_kline(code: str, period: str = "day"):
         "macd": stock_detail.calc_macd(closes),
         "kdj": stock_detail.calc_kdj(highs, lows, closes),
         "rsi": stock_detail.calc_rsi(closes),
+        # B/S 历史信号标记: 均线金叉(B)/死叉(S), 纯静态仅供查看, 不可点击交易
         "bsMarks": stock_detail.calc_bs_marks(bars),
     }
     return JSONResponse(d, headers=NO_CACHE_HEADERS)
 
 
 @app.get("/api/stock/fundflow")
+@_detail_cache(ttl=600)
 async def api_stock_fundflow(code: str):
     return _ok(stock_detail.fetch_fund_flow(code))
 
 
 @app.get("/api/stock/score")
+@_detail_cache(ttl=600)
 async def api_stock_score(code: str):
     rt = stock_detail.fetch_realtime(code)
     kl = stock_detail.fetch_kline(code, "day")
@@ -101,6 +142,7 @@ async def api_stock_score(code: str):
 
 
 @app.get("/api/stock/risk")
+@_detail_cache(ttl=600)
 async def api_stock_risk(code: str):
     rt = stock_detail.fetch_realtime(code)
     kl = stock_detail.fetch_kline(code, "day")
@@ -108,12 +150,14 @@ async def api_stock_risk(code: str):
 
 
 @app.get("/api/stock/backtest")
+@_detail_cache(ttl=600)
 async def api_stock_backtest(code: str):
     kl = stock_detail.fetch_kline(code, "day")
     return _ok(stock_detail.fetch_backtest(code, kl))
 
 
 @app.get("/api/stock/impression")
+@_detail_cache(ttl=600)
 async def api_stock_impression(code: str):
     rt = stock_detail.fetch_realtime(code)
     kl = stock_detail.fetch_kline(code, "day")
@@ -121,6 +165,7 @@ async def api_stock_impression(code: str):
 
 
 @app.get("/api/stock/techbao")
+@_detail_cache(ttl=600)
 async def api_stock_techbao(code: str):
     rt = stock_detail.fetch_realtime(code)
     kl = stock_detail.fetch_kline(code, "day")
@@ -129,6 +174,7 @@ async def api_stock_techbao(code: str):
 
 
 @app.get("/api/stock/fundtrack")
+@_detail_cache(ttl=600)
 async def api_stock_fundtrack(code: str):
     rt = stock_detail.fetch_realtime(code)
     ff = stock_detail.fetch_fund_flow(code)
@@ -136,6 +182,7 @@ async def api_stock_fundtrack(code: str):
 
 
 @app.get("/api/stock/value")
+@_detail_cache(ttl=600)
 async def api_stock_value(code: str):
     rt = stock_detail.fetch_realtime(code)
     kl = stock_detail.fetch_kline(code, "day")
@@ -143,11 +190,13 @@ async def api_stock_value(code: str):
 
 
 @app.get("/api/stock/news")
+@_detail_cache(ttl=600)
 async def api_stock_news(code: str):
     return _ok({"news": stock_detail.fetch_news(code)})
 
 
 @app.get("/api/stock/f10")
+@_detail_cache(ttl=600)
 async def api_stock_f10(code: str):
     rt = stock_detail.fetch_realtime(code)
     kl = stock_detail.fetch_kline(code, "day")
@@ -155,6 +204,7 @@ async def api_stock_f10(code: str):
 
 
 @app.get("/api/stock/detail")
+@_detail_cache(ttl=600)
 async def api_stock_detail(code: str):
     """详情弹窗一次性聚合 (各模块失败降级为空, 不阻断)"""
     return _ok(stock_detail.build_detail_payload(code))

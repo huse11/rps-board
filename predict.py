@@ -46,10 +46,12 @@ DELTA = {
     "rps50_80": +3,          # 个股 RPS50 ≥80
     "rps50_70": +1,
     "chg3_mild": +2,         # 近3日温和上行 (0,12]
-    "chg3_hot": -3,          # 近3日过热 >12 (追高风险)
+    "chg3_hot": -5,          # 近3日过热 >12 (追高风险, 原-3收紧)
     "chg3_down": -2,         # 近3日转弱 ≤0
     "chg5_ok": +2,           # 近5日 (5,15]
-    "chg5_hot": -2,          # 近5日 >20
+    "chg5_hot": -5,          # 近5日 >12 (追高风险, 原阈值20/-2收紧)
+    "ma20_dev_high": -4,     # 距 MA20 乖离 >25% (高位远离成本区)
+    "high_pos": -5,          # 当天大涨>7%未涨停 (高位追涨, 次日高开回落风险)
     "consec_3": +2,          # 连涨 ≥3 天
     "consec_6": +3,          # 连涨 ≥6 天
     "consec_9": +1,          # 连涨 ≥9 天 (惯性但过热衰减)
@@ -146,7 +148,7 @@ def _momentum_prob(f):
             d += DELTA["chg3_down"]
     chg5 = f.get("chg5")
     if chg5 is not None:
-        if chg5 > 20:
+        if chg5 > 12:
             d += DELTA["chg5_hot"]
         elif chg5 > 5:
             d += DELTA["chg5_ok"]
@@ -159,6 +161,16 @@ def _momentum_prob(f):
         d += DELTA["consec_3"]
     if cu >= 5:
         notes.append("连涨%d日动量延续" % cu)
+    # 位置风险: 距 MA20 乖离过大 → 高位追涨风险
+    ma20_dev = f.get("ma20_dev")
+    if ma20_dev is not None and _num(ma20_dev) > 25:
+        d += DELTA["ma20_dev_high"]
+        notes.append("偏离MA20过大")
+    # 当天大涨(>7%)但未涨停 → 次日高开回落风险
+    pct = _num(f.get("pct_chg"))
+    if 7 < pct < 9.8:
+        d += DELTA["high_pos"]
+        notes.append("大涨未涨停高位追涨")
     return _clamp(PROB_BASE + d), notes
 
 
@@ -283,7 +295,10 @@ def _confidence(up_prob, f):
     """置信度三档:
     高 = 概率≥68 且 双RPS档位以上共振 且 技术共振≥4 且 主力净流入>0
     中 = 概率≥58; 低 = 其余 (含偏弱市场环境整体降档)
+    位置约束: 近5日涨幅>12% 或 乖离MA20>25% → 高位追涨, 不给"高"(即使概率达档)
     """
+    if _num(f.get("chg5")) > 12 or _num(f.get("ma20_dev")) > 25:
+        return "中" if up_prob >= 58 else "低"
     if up_prob >= 68 and int(f.get("sector_count") or 0) >= 2 \
             and int(f.get("hit_count") or 0) >= 4 \
             and _num(f.get("net_inflow_3d")) > 0:
@@ -291,6 +306,41 @@ def _confidence(up_prob, f):
     if up_prob >= 58:
         return "中"
     return "低"
+
+
+# ============================================================
+# 概率校准 (预测效果复盘驱动, 防概率虚高)
+# ============================================================
+
+def _load_calib():
+    """从 prediction_review.json 读取近期实测命中率 (用于概率校准)
+    样本 <5 或字段缺失 → None (不校准, 避免小样本抖动)
+    """
+    rev = _load_json(REVIEW_FILE)
+    s = rev.get("summary") or {}
+    hit = s.get("hit_rate")
+    avg = s.get("avg_up_prob")
+    samples = s.get("samples") or 0
+    if hit is None or avg is None or samples < 5:
+        return None
+    return {"hit": float(hit), "avg_prob": float(avg), "samples": int(samples)}
+
+
+def calibrate_prob(up_prob):
+    """概率校准: 用实测命中率压缩虚高概率。
+    若系统近期平均输出概率(avg_prob)显著高于实测命中率(hit), 说明过度乐观,
+    将输出向 55% 基准收缩: p = 55 + (p-55)*k, k = 1 - 虚高量/100, 下限 0.3。
+    误差 ≤3pp 或样本不足 → 不做校准 (避免过度修正)。
+    """
+    cal = _load_calib()
+    if not cal:
+        return up_prob
+    gap = cal["avg_prob"] - cal["hit"]  # 虚高量 (如 82-50=32)
+    if gap <= 3:
+        return up_prob
+    k = max(0.3, 1 - gap / 100.0)
+    p = 55 + (up_prob - 55) * k
+    return _clamp(int(round(p)), lo=PROB_MIN + 5)
 
 
 def _pick_logic(notes, n=3):
@@ -319,7 +369,9 @@ def build_prediction(f, market_status=None):
     p_fund, n_fund = _fundamental_prob(f)
     # 综合 = 基准 + 各维度增量之和 + 市场环境修正
     deltas = (p_mom + p_tech + p_cap + p_sec + p_sent + p_fund) - 6 * PROB_BASE
-    up_prob = _clamp(PROB_BASE + deltas + int(regime["prob_adjust"]))
+    raw_prob = _clamp(PROB_BASE + deltas + int(regime["prob_adjust"]))
+    # 概率校准: 用 prediction_review 实测命中率压缩虚高概率 (防过度乐观)
+    up_prob = calibrate_prob(raw_prob)
     confidence = _confidence(up_prob, f)
     if regime["regime"] == "偏弱" and confidence == "高":
         confidence = "中"  # 市场偏弱整体降一档
@@ -372,17 +424,29 @@ def record_predictions(rec_list, latest_date, log_file=None):
     return len(preds)
 
 
-def _lookup_close(daily_map, date, code):
+def _build_close_index(df):
+    """DataFrame → {ts_code: close} (跳过 NaN/None), 供 O(1) 查询"""
+    idx = {}
+    codes = df["ts_code"] if "ts_code" in df.columns else df.get("code")
+    closes = df["close"]
+    for code, v in zip(codes, closes):
+        if v is None or str(v) in ("nan", "None"):
+            continue
+        idx[code] = float(v)
+    return idx
+
+
+def _lookup_close(daily_map, date, code, close_cache=None):
+    """查某日收盘价: 优先用 close_cache 缓存索引, 首次访问该日期时构建一次"""
     df = daily_map.get(date)
     if df is None:
         return None
-    row = df[df["ts_code"] == code]
-    if row.empty:
-        return None
-    v = row.iloc[0].get("close")
-    if v is None or str(v) in ("nan", "None"):
-        return None
-    return float(v)
+    if close_cache is not None and date in close_cache:
+        return close_cache[date].get(code)
+    idx = _build_close_index(df)
+    if close_cache is not None:
+        close_cache[date] = idx
+    return idx.get(code)
 
 
 def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=None):
@@ -396,6 +460,7 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
         return None
     trade_days = sorted(daily_map.keys())
     day_pos = {d: i for i, d in enumerate(trade_days)}
+    close_cache = {}  # 按目标日期惰性构建 {code: close}, 避免每条预测全表过滤 (N+1)
     verified = []
     for date, preds in sorted(log.items()):
         if date >= latest_date or date not in day_pos:
@@ -406,7 +471,7 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
             continue  # 数据不足(最近的预测需等 horizon 日后才能验证)
         tgt = trade_days[idx + horizon]
         for p in preds or []:
-            close_t = _lookup_close(daily_map, tgt, p.get("code"))
+            close_t = _lookup_close(daily_map, tgt, p.get("code"), close_cache)
             if close_t is None or not p.get("price"):
                 continue
             gain = (close_t / p["price"] - 1) * 100

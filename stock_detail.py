@@ -48,7 +48,8 @@ EM_HIS_DOMAINS = ["push2his.eastmoney.com", "push2his.dfcfw.com",
 EM_REALTIME_DOMAINS = ["push2.eastmoney.com", "push2delay.eastmoney.com",
                        "1.push2.eastmoney.com", "2.push2.eastmoney.com"]
 # 腾讯行情兜底 (东财 push2his 域名池在部分网络环境不可达时, 保证K线/分时可用)
-TX_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=%s%s,%s,,,%d,qfq"
+# fq 后缀: qfq(前复权) / hfq(后复权) / 空(不复权)
+TX_KLINE_URL = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get?param=%s%s,%s,,,%d%s"
 TX_MINUTE_URL = "https://web.ifzq.gtimg.cn/appstock/app/minute/query?code=%s%s"
 
 # ============================================================
@@ -155,10 +156,31 @@ def _pct_chg(close, pre_close):
 # A. 实时行情 (东财 stock/get)
 # ============================================================
 
+def market_status(rt):
+    """行情状态标签: 盘中 / 收盘 / 盘后 / 停牌 (纯展示, 仅看盘)
+    停牌: 无行情数据或成交量为0
+    盘中: 交易日 9:30-11:30 / 13:00-15:00
+    盘后: 收盘后至 18:00 (晚间数据)
+    其余(周末/盘前等) → 收盘
+    """
+    if not rt or rt.get("price") is None or (rt.get("volume") or 0) == 0:
+        return "停牌"
+    now = datetime.now()
+    if now.weekday() >= 5:
+        return "收盘"
+    hm = now.hour * 60 + now.minute
+    if (9 * 60 + 30) <= hm <= (11 * 60 + 30) or (13 * 60) <= hm <= (15 * 60):
+        return "盘中"
+    if (15 * 60) < hm <= (18 * 60):
+        return "盘后"
+    return "收盘"
+
+
 def fetch_realtime(code, force=False):
     """个股实时行情 → dict
     字段: name/code/price/change/changePercent/open/high/low/volumeRatio/
-          turnover/totalAmount/totalMarket/pe_ttm/afterPrice/preClose/volume/pb
+          turnover/amplitude/totalAmount/totalMarket/circ_mv/pe_ttm/pb/
+          preClose/volume/marketStatus
     """
     ts = to_ts_code(code)
     key = "rt:" + ts
@@ -180,6 +202,10 @@ def fetch_realtime(code, force=False):
     if change is None and price and pre_close:
         change = price - pre_close
         pct = _pct_chg(price, pre_close)
+    high = _num(data.get("f44"))
+    low = _num(data.get("f45"))
+    # 振幅 = (最高-最低)/昨收*100
+    amplitude = round((high - low) / pre_close * 100.0, 2) if (high is not None and low is not None and pre_close) else None
     out = {
         "name": data.get("f58") or ts.split(".")[0],
         "code": data.get("f57") or ts,
@@ -187,19 +213,23 @@ def fetch_realtime(code, force=False):
         "change": change,
         "changePercent": pct,
         "open": _num(data.get("f46")),
-        "high": _num(data.get("f44")),
-        "low": _num(data.get("f45")),
+        "high": high,
+        "low": low,
         "volumeRatio": _num(data.get("f50")),
         "turnover": _num(data.get("f168")),
+        "amplitude": amplitude,
         "totalAmount": _num(data.get("f48")),
         "totalMarket": _num(data.get("f116")),
+        "circ_mv": _num(data.get("f117")),  # 流通市值
         "pe_ttm": _num(data.get("f162")),
         "pb": _num(data.get("f167")),
         "preClose": pre_close,
         "volume": _num(data.get("f47")),
         # 盘后价格: 收盘后与现价一致(东财不单独给盘后价, 用收盘价近似)
         "afterPrice": price,
+        "marketStatus": None,  # 占位, 下方统一填充
     }
+    out["marketStatus"] = market_status(out)
     _cache_set(key, out)
     return out
 
@@ -208,8 +238,8 @@ def fetch_realtime(code, force=False):
 # B. K线 (东财 kline get, 多周期)
 # ============================================================
 
-PERIOD_KLT = {"time": 1, "day": 101, "week": 102, "month": 103}
-PERIOD_LMT = {"time": 240, "day": 250, "week": 120, "month": 120}
+PERIOD_KLT = {"time": 1, "multi": 101, "day": 101, "week": 102, "month": 103}
+PERIOD_LMT = {"time": 240, "multi": 60, "day": 250, "week": 120, "month": 120}
 
 
 # ------------------------------------------------------------
@@ -221,32 +251,44 @@ def _tx_prefix(ts_code):
     return {"SH": "sh", "SZ": "sz", "BJ": "bj"}.get(mkt, "sh")
 
 
-def _tx_fetch_kline(ts, period, lmt):
+def _tx_fetch_kline(ts, period, lmt, fqt="qfq"):
     """腾讯K线兜底 → 东财格式 bars 列表, 失败返回 None
-    腾讯 fqkline 响应: data.{code}.{qfq}day|week|month = [[date, open, close, high, low, vol(手)], ...]
+    腾讯 fqkline 响应: data.{code}.{qfq|hfq}{day|week|month} = [[date, open, close, high, low, vol(手)], ...]
     注意列顺序: 开/收/高/低 (与东财 开/高/低/收 不同); volume 单位手 → 转股
+    fqt: qfq(前复权, 腾讯前缀 qfq) / hfq(后复权, 前缀 hfq) / none(不复权, 无前缀)
     """
     prefix = _tx_prefix(ts)
     symbol = ts.split(".")[0]
     tx_p = {"day": "day", "week": "week", "month": "month"}.get(period, "day")
-    url = TX_KLINE_URL % (prefix, symbol, tx_p, lmt)
+    # 腾讯 fqkline 复权后缀: qfq/hfq/空(不复权); 不复权接口带尾逗号且数据在 day 键
+    if fqt == "none":
+        url = TX_KLINE_URL % (prefix, symbol, tx_p, lmt, ",")
+    else:
+        url = TX_KLINE_URL % (prefix, symbol, tx_p, lmt, "," + ({"qfq": "qfq", "hfq": "hfq"}.get(fqt, "qfq")))
     try:
         d = _http_get_json(url, timeout=10)
     except Exception:
         return None
     dd = ((d or {}).get("data") or {}).get(prefix + symbol) or {}
-    rows = dd.get("qfq" + tx_p) or dd.get(tx_p) or []
+    if fqt == "none":
+        rows = dd.get(tx_p) or []
+    else:
+        fq = {"qfq": "qfq", "hfq": "hfq"}.get(fqt, "qfq")
+        rows = dd.get(fq + tx_p) or dd.get(tx_p) or []
     bars = []
     for p in rows:
         if len(p) < 6:
             continue
+        close = _num(p[2])
+        vol = (_num(p[5]) or 0) * 100  # 手 → 股, 与东财 volume 单位一致
         bars.append({
             "time": p[0],
             "open": _num(p[1]),
-            "close": _num(p[2]),
+            "close": close,
             "high": _num(p[3]),
             "low": _num(p[4]),
-            "volume": (_num(p[5]) or 0) * 100,  # 手 → 股, 与东财 volume 单位一致
+            "volume": vol,
+            "amount": round(close * vol, 0) if close and vol else None,  # 成交额近似(东财无此字段)
         })
     return bars or None
 
@@ -316,24 +358,52 @@ def _tx_fetch_trends_rows(ts):
     return rows or None
 
 
-def fetch_kline(code, period="day", force=False):
-    """K线数据 → {period, bars:[{time,open,high,low,close,volume,amount}], last_close}
-    period: time(分时线) / multi(多日) / day(日K) / week(周K) / month(月K)
-    多日(multi) = 日K最近60根 (前端用多日K线形态, 不单独请求)
+def fetch_kline(code, period="day", fqt="qfq", force=False, days=5):
+    """K线数据 → {period, fqt, bars:[{time,open,high,low,close,volume,amount}], last_close}
+    period: time(分时线) / multi(多日分时) / day(日K) / week(周K) / month(月K)
+    fqt: qfq(前复权) / hfq(后复权) / none(不复权)
+    days: 仅 multi 生效, 最近 N 个交易日的分时拼接天数 (默认 5)
+    time/multi → {period, fqt, days:[{date, points:[{time,price,avg,volume}]}], last_close}
+    day/week/month → {period, fqt, bars:[{time,open,high,low,close,volume,amount}], last_close}
     """
     ts = to_ts_code(code)
     if period not in PERIOD_KLT:
         period = "day"
-    key = "kl:%s:%s" % (ts, period)
+    if fqt not in ("qfq", "hfq", "none"):
+        fqt = "qfq"
+    days = max(1, min(int(days or 5), 20))
+    key = ("kl:%s:%s:%s:d%d" % (ts, period, fqt, days)) if period == "multi" \
+        else "kl:%s:%s:%s" % (ts, period, fqt)
     if not force:
         hit = _cache_get(key, ttl=600)
         if hit is not None:
             return hit
+    if period in ("time", "multi"):
+        # 分时/多日: 真正的逐分钟分时数据 (东财 trends2 ndays), 按交易日分组首尾拼接
+        n = 1 if period == "time" else days
+        rows = fetch_multiday_trends(ts, n, force=force)
+        if not rows:
+            # 降级: 多日分时源(push2his 系)临时不可达 → 退回当日分时 (push2delay / 腾讯兜底),
+            # 保证个股详情默认"多日"Tab 不白屏 (days 单元素标记 degraded 供前端提示)
+            one = fetch_trends(ts, force=force)  # 东财单日分时, 含完整日期
+            if not one and period == "time":
+                one = _tx_fetch_trends_rows(ts)  # 单日分时腾讯兜底 (time 仅 HH:MM)
+            if one:
+                date = str(one[0].get("time", ""))[:10]
+                rows = [{"date": date if len(date) == 10 else "最近交易日",
+                         "points": one, "degraded": True}]
+        if not rows:
+            return None
+        out = {"period": period, "fqt": fqt, "days": rows,
+               "last_close": rows[-1]["points"][-1]["price"] if rows and rows[-1]["points"] else None}
+        _cache_set(key, out)
+        return out
     klt = PERIOD_KLT[period]
     lmt = PERIOD_LMT.get(period, 250)
-    url = ("https://%s/api/qt/stock/kline/get?secid=%s&klt=%d&fqt=1&lmt=%d&end=20500101"
+    fqt_v = {"qfq": 1, "hfq": 2, "none": 0}[fqt]
+    url = ("https://%s/api/qt/stock/kline/get?secid=%s&klt=%d&fqt=%d&lmt=%d&end=20500101"
            "&fields1=f1,f2,f3,f4,f5,f6&fields2=f51,f52,f53,f54,f55,f56,f57,f58,f59,f60,f61")
-    d = _em_get(url, EM_HIS_DOMAINS, (em_secid(ts), klt, lmt))
+    d = _em_get(url, EM_HIS_DOMAINS, (em_secid(ts), klt, fqt_v, lmt))
     data = (d or {}).get("data") or {}
     klines = data.get("klines") or []
     bars = []
@@ -351,13 +421,54 @@ def fetch_kline(code, period="day", force=False):
             "amount": _num(p[6]),
         })
     if not bars:
-        # 东财 push2his 域名池不可达时 → 腾讯兜底 (分时用 minute, 其余用 fqkline)
-        if period == "time":
-            bars = _tx_fetch_minute(ts) or []
-        else:
-            bars = _tx_fetch_kline(ts, period, lmt) or []
-    out = {"period": period, "bars": bars, "last_close": bars[-1]["close"] if bars else None}
+        # 东财 push2his 域名池不可达时 → 腾讯兜底 (分时用 minute, 其余用 fqkline; 腾讯仅支持前复权/不复权)
+        bars = _tx_fetch_kline(ts, period, lmt, fqt) or []
+    out = {"period": period, "fqt": fqt, "bars": bars, "last_close": bars[-1]["close"] if bars else None}
     _cache_set(key, out)
+    return out
+
+
+def fetch_multiday_trends(code, days=5, force=False):
+    """多日分时 → [{date:"YYYY-MM-DD", points:[{time,price,avg,volume}]}], 按交易日正序分组
+    数据源: 东财 trends2 (ndays 单次上限 5, 且无日期偏移参数 → 无法翻页取更早交易日;
+    超出上限的天数退化为最近 5 日, 不产生乱序/重复脏数据); 失败/无数据返回 []
+    """
+    ts = to_ts_code(code)
+    days = max(1, min(int(days or 5), 20))
+    key = "mt:%s:%d" % (ts, days)
+    if not force:
+        hit = _cache_get(key, ttl=120)
+        if hit is not None:
+            return hit
+    # 多日分时仅 push2his 系支持 (push2delay 只返回最近 1 天, 会误伤多日拼接)
+    trend_domains = [d for d in EM_HIS_DOMAINS if "delay" not in d]
+    url = ("https://%s/api/qt/stock/trends2/get?secid=%s&ndays=%d&iscr=0"
+           "&fields1=f1,f2,f3,f4,f5,f6,f7,f8,f9,f10,f11,f12,f13"
+           "&fields2=f51,f52,f53,f54,f55,f56,f57,f58")
+    chunk = min(days, 5)  # trends2 单次最多返回 5 个交易日
+    d = _em_get(url, trend_domains, (em_secid(ts), chunk))
+    rows = ((d or {}).get("data") or {}).get("trends") or []
+    day_map = {}
+    order = []
+    for row in rows:
+        p = str(row).split(",")
+        if len(p) < 8:
+            continue
+        full = p[0]  # 东财 trends2 f51: "YYYY-MM-DD HH:MM"
+        date = str(full)[:10]
+        if not date or len(str(full)) < 11:
+            continue
+        day_map.setdefault(date, []).append({
+            "time": full,
+            "price": _num(p[2]),
+            "avg": _num(p[7]),
+            "volume": _num(p[5]),
+        })
+        if date not in order:
+            order.append(date)
+    out = [{"date": d, "points": day_map[d]} for d in order]
+    if out:
+        _cache_set(key, out)
     return out
 
 
@@ -377,12 +488,13 @@ def fetch_trends(code, force=False):
     rows = []
     for row in trends:
         p = str(row).split(",")
-        if len(p) < 5:
+        if len(p) < 8:
             continue
+        # 东财 trends2 列序: f51时间 f52开盘 f53收盘(最新价) f54最高 f55最低 f56成交量 f57成交额 f58均价
         rows.append({
             "time": p[0],
-            "price": _num(p[1]),
-            "avg": _num(p[4]),
+            "price": _num(p[2]),
+            "avg": _num(p[7]),
             "volume": _num(p[5]),
         })
     if not rows:
@@ -510,6 +622,39 @@ def calc_kdj(highs, lows, closes, n=9):
     return out
 
 
+def calc_bs_marks(bars, fast=5, slow=10):
+    """B/S 历史信号点: MA(fast) 上穿 MA(slow) → B(金叉), 下穿 → S(死叉)
+    纯历史指标信号标记(仅供查看, 不可点击/不可交易):
+      - 连续重复信号做过滤: 同一方向拐点只标记首次, 图表更干净
+    返回 [{"time", "type": "B"|"S"}] 按时间正序
+    """
+    if not bars:
+        return []
+    closes = [b["close"] for b in bars]
+    if len(closes) < slow + 1:
+        return []
+    ma_f = calc_ma(closes, fast)
+    ma_s = calc_ma(closes, slow)
+    marks = []
+    prev_cross = None
+    for i in range(slow, len(closes)):
+        mf, ms = ma_f[i], ma_s[i]
+        mf0, ms0 = ma_f[i - 1], ma_s[i - 1]
+        if mf is None or ms is None or mf0 is None or ms0 is None:
+            continue
+        if mf0 <= ms0 and mf > ms:
+            cross = "B"
+        elif mf0 >= ms0 and mf < ms:
+            cross = "S"
+        else:
+            cross = None
+        if cross is not None:
+            if cross != prev_cross:  # 去噪: 同方向连续只标记一次
+                marks.append({"time": bars[i]["time"], "type": cross})
+            prev_cross = cross
+    return marks
+
+
 def calc_zhuli_zhuoyao(fflow_rows):
     """
     主力捉妖(副图1): 散户/游资曲线 + 加仓/卖信号
@@ -526,6 +671,7 @@ def calc_zhuli_zhuoyao(fflow_rows):
     out = []
     streak_youzi = 0
     prev_main_positive = None
+    prev_add_raw, prev_sell_raw = False, False  # 去噪: 连续同方向信号只标记首次(记录原始条件, 持续抑制)
     for row in fflow_rows:
         youzi = (row["big"] or 0) + (row["mid"] or 0)
         sanhu = row["small"] or 0
@@ -535,8 +681,11 @@ def calc_zhuli_zhuoyao(fflow_rows):
         else:
             streak_youzi = streak_youzi - 1 if streak_youzi <= 0 else -1
         main_pos = zhuil > 0
-        add = (streak_youzi >= 2 and main_pos)
-        sell = (streak_youzi <= -2 and prev_main_positive is True and not main_pos)
+        add_raw = (streak_youzi >= 2 and main_pos)
+        sell_raw = (streak_youzi <= -2 and prev_main_positive is True and not main_pos)
+        add = add_raw and not prev_add_raw
+        sell = sell_raw and not prev_sell_raw
+        prev_add_raw, prev_sell_raw = add_raw, sell_raw
         prev_main_positive = main_pos
         out.append({
             "date": row["date"],
@@ -571,6 +720,7 @@ def calc_qinlong_qibao(closes, highs, lows, volumes, n=20):
     kdj = calc_kdj(highs, lows, closes)
     out = []
     prev_booster = 0
+    prev_break = 0  # 去噪: 起爆点连续出现只标记首次
     for i in range(n_rows):
         c = closes[i]
         m = ma[i]
@@ -591,7 +741,7 @@ def calc_qinlong_qibao(closes, highs, lows, volumes, n=20):
             elif closes[i] > closes[i - 1]:
                 flame = 1
         j_val = kdj[i]["j"] if kdj else None
-        brk = 1 if (booster == 1 and j_val is not None and j_val > 80) else 0
+        brk = 1 if (booster == 1 and j_val is not None and j_val > 80 and not prev_break) else 0
         out.append({
             "color": color,
             "booster": booster,
@@ -600,34 +750,8 @@ def calc_qinlong_qibao(closes, highs, lows, volumes, n=20):
             "volRatio": round(vol_r, 2) if vol_r else None,
         })
         prev_booster = booster
+        prev_break = brk
     return out
-
-
-def calc_bs_marks(bars, kdj=None, ma_short_n=5, ma_long_n=10):
-    """
-    B/S 买卖标记: 基于金叉/死叉 + 量价
-    B(买入): 短均线上穿长均线 且 放量(当日量>1.2倍5日均量)
-    S(卖出): 短均线下穿长均线
-    返回 [{index, time, type}]
-    """
-    closes = [b["close"] for b in bars]
-    volumes = [b["volume"] or 0 for b in bars]
-    ma_s = calc_ma(closes, ma_short_n)
-    ma_l = calc_ma(closes, ma_long_n)
-    vol_ma5 = calc_ma(volumes, 5)
-    marks = []
-    for i in range(1, len(bars)):
-        if ma_s[i] is None or ma_l[i] is None:
-            continue
-        cross_up = (ma_l[i - 1] is not None and ma_s[i - 1] <= ma_l[i - 1] and ma_s[i] > ma_l[i])
-        cross_dn = (ma_l[i - 1] is not None and ma_s[i - 1] >= ma_l[i - 1] and ma_s[i] < ma_l[i])
-        if cross_up:
-            vol_ok = (vol_ma5[i] and volumes[i] > 1.2 * vol_ma5[i]) or True
-            if vol_ok:
-                marks.append({"index": i, "time": bars[i]["time"], "type": "B"})
-        if cross_dn:
-            marks.append({"index": i, "time": bars[i]["time"], "type": "S"})
-    return marks
 
 
 # ============================================================

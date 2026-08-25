@@ -14,10 +14,13 @@ AKShare 数据源适配层 v2.0 (服务器实测后定版)
   * ltsz 流通市值: 亿元 → 调用方需万元时 ×1e4
 """
 import json
+import logging
 import math
 import time
 import pandas as pd
 from datetime import datetime, timedelta
+
+logger = logging.getLogger("akshare_adapter")
 
 try:
     import akshare as ak
@@ -91,7 +94,8 @@ def _fetch_spot_tx(force=False):
         return _SPOT_TX_CACHE
     try:
         df = ak.stock_zh_a_spot_tx()
-    except Exception:
+    except Exception as e:
+        logger.warning("腾讯全市场行情拉取失败: %s", e)
         return None
     if df is None or len(df) == 0:
         return None
@@ -123,10 +127,12 @@ def fetch_index_daily_ak(index_code, start, end):
         symbol = ("sh" if mkt == "SH" else "sz") + sym
     try:
         df = ak.stock_zh_index_daily_em(symbol=symbol)
-    except Exception:
+    except Exception as e:
+        logger.warning("指数日线 em 源失败(%s): %s", symbol, e)
         try:
             df = ak.stock_zh_index_daily(symbol=symbol)
-        except Exception:
+        except Exception as e2:
+            logger.warning("指数日线 兜底源失败(%s): %s", symbol, e2)
             return None
     if df is None or len(df) == 0:
         return None
@@ -259,7 +265,8 @@ def fetch_market_fund_flow_ak(n_days=5):
     cache = {}
     try:
         df = ak.stock_market_fund_flow()
-    except Exception:
+    except Exception as e:
+        logger.warning("大盘资金流拉取失败(将走腾讯兜底): %s", e)
         df = None
     if df is not None and len(df) > 0:
         date_col = _pick_col(df, ["日期", "date"])
@@ -292,9 +299,213 @@ def fetch_market_fund_flow_ak(n_days=5):
             td = d.strftime("%Y%m%d")
             total = float(pd.to_numeric(spot["zljlr"], errors="coerce").sum()) * 1e4  # 万元 → 元
             cache[td] = {"main_net": total, "main_pct": 0.0}
-    except Exception:
-        pass
+    except Exception as e:
+        logger.warning("大盘资金流腾讯兜底失败: %s", e)
     return cache
+
+
+# ============================================================
+# 5. 龙虎榜净买额 (第四层资金面防御性信号, 2026-08-23 新增)
+# ============================================================
+def fetch_lhb_ak(latest_date):
+    """龙虎榜明细 → {ts_code: {"lhb_net": 元, "reason": 上榜原因}}
+    主源: 东财 stock_lhb_detail_em (当日全市场上榜个股)
+    lhb_net < 0 → 上榜出货(防御性扣分/标签); lhb_net > 0 → 净买入(仅标签, 不额外加分)
+    非交易日/无上榜/接口失败 → 返回 {} (缺失跳过, 不误杀)
+    """
+    if not _AK_OK:
+        return {}
+    td = str(latest_date).replace("-", "")
+    try:
+        df = ak.stock_lhb_detail_em(start_date=td, end_date=td)
+    except Exception as e:
+        logger.warning("龙虎榜拉取失败(%s): %s", td, e)
+        return {}
+    if df is None or len(df) == 0:
+        return {}
+    code_col = _pick_col(df, ["代码", "股票代码"])
+    net_col = _pick_col(df, ["龙虎榜净买额"])
+    reason_col = _pick_col(df, ["上榜原因"])
+    if code_col is None or net_col is None:
+        logger.warning("龙虎榜缺少 代码/龙虎榜净买额 列, 跳过")
+        return {}
+    result = {}
+    for _, r in df.iterrows():
+        code = str(r[code_col]).strip()
+        if not code or code == "nan":
+            continue
+        net = _safe_float(r[net_col])  # 元
+        if net == 0:
+            continue  # 0 值无信号意义
+        ts_code = _code_to_ts_code(code)
+        reason = ""
+        if reason_col:
+            try:
+                reason = str(r[reason_col])
+            except Exception:
+                reason = ""
+        result[ts_code] = {"lhb_net": net, "reason": reason}
+    return result
+
+
+# ============================================================
+# 6. 北向资金广度 (大盘环境提示, 2026-08-23 新增)
+# ============================================================
+def fetch_hsgt_ak():
+    """沪深股通(北向)当日广度 → {"north_up": N, "north_down": N, "north_ratio": float}
+    注意: 2024-08 起北向实时"成交净买额/资金净流入"停止披露(恒为0), 不可用;
+          仅用"上涨数/下跌数"计算北向成分股上涨占比, 作大盘环境提示(不否决)
+    失败返回 {}
+    """
+    if not _AK_OK:
+        return {}
+    try:
+        df = ak.stock_hsgt_fund_flow_summary_em()
+    except Exception as e:
+        logger.warning("北向资金流拉取失败: %s", e)
+        return {}
+    if df is None or len(df) == 0:
+        return {}
+    dir_col = _pick_col(df, ["资金方向", "市场类型"])
+    up_col = _pick_col(df, ["上涨数"])
+    down_col = _pick_col(df, ["下跌数"])
+    if dir_col is None or up_col is None or down_col is None:
+        return {}
+    north_up = 0
+    north_down = 0
+    for _, r in df.iterrows():
+        try:
+            d = str(r[dir_col]).strip()
+        except Exception:
+            continue
+        if d != "北向":
+            continue  # 仅统计北向 (南向为港股通, 忽略)
+        north_up += int(_safe_float(r[up_col]))
+        north_down += int(_safe_float(r[down_col]))
+    total = north_up + north_down
+    if total <= 0:
+        return {}
+    return {
+        "north_up": north_up,
+        "north_down": north_down,
+        "north_ratio": round(north_up / total, 4),
+    }
+
+
+# ============================================================
+# 7. 个股新闻 (消息面: 金融新闻真实性甄别, 2026-08-23)
+# ============================================================
+def fetch_stock_news_ak(symbol):
+    """东财个股新闻 → [{"title","content","time","source","url"}]
+    symbol: 6位数字代码 (如 "600519"); 失败/空返回 []
+    供消息面评分: "文章来源"用于真实性甄别, "新闻标题"用于利好/利空情绪分类
+    """
+    if not _AK_OK:
+        return []
+    try:
+        df = ak.stock_news_em(symbol=str(symbol).zfill(6))
+    except Exception as e:
+        logger.warning("个股新闻拉取失败(%s): %s", symbol, e)
+        return []
+    if df is None or len(df) == 0:
+        return []
+    t_col = _pick_col(df, ["新闻标题", "标题"])
+    c_col = _pick_col(df, ["新闻内容", "内容"])
+    time_col = _pick_col(df, ["发布时间"])
+    src_col = _pick_col(df, ["文章来源", "来源"])
+    url_col = _pick_col(df, ["新闻链接", "链接"])
+    out = []
+    for _, r in df.iterrows():
+        try:
+            out.append({
+                "title": str(r[t_col]) if t_col else "",
+                "content": str(r[c_col])[:500] if c_col else "",
+                "time": str(r[time_col]) if time_col else "",
+                "source": str(r[src_col]) if src_col else "",
+                "url": str(r[url_col]) if url_col else "",
+            })
+        except Exception:
+            continue
+    return out
+
+
+# ============================================================
+# 8. 人气榜 (散户情绪/关注度, 2026-08-23)
+# ============================================================
+def fetch_hot_rank_ak():
+    """东财人气榜 → {ts_code: rank} (rank=1 最热, 全市场前100)
+    命中候选且排名靠前 → 散户关注度提示标签【人气榜TOP】(仅提示不否决)
+    失败返回 {}
+    """
+    if not _AK_OK:
+        return {}
+    try:
+        df = ak.stock_hot_rank_em()
+    except Exception as e:
+        logger.warning("人气榜拉取失败: %s", e)
+        return {}
+    if df is None or len(df) == 0:
+        return {}
+    code_col = _pick_col(df, ["代码"])
+    rank_col = _pick_col(df, ["当前排名", "排名"])
+    if code_col is None or rank_col is None:
+        return {}
+    result = {}
+    for _, r in df.iterrows():
+        code = str(r[code_col]).strip()
+        if not code or code == "nan":
+            continue
+        ts_code = _code_to_ts_code(code)
+        try:
+            result[ts_code] = int(_safe_float(r[rank_col]))
+        except Exception:
+            continue
+    return result
+
+
+# ============================================================
+# 9. 大宗交易 (主力/产业资本真实行为, 2026-08-23)
+# ============================================================
+def fetch_dzjy_ak(latest_date):
+    """当日大宗交易 → {ts_code: {"count": N, "total_amt": 元, "avg_discount": float, "inst_buy": bool}}
+    avg_discount: 平均折溢率 (负=折价, 正=溢价); inst_buy: 是否有"机构专用"席位买入
+    非交易日/无大宗/接口失败 → 返回 {} (缺失跳过, 不误杀)
+    """
+    if not _AK_OK:
+        return {}
+    td = str(latest_date).replace("-", "")
+    try:
+        df = ak.stock_dzjy_mrmx(symbol="A股", start_date=td, end_date=td)
+    except Exception as e:
+        logger.warning("大宗交易拉取失败(%s): %s", td, e)
+        return {}
+    if df is None or len(df) == 0:
+        return {}
+    code_col = _pick_col(df, ["证券代码"])
+    disc_col = _pick_col(df, ["折溢率"])
+    amt_col = _pick_col(df, ["成交额"])
+    buyer_col = _pick_col(df, ["买方营业部"])
+    if code_col is None:
+        return {}
+    result = {}
+    for _, r in df.iterrows():
+        code = str(r[code_col]).strip()
+        if not code or code == "nan":
+            continue
+        ts_code = _code_to_ts_code(code)
+        disc = _safe_float(r[disc_col]) if disc_col else 0.0
+        amt = _safe_float(r[amt_col]) if amt_col else 0.0
+        buyer = str(r[buyer_col]) if buyer_col else ""
+        item = result.setdefault(ts_code, {"count": 0, "total_amt": 0.0, "avg_discount": 0.0, "inst_buy": False})
+        item["count"] += 1
+        item["total_amt"] += amt
+        item["avg_discount"] += disc
+        if "机构专用" in buyer:
+            item["inst_buy"] = True
+    for v in result.values():
+        if v["count"]:
+            v["avg_discount"] = round(v["avg_discount"] / v["count"], 4)
+    return result
 
 
 # ============================================================

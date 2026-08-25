@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "mode": "early_stage_start",
+  "update_date": "20260824",
+  "prev_date": "20260821",
+  "market_status": {
+    "is_safe": false,
+    "level": "reject",
+    "rule": "至少 1 个指数站上 20 日线 且 上涨占比≥40% 且 跌停≤40家",
+    "reason": "上证指数 / 创业板指 未站上20日线",
+    "indexes": [
+      {
+        "code": "000001.SH",
+        "name": "上证指数",
+        "close": 3882.01,
+        "ma": 3894.47,
+        "above": false
+      },
+      {
+        "code": "399006.SZ",
+        "name": "创业板指",
+        "close": 3431.89,
+        "ma": 3499.64,
+        "above": false
+      }
+    ],
+    "advance_ratio": 0.27,
+    "limit_down_count": 39,
+    "limit_up_count": 61,
+    "main_flow": {
+      "days": 3,
+      "neg_days": 2,
+      "total_net_yi": -633.0,
+      "verdict": "资金偏弱"
+    },
+    "sector_strong_count": 20,
+    "alt_pass": false,
+    "hsgt_breadth": {
+      "up": 1025,
+      "down": 2418,
+      "ratio": 0.3
+    },
+    "note": "大盘环境不合格, 终止选股；大盘主力资金近3日2日净流出；北向广度偏弱(上涨占比30%<40%)"
+  },
+  "multi_sector_count": 0,
+  "platform_count": 0,
+  "industry_concentration": {},
+  "disclaimer": "⚠️ 早期启动挖掘为独立候选池量化结果(潜力板块RPS∈[88,90) + 涨幅/MA60偏离惩罚 + 平台形态加分), 刚启动标的胜率低于原版动量模式, 但规避高位接盘; 两个列表互为参考, 绝对不构成任何个股投资建议; 严禁杠杆借贷炒股。",
+  "count": 0,
+  "stocks": []
+}

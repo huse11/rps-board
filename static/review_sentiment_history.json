@@ -1,0 +1,42 @@
+[
+ {
+  "date": "20260818",
+  "phase": "震荡期",
+  "high_n": 18,
+  "seed_n": 6,
+  "core_n": 4,
+  "out_n": 6
+ },
+ {
+  "date": "20260819",
+  "phase": "震荡期",
+  "high_n": 17,
+  "seed_n": 15,
+  "core_n": 2,
+  "out_n": 15
+ },
+ {
+  "date": "20260820",
+  "phase": "发酵期",
+  "high_n": 16,
+  "seed_n": 9,
+  "core_n": 5,
+  "out_n": 9
+ },
+ {
+  "date": "20260821",
+  "phase": "震荡期",
+  "high_n": 17,
+  "seed_n": 8,
+  "core_n": 4,
+  "out_n": 8
+ },
+ {
+  "date": "20260824",
+  "phase": "震荡期",
+  "high_n": 18,
+  "seed_n": 4,
+  "core_n": 5,
+  "out_n": 4
+ }
+]

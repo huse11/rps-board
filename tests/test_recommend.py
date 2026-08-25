@@ -200,13 +200,13 @@ class TestCheckMarketEnv(unittest.TestCase):
         self.assertTrue(status["is_safe"])
         self.assertTrue(status["indexes"][0]["above"])
 
-    def test_below_ma20_warn(self):
-        # 上证指数下行跌破20日线, 但无普跌信号 → WARN (继续选股, 全量打【大盘偏弱】标签)
+    def test_below_ma20_reject(self):
+        # 严格二态: 上证指数下行跌破20日线 → REJECT (输出0只, 任一条件不满足即否决)
         idx = make_index_map([3500 - i * 10 for i in range(30)])
         ok, status = recommend.check_market_env(idx, {}, "20260807")
-        self.assertTrue(ok)  # 三态: 未触发 REJECT 则继续选股
-        self.assertEqual(status["level"], "warn")
-        self.assertIn("跌破20日线", status["reason"])
+        self.assertFalse(ok)
+        self.assertEqual(status["level"], "reject")
+        self.assertIn("未站上20日线", status["reason"])
 
     def test_reject_extreme_advance(self):
         # 上涨占比 < 25% → REJECT (输出0只)
@@ -234,8 +234,8 @@ class TestCheckMarketEnv(unittest.TestCase):
         self.assertEqual(status["limit_down_count"], 50)
         self.assertLess(status["limit_up_count"], 12)
 
-    def test_need_two_above_warn(self):
-        # need_above=2: 仅1个指数站上 → 未达 PASS, 但无普跌信号 → WARN (验证配置生效)
+    def test_need_two_above_reject(self):
+        # 严格二态: need_above=2, 仅1个指数站上 → 未达 PASS → REJECT (验证配置生效)
         import pandas as pd
         orig = recommend.CONFIG["market"]["need_above"]
         try:
@@ -245,23 +245,72 @@ class TestCheckMarketEnv(unittest.TestCase):
             up = pd.DataFrame({"close": [3000 + i * 5 for i in range(30)], "trade_date": dates})
             down = pd.DataFrame({"close": [3500 - i * 10 for i in range(30)], "trade_date": dates})
             ok, status = recommend.check_market_env({"000001.SH": up, "399006.SZ": down}, {}, "20260807")
-            self.assertTrue(ok)  # 1 站上 < 2 → WARN, 不终止
-            self.assertEqual(status["level"], "warn")
+            self.assertFalse(ok)  # 1 站上 < 2 → REJECT, 终止选股
+            self.assertEqual(status["level"], "reject")
+            self.assertIn("未站上20日线", status["reason"])
         finally:
             recommend.CONFIG["market"]["need_above"] = orig
 
-    def test_sentiment_weak_warn(self):
-        # 指数合格但上涨占比 25% (30%>25%≥25%) → WARN (继续选股, 打【大盘偏弱】标签)
+    def test_sentiment_weak_reject(self):
+        # 严格二态: 指数合格但上涨占比 25% < 40% → REJECT (输出0只)
         import pandas as pd
         idx = make_index_map([3000 + i * 5 for i in range(30)])
-        # 25涨 75跌 → 上涨占比 25% < 30% PASS 阈值, 但 ≥25% 未触发 REJECT
+        # 25涨 75跌 → 上涨占比 25% < advance_ratio_min(40%)
         rows = [{"ts_code": f"A{i:03d}", "pct_chg": 1.0, "amount": 1e7} for i in range(25)]
         rows += [{"ts_code": f"B{i:03d}", "pct_chg": -1.0, "amount": 1e7} for i in range(75)]
         dm = {"20260807": pd.DataFrame(rows)}
         ok, status = recommend.check_market_env(idx, dm, "20260807")
-        self.assertTrue(ok)
-        self.assertEqual(status["level"], "warn")
+        self.assertFalse(ok)
+        self.assertEqual(status["level"], "reject")
         self.assertIn("上涨家数占比", status["reason"])
+
+    def test_sector_momentum_alt_pass(self):
+        # 板块动量替代路径: 指数站上 + 跌停可控, 上涨占比 39%<40%
+        # 但强势板块 18 个 ≥15 → 板块动量强, 豁免通过
+        import pandas as pd
+        idx = make_index_map([3000 + i * 5 for i in range(30)])
+        rows = [{"ts_code": f"A{i:03d}", "pct_chg": 1.0, "amount": 1e7} for i in range(39)]
+        rows += [{"ts_code": f"B{i:03d}", "pct_chg": -1.0, "amount": 1e7} for i in range(61)]
+        dm = {"20260807": pd.DataFrame(rows)}  # 上涨占比 39%
+        ok, status = recommend.check_market_env(idx, dm, "20260807", strong_sector_count=18)
+        self.assertTrue(ok)
+        self.assertTrue(status["alt_pass"])
+        self.assertEqual(status["sector_strong_count"], 18)
+        self.assertIn("板块动量强", status["note"])
+
+    def test_sector_momentum_not_enough_reject(self):
+        # 强势板块仅 5 个 < 15 → 无替代, 上涨占比不足 → 仍 REJECT
+        import pandas as pd
+        idx = make_index_map([3000 + i * 5 for i in range(30)])
+        rows = [{"ts_code": f"A{i:03d}", "pct_chg": 1.0, "amount": 1e7} for i in range(39)]
+        rows += [{"ts_code": f"B{i:03d}", "pct_chg": -1.0, "amount": 1e7} for i in range(61)]
+        dm = {"20260807": pd.DataFrame(rows)}
+        ok, status = recommend.check_market_env(idx, dm, "20260807", strong_sector_count=5)
+        self.assertFalse(ok)
+        self.assertEqual(status["level"], "reject")
+        self.assertIn("上涨家数占比", status["reason"])
+
+    def test_sector_alt_not_override_limit_down(self):
+        # 替代路径不豁免跌停硬底线: 强势板块 18 个但跌停 50 家 → 仍 REJECT
+        import pandas as pd
+        idx = make_index_map([3000 + i * 5 for i in range(30)])
+        rows = [{"ts_code": f"L{i:03d}", "pct_chg": -10.0, "amount": 1e7} for i in range(50)]
+        rows += [{"ts_code": f"U{i:03d}", "pct_chg": 1.0, "amount": 1e7} for i in range(150)]
+        dm = {"20260807": pd.DataFrame(rows)}
+        ok, status = recommend.check_market_env(idx, dm, "20260807", strong_sector_count=18)
+        self.assertFalse(ok)
+        self.assertEqual(status["limit_down_count"], 50)
+        self.assertIn("跌停", status["reason"])
+
+    def test_count_strong_sectors(self):
+        # 仅统计 RPS5 ≥ 90 的板块, 异常/缺失值跳过
+        self.assertEqual(recommend.count_strong_sectors([
+            {"name": "A", "RPS5": 95.0}, {"name": "B", "RPS5": 88},
+            {"name": "C", "RPS5": 91.5}, {"name": "D", "RPS5": None},
+            {"name": "E", "RPS5": "x"}, {"name": "F"}, "bad",
+        ]), 2)
+        self.assertEqual(recommend.count_strong_sectors([]), 0)
+        self.assertEqual(recommend.count_strong_sectors(None), 0)
 
 
 # ============================================================
@@ -451,6 +500,30 @@ class TestScreenCapital(unittest.TestCase):
         self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
         self.assertGreaterEqual(details["600000.SH"]["vol_ratio"], 1.1)
 
+    # ---- 龙虎榜信号 (2026-08-23 数据源增强): 仅标注不否决 ----
+    def test_lhb_sell_annotated_not_vetoed(self):
+        # 龙虎榜净买额<0 (上榜出货) → 通过但标注 lhb_sell=True + 净买额/原因
+        lhb = {"600000.SH": {"lhb_net": -7155484.55, "reason": "日跌幅偏离值达到7%的前5只证券"}}
+        passed, details = recommend.screen_capital(self._df(), self.dm, self.latest, self.mflow_pos, lhb_map=lhb)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})  # 不否决
+        self.assertTrue(details["600000.SH"]["lhb_sell"])
+        self.assertEqual(details["600000.SH"]["lhb_net"], -7155484.55)
+        self.assertIn("日跌幅", details["600000.SH"]["lhb_reason"])
+
+    def test_lhb_buy_annotated(self):
+        # 龙虎榜净买额>0 (净买入) → lhb_sell=False, 保留净买额
+        lhb = {"600000.SH": {"lhb_net": 402753375.14, "reason": "日涨幅偏离值达到7%的前5只证券"}}
+        passed, details = recommend.screen_capital(self._df(), self.dm, self.latest, self.mflow_pos, lhb_map=lhb)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
+        self.assertFalse(details["600000.SH"]["lhb_sell"])
+        self.assertGreater(details["600000.SH"]["lhb_net"], 0)
+
+    def test_lhb_missing_does_not_kill(self):
+        # lhb_map 缺失/无该股 → 无 lhb 字段, 正常通过 (不误杀)
+        passed, details = recommend.screen_capital(self._df(), self.dm, self.latest, self.mflow_pos)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
+        self.assertNotIn("lhb_sell", details["600000.SH"])
+
 
 # ============================================================
 # 第五层: 多技术指标共振 (达标 ≥3 项通过)
@@ -509,32 +582,40 @@ class TestBuildRps50Map(unittest.TestCase):
 
 class TestScoreFunnel(unittest.TestCase):
     def test_sector_funnel(self):
+        # v3.3: 板块满分 30 (1档=15, 2档=22, ≥3档=30)
         self.assertEqual(recommend.score_sector_funnel(0), 0)
-        self.assertEqual(recommend.score_sector_funnel(1), 20)
-        self.assertEqual(recommend.score_sector_funnel(2), 30)
-        self.assertEqual(recommend.score_sector_funnel(3), 40)
-        self.assertEqual(recommend.score_sector_funnel(5), 40)
+        self.assertEqual(recommend.score_sector_funnel(1), 15)
+        self.assertEqual(recommend.score_sector_funnel(2), 22)
+        self.assertEqual(recommend.score_sector_funnel(3), 30)
+        self.assertEqual(recommend.score_sector_funnel(5), 30)
 
     def test_technical_funnel(self):
+        # v3.3: 技术满分 15 (达标数×5, ≥3项即满分)
         self.assertEqual(recommend.score_technical_funnel(0), 0)
-        self.assertEqual(recommend.score_technical_funnel(1), 7)
-        self.assertEqual(recommend.score_technical_funnel(2), 14)
-        self.assertEqual(recommend.score_technical_funnel(3), 20)  # 21 → 上限20
-        self.assertEqual(recommend.score_technical_funnel(7), 20)
+        self.assertEqual(recommend.score_technical_funnel(1), 5)
+        self.assertEqual(recommend.score_technical_funnel(2), 10)
+        self.assertEqual(recommend.score_technical_funnel(3), 15)  # 15 → 上限15
+        self.assertEqual(recommend.score_technical_funnel(7), 15)
 
     def test_fundamental_funnel(self):
         import pandas as pd
         s = pd.Series({"pe_ttm": 20.0, "circ_mv": 100 * 10000})  # 100亿
         fina = {"net_profit": 1e8, "debt_to_assets": 40}
-        self.assertEqual(recommend.score_fundamental_funnel(s, fina), 20)
+        # v3.3: 净利4 + PE4 + 市值4 + 负债3 = 15
+        self.assertEqual(recommend.score_fundamental_funnel(s, fina), 15)
         # 全缺失 → 0分(不淘汰)
         s0 = pd.Series({"pe_ttm": float("nan"), "circ_mv": float("nan")})
         self.assertEqual(recommend.score_fundamental_funnel(s0, None), 0)
 
     def test_capital_funnel(self):
-        cap = {"turnover": 10.0, "vol_ratio": 2.0, "net_inflow_3d": 2e8, "amount": 5e8}
-        self.assertEqual(recommend.score_capital_funnel(cap), 20)  # 5+5+5+5
-        cap0 = {"turnover": 3.0, "vol_ratio": 1.0, "net_inflow_3d": -1e7, "amount": 1e7}
+        # v3.3: 资金满分 40 (v2.0 梯度制: 换手20 + 量比20)
+        cap_best = {"turnover": 7.0, "vol_ratio": 2.0}  # 6-8% + 1.5-2.5 → 20+20
+        self.assertEqual(recommend.score_capital_funnel(cap_best), 40)
+        cap_mid = {"turnover": 5.0, "vol_ratio": 1.4}  # 4-6% + 1.3-1.5 → 15+15
+        self.assertEqual(recommend.score_capital_funnel(cap_mid), 30)
+        cap_high = {"turnover": 11.0, "vol_ratio": 4.0}  # 10-12% + ≥3.5 → 10+5
+        self.assertEqual(recommend.score_capital_funnel(cap_high), 15)
+        cap0 = {"turnover": 3.0, "vol_ratio": 1.0}  # 区间外 → 0
         self.assertEqual(recommend.score_capital_funnel(cap0), 0)
         self.assertEqual(recommend.score_capital_funnel({}), 0)
 
@@ -543,6 +624,144 @@ class TestScoreFunnel(unittest.TestCase):
         t = recommend.CONFIG["technical"]
         for k in ("overbought_deduct", "overbought_deduct_both"):
             self.assertIn(k, t, f"CONFIG['technical'] 缺少 {k}")
+
+
+# ============================================================
+# 盈利质量评分 score_quality_funnel (2026-08-23, financial-modeling/earnings-interpretation)
+# ============================================================
+
+class TestScoreQualityFunnel(unittest.TestCase):
+    def test_quality_config_keys_present(self):
+        # 回归保护: 评分循环从 CONFIG["score"]["quality"] 读取阈值
+        q = recommend.CONFIG["score"]["quality"]
+        for k in ("bonus_cap", "revenue_yoy_pos", "gross_margin_high", "roe_high",
+                  "ocf_pos", "roic_pos", "ocf_neg_deduct", "margin_gap_deduct", "margin_gap_max"):
+            self.assertIn(k, q, f"CONFIG['score']['quality'] 缺少 {k}")
+
+    def test_quality_bonus_capped(self):
+        # 满分项 7 → 上限 5
+        fina = {"revenue_yoy": 35.0, "gross_margin": 45.0, "roe": 18.0,
+                "ocf_ps": 1.2, "roic": 10.0, "net_profit": 1e8}
+        bonus, deduct, tags = recommend.score_quality_funnel(fina)
+        self.assertEqual(bonus, 5)
+        self.assertEqual(deduct, 0)
+        self.assertEqual(tags, [])
+
+    def test_quality_bonus_gradient(self):
+        # 营收正增2 + 中毛利1 + 中ROE1 + 现金流2 + ROIC1 = 7 → 上限5
+        fina = {"revenue_yoy": 10.0, "gross_margin": 25.0, "roe": 10.0,
+                "ocf_ps": 0.5, "roic": 9.0, "net_profit": 1e8}
+        bonus, _, _ = recommend.score_quality_funnel(fina)
+        self.assertEqual(bonus, 5)
+
+    def test_quality_bonus_minimal(self):
+        # 仅营收正增长 → 2
+        fina = {"revenue_yoy": 5.0}
+        bonus, _, _ = recommend.score_quality_funnel(fina)
+        self.assertEqual(bonus, 2)
+
+    def test_quality_missing_no_punish(self):
+        # 全缺失 → (0,0,[]) (缺失跳过, 不误杀)
+        self.assertEqual(recommend.score_quality_funnel({}), (0, 0, []))
+        self.assertEqual(recommend.score_quality_funnel(None), (0, 0, []))
+
+    def test_quality_ocf_negative_deduct(self):
+        # 经营现金流为负 且 净利>0 → 扣2 + 标签【现金流为负】
+        fina = {"revenue_yoy": 10.0, "ocf_ps": -0.3, "net_profit": 1e8}
+        bonus, deduct, tags = recommend.score_quality_funnel(fina)
+        self.assertEqual(deduct, 2)
+        self.assertIn("现金流为负", tags)
+        self.assertGreaterEqual(bonus, 2)  # 营收正增仍加分 (加减独立)
+
+    def test_quality_margin_gap_deduct(self):
+        # 净利增速-营收增速 > 40pct → 扣1 + 标签【利润质量存疑】
+        fina = {"revenue_yoy": 5.0, "netprofit_yoy": 60.0, "net_profit": 1e8}
+        bonus, deduct, tags = recommend.score_quality_funnel(fina)
+        self.assertEqual(deduct, 1)
+        self.assertIn("利润质量存疑", tags)
+
+    def test_quality_gap_normal_no_deduct(self):
+        # 增速匹配 (差值≤40pct) → 不扣分无标签
+        fina = {"revenue_yoy": 30.0, "netprofit_yoy": 40.0, "net_profit": 1e8}
+        _, deduct, tags = recommend.score_quality_funnel(fina)
+        self.assertEqual(deduct, 0)
+        self.assertEqual(tags, [])
+
+
+# ============================================================
+# 业绩预告信号 fetch_yjyg (2026-08-23, earnings-interpretation 预期差)
+# ============================================================
+
+class TestFetchYjyg(unittest.TestCase):
+    def test_yjyg_tag_positive(self):
+        self.assertEqual(recommend._yjyg_tag("预增"), (True, "业绩预增"))
+        self.assertEqual(recommend._yjyg_tag("略增"), (True, "业绩预增"))
+        self.assertEqual(recommend._yjyg_tag("续盈"), (True, "业绩预增"))
+        self.assertEqual(recommend._yjyg_tag("扭亏"), (True, "扭亏为盈"))
+        self.assertEqual(recommend._yjyg_tag("减亏"), (True, "业绩预增"))
+
+    def test_yjyg_tag_negative(self):
+        self.assertEqual(recommend._yjyg_tag("预减"), (False, "业绩预减"))
+        self.assertEqual(recommend._yjyg_tag("略减"), (False, "业绩预减"))
+        self.assertEqual(recommend._yjyg_tag("续亏"), (False, "业绩预减"))
+        self.assertEqual(recommend._yjyg_tag("首亏"), (False, "首亏预警"))
+        self.assertEqual(recommend._yjyg_tag("增亏"), (False, "业绩预减"))
+
+    def test_yjyg_tag_neutral(self):
+        self.assertEqual(recommend._yjyg_tag("不确定"), (None, ""))
+
+    def test_fetch_yjyg_parses(self):
+        rows = [
+            {"SECUCODE": "000001.SZ", "PREDICT_TYPE": "预增", "PREDICT_RATIO_LOWER": 20.0,
+             "PREDICT_RATIO_UPPER": 40.0, "REPORT_DATE": "2026-06-30"},
+            {"SECUCODE": "600519.SH", "PREDICT_TYPE": "首亏", "PREDICT_RATIO_LOWER": -50.0,
+             "PREDICT_RATIO_UPPER": -20.0, "REPORT_DATE": "2026-06-30"},
+            {"SECUCODE": "000002.SZ", "PREDICT_TYPE": "不确定", "PREDICT_RATIO_LOWER": None,
+             "PREDICT_RATIO_UPPER": None, "REPORT_DATE": "2026-06-30"},
+        ]
+        orig = recommend._em_get_json
+        calls = {"urls": []}
+
+        def fake(url, timeout=15):
+            calls["urls"].append(url)
+            return {"result": {"data": rows}}
+        recommend._em_get_json = fake
+        try:
+            result = recommend.fetch_yjyg("20260821")
+        finally:
+            recommend._em_get_json = orig
+        self.assertIn("2026-08-21", calls["urls"][0])  # NOTICE_DATE 过滤当日
+        self.assertIn("IS_LATEST", calls["urls"][0])
+        self.assertEqual(set(result.keys()), {"000001.SZ", "600519.SH"})  # 不确定被忽略
+        self.assertTrue(result["000001.SZ"]["positive"])
+        self.assertEqual(result["000001.SZ"]["ratio"], 30.0)  # (20+40)/2
+        self.assertEqual(result["000001.SZ"]["tag"], "业绩预增")
+        self.assertFalse(result["600519.SH"]["positive"])
+        self.assertEqual(result["600519.SH"]["tag"], "首亏预警")
+
+    def test_fetch_yjyg_exception_returns_empty(self):
+        orig = recommend._em_get_json
+
+        def fake(url, timeout=15):
+            raise Exception("boom")
+        recommend._em_get_json = fake
+        try:
+            result = recommend.fetch_yjyg("20260821")
+        finally:
+            recommend._em_get_json = orig
+        self.assertEqual(result, {})
+
+    def test_fetch_yjyg_empty_returns_empty(self):
+        orig = recommend._em_get_json
+
+        def fake(url, timeout=15):
+            return {"result": {"data": []}}
+        recommend._em_get_json = fake
+        try:
+            result = recommend.fetch_yjyg("20260821")
+        finally:
+            recommend._em_get_json = orig
+        self.assertEqual(result, {})
 
 
 class TestFilterByMinScore(unittest.TestCase):
@@ -910,6 +1129,126 @@ class TestFinaF10Fetch(unittest.TestCase):
             recommend._em_get_json = orig
         self.assertEqual(result, {})
 
+    def test_fina_f10_quality_fields(self):
+        # 盈利质量扩展字段 (2026-08-23): 营收/毛利率/ROE/ROIC/现金流/BPS 解析
+        row = {"SECUCODE": "600519.SH", "REPORT_DATE": "2026-06-30 00:00:00", "ZCFZL": "15.19",
+               "PARENTNETPROFIT": "44500000000", "PARENTNETPROFITTZ": "15.5",
+               "KCFJCXSYJLR": "44300000000", "KCFJCXSYJLRTZ": "16.1",
+               "TOTALOPERATEREVE": "80000000000", "TOTALOPERATEREVETZ": "12.3",
+               "XSMLL": "91.5", "XSJLL": "55.0", "ROEJQ": "28.0", "ROIC": "25.0",
+               "MGJYXJJE": "18.5", "BPS": "120.0"}
+        orig = recommend._em_get_json
+        calls = {"urls": []}
+
+        def fake(url, timeout=20):
+            calls["urls"].append(url)
+            if "2026-06-30" in url:
+                return {"result": {"data": [row]}}
+            return {"result": {"data": []}}
+        recommend._em_get_json = fake
+        try:
+            result = recommend.fetch_fina_f10_em("20260814", codes={"600519.SH"})
+        finally:
+            recommend._em_get_json = orig
+        self.assertEqual(set(result.keys()), {"600519.SH"})
+        mt = result["600519.SH"]
+        self.assertEqual(mt["total_revenue"], 80000000000.0)
+        self.assertEqual(mt["revenue_yoy"], 12.3)
+        self.assertEqual(mt["gross_margin"], 91.5)
+        self.assertEqual(mt["net_margin"], 55.0)
+        self.assertEqual(mt["roe"], 28.0)
+        self.assertEqual(mt["roic"], 25.0)
+        self.assertEqual(mt["ocf_ps"], 18.5)
+        self.assertEqual(mt["bps"], 120.0)
+        # columns 请求必须携带新增质量字段
+        self.assertIn("XSMLL", calls["urls"][0])
+        self.assertIn("TOTALOPERATEREVE", calls["urls"][0])
+        self.assertIn("MGJYXJJE", calls["urls"][0])
+
+    def test_fina_f10_missing_quality_fields_none(self):
+        # 旧 mock 行(无质量字段) → 新字段为 None, 不报错 (缺失跳过, 不误杀)
+        row = {"SECUCODE": "600519.SH", "REPORT_DATE": "2026-06-30 00:00:00", "ZCFZL": "15.19",
+               "PARENTNETPROFIT": "44500000000", "PARENTNETPROFITTZ": "15.5",
+               "KCFJCXSYJLR": "44300000000", "KCFJCXSYJLRTZ": "16.1"}
+        orig = recommend._em_get_json
+
+        def fake(url, timeout=20):
+            if "2026-06-30" in url:
+                return {"result": {"data": [row]}}
+            return {"result": {"data": []}}
+        recommend._em_get_json = fake
+        try:
+            result = recommend.fetch_fina_f10_em("20260814", codes={"600519.SH"})
+        finally:
+            recommend._em_get_json = orig
+        mt = result["600519.SH"]
+        self.assertIsNone(mt["gross_margin"])
+        self.assertIsNone(mt["roe"])
+        self.assertIsNone(mt["ocf_ps"])
+
+    def test_fina_cache_old_without_quality_rebuilds(self):
+        # 回归保护 (2026-08-23): 旧缓存缺 gross_margin 等质量字段 → 判定不 fresh → 强制重建
+        # 场景: 服务器 8/21 现场缓存 (旧字段), 新代码加入质量分后若不校验该键,
+        #        同交易日重跑会命中旧缓存 → score_quality 恒为 0
+        import json as _json
+        import tempfile
+        import os as _os
+        from pathlib import Path as _P
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        _os.close(fd)
+        tmp_path = _P(tmp)
+        old = {"_fetched_date": "20260821", "600519.SH": {"end_date": "20260630",
+               "net_profit": 1.0, "netprofit_yoy": 2.0, "debt_to_assets": 15.0}}
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            _json.dump(old, f)
+        orig_cache = recommend.FINA_CACHE_FILE
+        recommend.FINA_CACHE_FILE = tmp_path
+        orig_pool = recommend.pool.call_any
+        orig_f10 = recommend.fetch_fina_f10_em
+        # Tushare fina_indicator 不可用(服务器现场), 东财F10 提供含质量字段的新数据
+        recommend.pool.call_any = lambda *a, **k: (_ for _ in ()).throw(Exception("您没有接口"))
+        recommend.fetch_fina_f10_em = lambda *a, **k: {"600519.SH": {
+            "end_date": "20260630", "net_profit": 1.0, "netprofit_yoy": 2.0,
+            "gross_margin": 91.5, "roe": 28.0, "ocf_ps": 18.5}}
+        try:
+            result = recommend.fetch_fina_indicator_batch("20260821", codes={"600519.SH"})
+        finally:
+            recommend.FINA_CACHE_FILE = orig_cache
+            recommend.pool.call_any = orig_pool
+            recommend.fetch_fina_f10_em = orig_f10
+            _os.remove(tmp_path)
+        # 旧缓存被弃用, 新数据含质量字段
+        self.assertEqual(result["600519.SH"]["gross_margin"], 91.5)
+        self.assertEqual(result["600519.SH"]["roe"], 28.0)
+
+    def test_fina_cache_fresh_with_quality_reused(self):
+        # 新格式缓存(含 gross_margin)且 _fetched_date=最新交易日 → fresh → 直接复用
+        import json as _json
+        import tempfile
+        import os as _os
+        from pathlib import Path as _P
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        _os.close(fd)
+        tmp_path = _P(tmp)
+        new = {"_fetched_date": "20260821",
+               "600519.SH": {"end_date": "20260630", "net_profit": 1.0, "netprofit_yoy": 2.0,
+                             "gross_margin": 91.5, "roe": 28.0, "ocf_ps": 18.5}}
+        with open(tmp_path, "w", encoding="utf-8") as f:
+            _json.dump(new, f)
+        orig_cache = recommend.FINA_CACHE_FILE
+        recommend.FINA_CACHE_FILE = tmp_path
+        orig_pool = recommend.pool.call_any
+        recommend.pool.call_any = lambda *a, **k: (_ for _ in ()).throw(Exception("不应调用接口"))
+        try:
+            result = recommend.fetch_fina_indicator_batch("20260821", codes={"600519.SH"})
+        finally:
+            recommend.FINA_CACHE_FILE = orig_cache
+            recommend.pool.call_any = orig_pool
+            _os.remove(tmp_path)
+        # 直接复用, 未触发任何网络调用
+        self.assertEqual(result["600519.SH"]["gross_margin"], 91.5)
+        self.assertEqual(result["600519.SH"]["roe"], 28.0)
+
 
 # ============================================================
 # 大盘主力资金 (fetch_market_fund_flow) — 替代北向, 真实值
@@ -990,6 +1329,40 @@ class TestCheckMarketEnvMainFlow(unittest.TestCase):
         ok, status = recommend.check_market_env(idx, {}, "20260807")
         self.assertTrue(ok)
         self.assertIsNone(status["main_flow"])
+
+
+# ============================================================
+# 北向广度接入 check_market_env (仅提示不否决, 2026-08-23)
+# ============================================================
+
+class TestCheckMarketEnvHsgtBreadth(unittest.TestCase):
+    def test_hsgt_weak_hint_not_veto(self):
+        # 北向成分股上涨占比 30% < 40% → note 附加"北向广度偏弱", 但不否决
+        idx = make_index_map([3000 + i * 5 for i in range(30)])
+        hsgt = {"north_up": 300, "north_down": 700, "north_ratio": 0.30}
+        ok, status = recommend.check_market_env(idx, {}, "20260807", hsgt_breadth=hsgt)
+        self.assertTrue(ok)
+        self.assertEqual(status["hsgt_breadth"]["ratio"], 0.30)
+        self.assertEqual(status["hsgt_breadth"]["up"], 300)
+        self.assertEqual(status["hsgt_breadth"]["down"], 700)
+        self.assertIn("北向广度偏弱", status["note"])
+
+    def test_hsgt_normal_no_hint(self):
+        # 北向成分股上涨占比 55% ≥ 40% → 记录字段但不加提示
+        idx = make_index_map([3000 + i * 5 for i in range(30)])
+        hsgt = {"north_up": 550, "north_down": 450, "north_ratio": 0.55}
+        ok, status = recommend.check_market_env(idx, {}, "20260807", hsgt_breadth=hsgt)
+        self.assertTrue(ok)
+        self.assertEqual(status["hsgt_breadth"]["ratio"], 0.55)
+        self.assertNotIn("北向广度偏弱", status["note"])
+
+    def test_hsgt_absent(self):
+        # hsgt_breadth 缺失 → 字段为 None, 无提示, 不否决
+        idx = make_index_map([3000 + i * 5 for i in range(30)])
+        ok, status = recommend.check_market_env(idx, {}, "20260807")
+        self.assertTrue(ok)
+        self.assertIsNone(status["hsgt_breadth"])
+        self.assertNotIn("北向广度", status["note"])
 
 
 # ============================================================
@@ -1152,6 +1525,490 @@ class TestSaveEarlyRecommendations(unittest.TestCase):
         data = self._save(rec)
         self.assertIsNone(data["stocks"][0]["price"])
         _json.dumps(data, allow_nan=False)  # 无 NaN 不抛错
+
+
+class TestChaseDeducts(unittest.TestCase):
+    """短期追高抑制扣分 (日度/早期共用, 保证两套评分口径一致)"""
+
+    def _df(self, closes):
+        import pandas as pd
+        return pd.DataFrame({"date": [str(i) for i in range(len(closes))],
+                             "close": [float(c) for c in closes]})
+
+    def _cfg(self):
+        return recommend.CONFIG["score"]
+
+    def test_gain5_high(self):
+        # 近5日涨幅 30% > 12% → 扣 gain5_deduct
+        df = self._df([10.0] * 5 + [13.0])
+        r = recommend._chase_deducts("x", {"pct_chg": 1.0}, df, self._cfg())
+        self.assertEqual(r["deduct"], recommend.CONFIG["score"]["gain5_deduct"])
+        self.assertTrue(r["flags"]["gain5_high"])
+        self.assertIn("短期涨幅过高", r["tags"])
+
+    def test_high_pos(self):
+        # 当天涨8% (7≤8<9.8) 未涨停 → 扣 high_pos_deduct
+        r = recommend._chase_deducts("x", {"pct_chg": 8.0}, self._df([10.0] * 25), self._cfg())
+        self.assertEqual(r["deduct"], recommend.CONFIG["score"]["high_pos_deduct"])
+        self.assertTrue(r["flags"]["high_pos"])
+        self.assertIn("高位追涨", r["tags"])
+        # 涨停(≥9.8)不触发 (涨停无量豁免)
+        r2 = recommend._chase_deducts("x", {"pct_chg": 9.9}, self._df([10.0] * 25), self._cfg())
+        self.assertFalse(r2["flags"]["high_pos"])
+
+    def test_ma20_dev_high(self):
+        # 前期横盘10元, 近6日缓涨至14.5 → 乖离MA20≈29%>25% 但近5日涨幅仅6.6%<12%
+        closes = [10.0] * 14 + [13.6, 13.8, 14.0, 14.2, 14.4, 14.5]
+        df = self._df(closes)
+        r = recommend._chase_deducts("x", {"pct_chg": 1.0}, df, self._cfg())
+        self.assertEqual(r["deduct"], recommend.CONFIG["score"]["ma20_dev_deduct"])
+        self.assertFalse(r["flags"]["gain5_high"])  # 仅乖离触发
+        self.assertTrue(r["flags"]["dev_high"])
+        self.assertIn("乖离过大", r["tags"])
+        self.assertGreater(r["ma20_dev"], 25)
+
+    def test_no_deduct_normal(self):
+        # 温和上行 + 小幅当日涨幅 → 无扣分
+        closes = [10.0 + i * 0.05 for i in range(30)]
+        r = recommend._chase_deducts("x", {"pct_chg": 1.0}, self._df(closes), self._cfg())
+        self.assertEqual(r["deduct"], 0)
+        self.assertEqual(r["tags"], [])
+        self.assertFalse(any(r["flags"].values()))
+
+    def test_combined_deducts(self):
+        # 三项同时触发 → 扣分叠加
+        df = self._df([10.0] * 19 + [14.0])  # ma20_dev≈34% + 近5日涨幅40%
+        r = recommend._chase_deducts("x", {"pct_chg": 8.0}, df, self._cfg())
+        sc = recommend.CONFIG["score"]
+        self.assertEqual(r["deduct"], sc["gain5_deduct"] + sc["high_pos_deduct"] + sc["ma20_dev_deduct"])
+        self.assertEqual(len(r["tags"]), 3)
+
+    def test_insufficient_data(self):
+        # 历史数据不足(<6天) → chg5/ma20_dev 均无法计算; 当日涨幅温和 → 无扣分
+        r = recommend._chase_deducts("x", {"pct_chg": 1.0}, self._df([10.0, 10.1]), self._cfg())
+        self.assertEqual(r["deduct"], 0)
+        self.assertIsNone(r["chg5"])
+        self.assertIsNone(r["ma20_dev"])
+        # 但当日大涨未涨停的扣分不依赖历史数据, 数据不足时仍触发
+        r2 = recommend._chase_deducts("x", {"pct_chg": 8.0}, self._df([10.0, 10.1]), self._cfg())
+        self.assertEqual(r2["deduct"], recommend.CONFIG["score"]["high_pos_deduct"])
+
+
+class TestPredictionCorrectionConfig(unittest.TestCase):
+    """回归保护: 预测修正 CONFIG 键必须存在 (评分循环/特征提取依赖)"""
+
+    def test_score_keys_present(self):
+        sc = recommend.CONFIG["score"]
+        for k in ("gain5_threshold", "gain5_deduct", "high_pos_pct",
+                  "high_pos_deduct", "ma20_dev_threshold", "ma20_dev_deduct",
+                  "sentiment_cap"):
+            self.assertIn(k, sc, f"CONFIG['score'] 缺少 {k}")
+        # 追高阈值收紧: 近5日涨幅 >12% 即触发 (原25)
+        self.assertLessEqual(sc["gain5_threshold"], 12.0)
+        self.assertGreaterEqual(sc["gain5_deduct"], 12)
+
+    def test_sentiment_cap_defaults(self):
+        cap = recommend.CONFIG["score"]["sentiment_cap"]
+        self.assertEqual(cap["advance_ratio_min"], 0.5)
+        self.assertEqual(cap["keep_ratio"], 0.5)
+        self.assertGreaterEqual(cap["keep_min"], 3)
+
+
+class TestSentimentCap(unittest.TestCase):
+    """情绪联动: 大盘上涨占比不足且指数未全面站稳 → 缩减推荐数量"""
+
+    def _recs(self, n=6):
+        return [{"ts_code": "%06d.SH" % (600000 + i), "score_total": 90 - i}
+                for i in range(n)]
+
+    def test_weak_market_capped(self):
+        shown, capped = recommend._sentiment_cap_shown(
+            self._recs(), {"advance_ratio": 0.45,
+                           "indexes": [{"above": True}, {"above": False}]})
+        self.assertTrue(capped)
+        self.assertEqual(len(shown), 3)  # 6*0.5=3, 保留最强的
+
+    def test_strong_advance_no_cap(self):
+        shown, capped = recommend._sentiment_cap_shown(
+            self._recs(), {"advance_ratio": 0.55, "indexes": [{"above": False}]})
+        self.assertFalse(capped)
+        self.assertEqual(len(shown), 6)
+
+    def test_indexes_all_above_no_cap(self):
+        """上涨占比不足但指数全面站稳 → 不缩减"""
+        shown, capped = recommend._sentiment_cap_shown(
+            self._recs(), {"advance_ratio": 0.45,
+                           "indexes": [{"above": True}, {"above": True}]})
+        self.assertFalse(capped)
+
+    def test_keep_min_floor(self):
+        """触发时至少保留 keep_min 只; 数量不足不触发"""
+        shown, capped = recommend._sentiment_cap_shown(
+            self._recs(3), {"advance_ratio": 0.30, "indexes": [{"above": False}]})
+        self.assertFalse(capped)  # len(3) <= keep_min(3)
+        shown, capped = recommend._sentiment_cap_shown(
+            self._recs(8), {"advance_ratio": 0.30, "indexes": [{"above": False}]})
+        self.assertTrue(capped)
+        self.assertEqual(len(shown), 4)  # 8*0.5=4
+
+    def test_no_market_status_no_cap(self):
+        shown, capped = recommend._sentiment_cap_shown(self._recs(), None)
+        self.assertFalse(capped)
+
+
+class TestPredFeaturesMa20Dev(unittest.TestCase):
+    """回归: _pred_features 必须输出 ma20_dev 特征 (位置风险约束依赖)"""
+
+    def test_ma20_dev_in_features(self):
+        import pandas as pd
+        closes = [10.0 + i * 0.1 for i in range(25)]  # 末值 12.4
+        df = pd.DataFrame({"date": [str(i) for i in range(25)],
+                           "close": closes, "low": [9.0] * 25})
+        s = {"ts_code": "600000.SH", "sector_count": 1, "sector_names": ["半导体"],
+             "pct_chg": 2.0, "price": 12.4, "pe_ttm": 20.0,
+             "vol_ratio": 1.5, "turnover_rate": 8.0}
+        cap = {"vol_ratio": 1.5, "turnover": 8.0, "net_inflow_3d": 1e7}
+        tech = {"hits": ["均线多头"], "hit_count": 1}
+        f = recommend._pred_features("600000.SH", s, cap, tech,
+                                     {"600000.SH": 85}, {"600000.SH": df},
+                                     {"半导体": 3}, {"advance_ratio": 0.55})
+        self.assertIn("ma20_dev", f)
+        self.assertIsNotNone(f["ma20_dev"])
+        ma20 = sum(closes[-20:]) / 20
+        self.assertAlmostEqual(f["ma20_dev"], (12.4 / ma20 - 1) * 100, places=4)
+
+    def test_ma20_dev_none_with_short_data(self):
+        import pandas as pd
+        df = pd.DataFrame({"date": ["0", "1", "2"],
+                           "close": [10.0, 10.1, 10.2], "low": [9.9, 9.8, 9.9]})
+        s = {"ts_code": "600000.SH", "sector_count": 1, "sector_names": [],
+             "pct_chg": 1.0, "price": 10.2, "pe_ttm": 20.0}
+        f = recommend._pred_features("600000.SH", s, {}, {"hits": [], "hit_count": 0},
+                                     {}, {"600000.SH": df}, {}, {"advance_ratio": 0.55})
+        self.assertIn("ma20_dev", f)
+        self.assertIsNone(f["ma20_dev"])
+
+
+class TestTrendRegimeFlags(unittest.TestCase):
+    """精准度增强(2026-08-18): 趋势/位置形态研判
+    三态: 反弹未反转(60日区间跌) / 超跌反弹(距60日高点回撤>30%) / 贴近新高(回撤≤15%且60日涨)
+    """
+
+    def _df(self, closes, high_mult=1.02):
+        import pandas as pd
+        closes = [float(c) for c in closes]
+        return {"TEST.SH": pd.DataFrame({
+            "date": [str(i) for i in range(len(closes))],
+            "close": closes,
+            "high": [c * high_mult for c in closes],
+        })}
+
+    def test_rebound_not_reversed(self):
+        # 61根: 10 → 9.4 温和阴跌 (60日区间 -6%), 高点回撤仅 -10.5% → 只标反弹未反转
+        closes = [10.0] * 30 + [9.8 - i * 0.02 for i in range(31)]
+        out = recommend.trend_regime_flags("TEST.SH", {}, self._df(closes, high_mult=1.05))
+        self.assertTrue(out["flags"]["rebound"])
+        self.assertFalse(out["flags"]["retreat"])
+        self.assertFalse(out["flags"]["near_high"])
+        self.assertIn("反弹未反转", out["tags"])
+        self.assertLess(out["chg60"], 0)
+        self.assertEqual(out["regime"], "rebound")
+
+    def test_retreat_oversold(self):
+        # 拉升到15后回落到10.5: 60日区间 +5% 但距高点回撤 -31.4% → 只标超跌反弹
+        closes = [10.0] * 40 + [11, 12, 13, 14, 15] + [10.5] * 16
+        out = recommend.trend_regime_flags("TEST.SH", {}, self._df(closes))
+        self.assertTrue(out["flags"]["retreat"])
+        self.assertFalse(out["flags"]["rebound"])
+        self.assertFalse(out["flags"]["near_high"])
+        self.assertIn("超跌反弹", out["tags"])
+        self.assertLessEqual(out["retreat_pct"], -30)
+        self.assertEqual(out["regime"], "retreat")
+
+    def test_near_high(self):
+        # 10 → 19 单边慢牛 (60日 +90%), 距最高点仅 -2% → 贴近新高
+        closes = [10.0 + i * 0.15 for i in range(61)]
+        out = recommend.trend_regime_flags("TEST.SH", {}, self._df(closes))
+        self.assertTrue(out["flags"]["near_high"])
+        self.assertFalse(out["flags"]["rebound"])
+        self.assertFalse(out["flags"]["retreat"])
+        self.assertIn("贴近新高", out["tags"])
+        self.assertGreater(out["chg60"], 0)
+
+    def test_near_high_requires_positive_chg60(self):
+        # 回撤≤15% 但60日区间为负 (下跌途中小反弹) → 不标贴近新高, 只标反弹未反转
+        closes = [12.0] * 58 + [11.5, 11.2, 11.0]
+        out = recommend.trend_regime_flags("TEST.SH", {}, self._df(closes))
+        self.assertTrue(out["flags"]["rebound"])
+        self.assertFalse(out["flags"]["near_high"])
+        self.assertGreaterEqual(out["retreat_pct"], -15)
+
+    def test_insufficient_data(self):
+        out = recommend.trend_regime_flags("TEST.SH", {}, self._df([10.0] * 10))
+        self.assertIsNone(out["chg60"])
+        self.assertIsNone(out["retreat_pct"])
+        self.assertFalse(any(out["flags"].values()))
+        self.assertEqual(out["tags"], [])
+
+    def test_none_df(self):
+        out = recommend.trend_regime_flags("TEST.SH", {}, None)
+        self.assertIsNone(out["regime"])
+        self.assertEqual(out["tags"], [])
+
+
+class TestPeHighFlag(unittest.TestCase):
+    """高估值降权: PE-TTM > 100 才判定为高估值"""
+
+    def test_pe_high(self):
+        self.assertTrue(recommend.pe_high_flag({"pe_ttm": 101.0}))
+
+    def test_pe_below_threshold(self):
+        self.assertFalse(recommend.pe_high_flag({"pe_ttm": 99.0}))
+
+    def test_pe_none(self):
+        self.assertFalse(recommend.pe_high_flag({"pe_ttm": None}))
+        self.assertFalse(recommend.pe_high_flag({}))
+
+    def test_pe_na(self):
+        import pandas as pd
+        self.assertFalse(recommend.pe_high_flag({"pe_ttm": pd.NA}))
+
+    def test_pe_negative(self):
+        # 亏损/负PE 不归为"高估值" (基本面条已处理)
+        self.assertFalse(recommend.pe_high_flag({"pe_ttm": -5.0}))
+
+
+class TestIndustryConcentration(unittest.TestCase):
+    """精准度增强: 输出 top1 行业集中度 (日度+早期双列表同口径)"""
+
+    def _rec(self, industry, name):
+        return {"ts_code": "600000.SH", "name": name, "industry": industry,
+                "sectors": [], "sector_count": 1, "tags": "", "price": 10.0,
+                "pct_chg": 1.0, "pe_ttm": 15.0, "circ_mv": 50.0,
+                "score_total": 80, "score_sector": 20, "score_fundamental": 15,
+                "score_capital": 20, "score_technical": 20,
+                "fundamental": {}, "capital": {}, "technical": {}}
+
+    def _save_daily(self, rec_list):
+        import json, tempfile, os as _os
+        rec_mod = recommend
+        rec_mod._LAST_MARKET_STATUS = None
+        orig = rec_mod.REC_FILE
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        _os.close(fd)
+        rec_mod.REC_FILE = tmp
+        try:
+            rec_mod.save_recommendations(rec_list, "20260807", "20260806")
+            with open(tmp, encoding="utf-8") as f:
+                return json.load(f)
+        finally:
+            rec_mod.REC_FILE = orig
+            if _os.path.exists(tmp):
+                _os.remove(tmp)
+
+    def _save_early(self, rec_list):
+        import json, tempfile, os as _os
+        rec_mod = recommend
+        rec_mod._LAST_EARLY_MARKET_STATUS = None
+        orig = rec_mod.EARLY_REC_FILE
+        fd, tmp = tempfile.mkstemp(suffix=".json")
+        _os.close(fd)
+        rec_mod.EARLY_REC_FILE = tmp
+        try:
+            rec_mod.save_early_recommendations(rec_list, "20260810", "20260807")
+            with open(tmp, encoding="utf-8") as f:
+                return json.load(f)
+        finally:
+            rec_mod.EARLY_REC_FILE = orig
+            if _os.path.exists(tmp):
+                _os.remove(tmp)
+
+    def test_daily_top_industry(self):
+        rec_list = [self._rec("半导体", "股1"), self._rec("半导体", "股2"), self._rec("银行", "股3")]
+        ic = self._save_daily(rec_list)["industry_concentration"]
+        self.assertEqual(ic["top_industry"], "半导体")
+        self.assertEqual(ic["top_count"], 2)
+        self.assertEqual(ic["top_ratio"], round(2 / 3, 2))
+
+    def test_early_top_industry(self):
+        rec_list = [self._rec("半导体", "股1"), self._rec("银行", "股2")]
+        ic = self._save_early(rec_list)["industry_concentration"]
+        self.assertEqual(ic["top_industry"], "半导体")
+        self.assertEqual(ic["top_ratio"], 0.5)
+
+    def test_empty_list_empty_dict(self):
+        self.assertEqual(self._save_daily([])["industry_concentration"], {})
+        self.assertEqual(self._save_early([])["industry_concentration"], {})
+
+    def test_missing_industry_unknown(self):
+        rec = self._rec(None, "股1")
+        ic = self._save_early([rec, rec])["industry_concentration"]
+        self.assertEqual(ic["top_industry"], "未知")
+        self.assertEqual(ic["top_ratio"], 1.0)
+
+
+# ============================================================
+# 消息面信号 (2026-08-23, 金融新闻 + 主力/散户真实消息)
+# ============================================================
+
+class TestNewsSourceLevel(unittest.TestCase):
+    def test_official_source_media(self):
+        self.assertEqual(recommend._news_source_level("中国证券报", "某公司中标大单"), "official")
+        self.assertEqual(recommend._news_source_level("财联社", "某公司业绩预增"), "official")
+        self.assertEqual(recommend._news_source_level("新浪财经", "某公司签订合同"), "official")
+
+    def test_official_announcement_feature(self):
+        # 标题含公告/披露特征 → 即便来源普通媒体也算官方 (内容即公司披露)
+        self.assertEqual(recommend._news_source_level("综合", "某公司发布年度业绩公告"), "official")
+        self.assertEqual(recommend._news_source_level("", "某公司半年度业绩说明会"), "official")
+
+    def test_rumor_source(self):
+        # 股吧/雪球等散户平台 → rumor (小道消息, 不采信)
+        self.assertEqual(recommend._news_source_level("东方财富股吧", "某公司重大利好传闻"), "rumor")
+        self.assertEqual(recommend._news_source_level("雪球", "某公司要重组了"), "rumor")
+
+    def test_neutral_other(self):
+        self.assertEqual(recommend._news_source_level("某某自媒体", "随便聊聊市场"), "neutral")
+        self.assertEqual(recommend._news_source_level("", ""), "neutral")
+
+
+class TestNewsSentiment(unittest.TestCase):
+    def test_bull_kw(self):
+        self.assertEqual(recommend._news_sentiment("公司中标1.2亿订单"), "pos")
+        self.assertEqual(recommend._news_sentiment("控股股东增持500万股"), "pos")
+        self.assertEqual(recommend._news_sentiment("前三季度业绩预增50%"), "pos")
+
+    def test_bear_kw(self):
+        self.assertEqual(recommend._news_sentiment("股东拟减持不超过2%"), "neg")
+        self.assertEqual(recommend._news_sentiment("收到证监会立案调查通知"), "neg")
+        self.assertEqual(recommend._news_sentiment("公司预计首亏"), "neg")
+
+    def test_neutral_reverse(self):
+        # 反向表述: 解除质押/取消减持 → 中性 (不误判利空)
+        self.assertEqual(recommend._news_sentiment("控股股东解除质押公告"), None)
+        self.assertEqual(recommend._news_sentiment("控股股东取消减持计划"), None)
+
+    def test_no_kw(self):
+        self.assertEqual(recommend._news_sentiment("公司参加行业展会"), None)
+        self.assertEqual(recommend._news_sentiment(""), None)
+
+
+class TestNewsWindow(unittest.TestCase):
+    def test_within_window(self):
+        self.assertTrue(recommend._news_in_window("2026-08-20 10:00:00", "20260821", 7))
+
+    def test_today(self):
+        self.assertTrue(recommend._news_in_window("2026-08-21 09:00:00", "20260821", 7))
+
+    def test_too_old(self):
+        self.assertFalse(recommend._news_in_window("2026-08-01 10:00:00", "20260821", 7))
+
+    def test_future(self):
+        self.assertFalse(recommend._news_in_window("2026-08-22 10:00:00", "20260821", 7))
+
+    def test_invalid(self):
+        self.assertFalse(recommend._news_in_window("", "20260821", 7))
+
+
+class TestScoreNewsFunnel(unittest.TestCase):
+    def test_news_config_keys_present(self):
+        # 回归保护: 评分循环从 CONFIG["score"]["news"] 读取阈值
+        n = recommend.CONFIG["score"]["news"]
+        for k in ("bonus", "deduct", "window_days", "max_fetch", "hot_rank_top", "dzjy_discount_max"):
+            self.assertIn(k, n, f"CONFIG['score']['news'] 缺少 {k}")
+
+    def test_official_pos_bonus(self):
+        nb, nd, tags = recommend.score_news_funnel({"official_pos": 2, "official_neg": 0})
+        self.assertEqual(nb, 2)
+        self.assertEqual(nd, 0)
+        self.assertIn("利好消息", tags)
+
+    def test_official_neg_deduct(self):
+        nb, nd, tags = recommend.score_news_funnel({"official_neg": 1})
+        self.assertEqual(nb, 0)
+        self.assertEqual(nd, 3)
+        self.assertIn("利空消息", tags)
+
+    def test_neg_priority_over_pos(self):
+        # 利好利空并存 → 利空优先扣分 (防御优先)
+        nb, nd, tags = recommend.score_news_funnel({"official_pos": 1, "official_neg": 1})
+        self.assertEqual(nb, 0)
+        self.assertEqual(nd, 3)
+        self.assertIn("利空消息", tags)
+
+    def test_rumor_tag_only_no_score(self):
+        # 传闻利好 → 仅标签, 不加减分 (真实性甄别: 小道消息不采信)
+        nb, nd, tags = recommend.score_news_funnel({"rumor_pos": 2})
+        self.assertEqual((nb, nd), (0, 0))
+        self.assertIn("传闻利好", tags)
+        nb, nd, tags = recommend.score_news_funnel({"rumor_neg": 1})
+        self.assertEqual((nb, nd), (0, 0))
+        self.assertIn("消息待证", tags)
+
+    def test_missing_no_punish(self):
+        self.assertEqual(recommend.score_news_funnel(None), (0, 0, []))
+        self.assertEqual(recommend.score_news_funnel({}), (0, 0, []))
+
+    def test_hot_rank_tag(self):
+        nb, nd, tags = recommend.score_news_funnel({}, hot_rank={"600519.SH": 3}, code="600519.SH")
+        self.assertEqual((nb, nd), (0, 0))
+        self.assertIn("人气榜TOP", tags)
+        _, _, tags = recommend.score_news_funnel({}, hot_rank={"600519.SH": 80}, code="600519.SH")
+        self.assertNotIn("人气榜TOP", tags)
+
+    def test_dzjy_tags(self):
+        dzjy = {"600519.SH": {"count": 2, "total_amt": 1e8, "avg_discount": -0.05, "inst_buy": False}}
+        _, _, tags = recommend.score_news_funnel({}, dzjy=dzjy, code="600519.SH")
+        self.assertIn("大宗折价", tags)
+        dzjy2 = {"600519.SH": {"count": 1, "total_amt": 1e8, "avg_discount": 0.0, "inst_buy": True}}
+        _, _, tags = recommend.score_news_funnel({}, dzjy=dzjy2, code="600519.SH")
+        self.assertIn("机构大宗买入", tags)
+
+
+class TestApplyNewsSignals(unittest.TestCase):
+    def setUp(self):
+        self._reset_cache()
+
+    def _reset_cache(self):
+        recommend._NEWS_SIGNALS_CACHE.clear()
+        recommend._HOT_RANK_CACHE = None
+        recommend._DZJY_CACHE_DATE = None
+        recommend._DZJY_CACHE = None
+
+    def test_applies_score_and_tags(self):
+        # 预填缓存, 避免真实网络请求
+        recommend._NEWS_SIGNALS_CACHE["000001.SZ"] = {"official_pos": 1, "official_neg": 0,
+                                                       "rumor_pos": 0, "rumor_neg": 0, "headlines": []}
+        recommend._NEWS_SIGNALS_CACHE["600519.SH"] = {"official_pos": 0, "official_neg": 1,
+                                                       "rumor_pos": 0, "rumor_neg": 0, "headlines": []}
+        recommend._HOT_RANK_CACHE = {"000001.SZ": 5}
+        recommend._DZJY_CACHE_DATE = "20260821"
+        recommend._DZJY_CACHE = {}
+        # 无消息面股票预填空信号, 避免触发真实网络请求
+        recommend._NEWS_SIGNALS_CACHE["000002.SZ"] = {"official_pos": 0, "official_neg": 0,
+                                                       "rumor_pos": 0, "rumor_neg": 0, "headlines": []}
+        results = [
+            {"ts_code": "000001.SZ", "score_total": 80, "tags": "短线优选"},
+            {"ts_code": "600519.SH", "score_total": 75, "tags": "短线观察"},
+            {"ts_code": "000002.SZ", "score_total": 70, "tags": ""},  # 无消息面
+        ]
+        out = recommend.apply_news_signals(results, "20260821")
+        r1 = next(r for r in out if r["ts_code"] == "000001.SZ")
+        r2 = next(r for r in out if r["ts_code"] == "600519.SH")
+        r3 = next(r for r in out if r["ts_code"] == "000002.SZ")
+        self.assertEqual(r1["score_total"], 82)      # 权威利好 +2
+        self.assertEqual(r1["score_news"], 2)
+        self.assertIn("利好消息", r1["tags"])
+        self.assertIn("人气榜TOP", r1["tags"])
+        self.assertEqual(r2["score_total"], 72)      # 权威利空 -3
+        self.assertEqual(r2["score_news"], -3)
+        self.assertIn("利空消息", r2["tags"])
+        self.assertEqual(r3["score_total"], 70)      # 无消息面不误杀
+        self.assertEqual(r3["score_news"], 0)
+        self.assertIn("news", r3)
+
+    def test_empty_results(self):
+        self.assertEqual(recommend.apply_news_signals([], "20260821"), [])
 
 
 if __name__ == "__main__":

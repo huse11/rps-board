@@ -1,396 +1,390 @@
 {
- "update_date": "20260814",
- "prev_date": "20260813",
+ "update_date": "20260825",
+ "prev_date": "20260824",
  "total_industries": 208,
  "threshold": 90,
  "market": {
   "tone": "中性",
-  "high5": 20,
-  "high10": 20,
-  "high20": 20,
+  "high5": 18,
+  "high10": 16,
+  "high20": 15,
   "diff5": 0,
-  "avg_high": 20.0,
-  "high_score_count_pct": 0.0,
+  "avg_high": 16.333333333333332,
+  "high_score_count_pct": 24.4,
   "index": {
    "ok": true,
-   "close": 3927.1764,
-   "ma20": 3870.39551,
-   "above": true,
-   "days": 133
+   "close": 3889.4449,
+   "ma20": 3898.2724649999996,
+   "above": false,
+   "days": 132
   },
-  "note": "高分板块数处于近120日历史0%分位；上证指数站上20日线(3870点)"
+  "note": "沪指跌破20日线(3898点)"
  },
  "resonance": {
   "core": [
    {
-    "name": "医疗研发外包",
+    "name": "黄金",
     "RPS": 99.5,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 6,
-    "ratio": 93.1,
-    "stock_count": 29,
-    "rps50_above_90": 27
+    "continuous": 4,
+    "ratio": 88.9,
+    "stock_count": 9,
+    "rps50_above_90": 8
    },
    {
-    "name": "其他生物制品",
-    "RPS": 97.1,
-    "rank": 6,
-    "rank_change": -4,
-    "continuous": 5,
-    "ratio": 70.0,
-    "stock_count": 30,
-    "rps50_above_90": 21
-   },
-   {
-    "name": "通信网络设备及器件",
-    "RPS": 93.3,
-    "rank": 14,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 5.7,
-    "stock_count": 35,
-    "rps50_above_90": 2
-   }
-  ],
-  "tough": [
-   {
-    "name": "印制电路板",
+    "name": "其他化学原料",
     "RPS": 99.0,
     "rank": 2,
-    "rank_change": 0,
-    "continuous": 6,
-    "ratio": 15.6,
-    "stock_count": 45,
-    "rps50_above_90": 7
-   }
-  ],
-  "pulse": [
-   {
-    "name": "线下药店",
-    "RPS": 98.6,
-    "rank": 3,
-    "rank_change": 5,
-    "continuous": 3,
-    "ratio": 50.0,
-    "stock_count": 8,
+    "rank_change": 4,
+    "continuous": 5,
+    "ratio": 33.3,
+    "stock_count": 12,
     "rps50_above_90": 4
    },
    {
-    "name": "医院",
-    "RPS": 98.1,
-    "rank": 4,
-    "rank_change": 1,
-    "continuous": 2,
-    "ratio": 21.4,
-    "stock_count": 14,
-    "rps50_above_90": 3
+    "name": "种子",
+    "RPS": 94.7,
+    "rank": 11,
+    "rank_change": -9,
+    "continuous": 6,
+    "ratio": 71.4,
+    "stock_count": 7,
+    "rps50_above_90": 5
    },
    {
-    "name": "装修装饰Ⅲ",
+    "name": "定制家居",
+    "RPS": 92.8,
+    "rank": 15,
+    "rank_change": 0,
+    "continuous": 4,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
+   }
+  ],
+  "tough": [],
+  "pulse": [
+   {
+    "name": "钟表珠宝",
     "RPS": 97.6,
     "rank": 5,
-    "rank_change": 10,
-    "continuous": 2,
-    "ratio": 7.1,
-    "stock_count": 14,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "医药流通",
-    "RPS": 96.6,
-    "rank": 7,
     "rank_change": 3,
     "continuous": 3,
-    "ratio": 30.4,
-    "stock_count": 23,
-    "rps50_above_90": 7
+    "ratio": 16.7,
+    "stock_count": 12,
+    "rps50_above_90": 2
    },
    {
-    "name": "楼宇设备",
-    "RPS": 96.2,
-    "rank": 8,
-    "rank_change": 12,
-    "continuous": 2,
-    "ratio": 7.7,
-    "stock_count": 13,
+    "name": "金融控股",
+    "RPS": 97.1,
+    "rank": 6,
+    "rank_change": 20,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 8,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "股份制银行Ⅲ",
+    "RPS": 96.6,
+    "rank": 7,
+    "rank_change": 2,
+    "continuous": 3,
+    "ratio": 11.1,
+    "stock_count": 9,
     "rps50_above_90": 1
    },
    {
-    "name": "乳品",
+    "name": "动力煤",
+    "RPS": 95.7,
+    "rank": 9,
+    "rank_change": -2,
+    "continuous": 2,
+    "ratio": 33.3,
+    "stock_count": 15,
+    "rps50_above_90": 5
+   },
+   {
+    "name": "炼油化工",
     "RPS": 95.2,
     "rank": 10,
     "rank_change": -7,
-    "continuous": 2,
-    "ratio": 11.1,
-    "stock_count": 18,
-    "rps50_above_90": 2
+    "continuous": 5,
+    "ratio": 44.4,
+    "stock_count": 9,
+    "rps50_above_90": 4
    },
    {
-    "name": "其他塑料制品",
-    "RPS": 94.7,
-    "rank": 11,
-    "rank_change": 24,
-    "continuous": 1,
-    "ratio": 11.1,
-    "stock_count": 18,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "其他酒类",
+    "name": "农商行Ⅲ",
     "RPS": 94.2,
     "rank": 12,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 16.7,
-    "stock_count": 6,
-    "rps50_above_90": 1
+    "rank_change": -1,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 10,
+    "rps50_above_90": 0
    },
    {
-    "name": "综合Ⅲ",
+    "name": "房屋建设Ⅲ",
+    "RPS": 93.3,
+    "rank": 14,
+    "rank_change": 5,
+    "continuous": 2,
+    "ratio": 0.0,
+    "stock_count": 7,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "跨境物流",
+    "RPS": 91.8,
+    "rank": 17,
+    "rank_change": 6,
+    "continuous": 1,
+    "ratio": 27.3,
+    "stock_count": 11,
+    "rps50_above_90": 3
+   },
+   {
+    "name": "自然景区",
+    "RPS": 91.3,
+    "rank": 18,
+    "rank_change": 14,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 13,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "城商行Ⅲ",
     "RPS": 90.9,
     "rank": 19,
-    "rank_change": 26,
-    "continuous": 1,
-    "ratio": 5.3,
-    "stock_count": 19,
-    "rps50_above_90": 1
+    "rank_change": -9,
+    "continuous": 5,
+    "ratio": 0.0,
+    "stock_count": 17,
+    "rps50_above_90": 0
    },
    {
-    "name": "体外诊断",
+    "name": "港口",
     "RPS": 90.4,
     "rank": 20,
-    "rank_change": -8,
+    "rank_change": -4,
     "continuous": 2,
-    "ratio": 19.4,
-    "stock_count": 36,
-    "rps50_above_90": 7
+    "ratio": 6.7,
+    "stock_count": 15,
+    "rps50_above_90": 1
    }
   ],
   "diverge": [
    {
-    "name": "光学元件"
+    "name": "仪器仪表"
    },
    {
-    "name": "其他小金属"
+    "name": "其他农产品加工"
+   },
+   {
+    "name": "其他塑料制品"
    },
    {
     "name": "其他自动化设备"
    },
    {
-    "name": "分立器件"
+    "name": "其他运输设备"
    },
    {
-    "name": "半导体材料"
+    "name": "制冷空调设备"
+   },
+   {
+    "name": "医疗研发外包"
+   },
+   {
+    "name": "半导体设备"
    },
    {
     "name": "印制电路板"
    },
    {
-    "name": "地面兵装Ⅲ"
-   },
-   {
     "name": "培训教育"
    },
    {
-    "name": "模拟芯片设计"
+    "name": "涂料油墨"
    },
    {
-    "name": "横向通用软件"
+    "name": "涤纶"
    },
    {
-    "name": "民爆制品"
+    "name": "激光设备"
    },
    {
-    "name": "玻纤制造"
+    "name": "照明设备Ⅲ"
    },
    {
-    "name": "电子化学品Ⅲ"
+    "name": "装修装饰Ⅲ"
    },
    {
-    "name": "磨具磨料"
+    "name": "通信线缆及配套"
    },
    {
-    "name": "线缆部件及其他"
+    "name": "通信终端及配件"
    },
    {
-    "name": "营销代理"
-   },
-   {
-    "name": "被动元件"
-   },
-   {
-    "name": "输变电设备"
-   },
-   {
-    "name": "通信工程及服务"
-   },
-   {
-    "name": "通信应用增值服务"
+    "name": "通信网络设备及器件"
    },
    {
     "name": "铅锌"
    },
    {
-    "name": "铜"
-   },
-   {
-    "name": "集成电路封测"
-   },
-   {
-    "name": "非金属材料Ⅲ"
-   },
-   {
-    "name": "黄金"
+    "name": "鞋帽及其他"
    }
   ],
   "mainline_count": 4,
   "mainlines": [
    {
-    "name": "医疗研发外包",
+    "name": "黄金",
     "RPS": 99.5,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 6,
-    "ratio": 93.1,
-    "stock_count": 29,
-    "rps50_above_90": 27
+    "continuous": 4,
+    "ratio": 88.9,
+    "stock_count": 9,
+    "rps50_above_90": 8
    },
    {
-    "name": "其他生物制品",
-    "RPS": 97.1,
-    "rank": 6,
-    "rank_change": -4,
-    "continuous": 5,
-    "ratio": 70.0,
-    "stock_count": 30,
-    "rps50_above_90": 21
-   },
-   {
-    "name": "通信网络设备及器件",
-    "RPS": 93.3,
-    "rank": 14,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 5.7,
-    "stock_count": 35,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "印制电路板",
+    "name": "其他化学原料",
     "RPS": 99.0,
     "rank": 2,
-    "rank_change": 0,
+    "rank_change": 4,
+    "continuous": 5,
+    "ratio": 33.3,
+    "stock_count": 12,
+    "rps50_above_90": 4
+   },
+   {
+    "name": "种子",
+    "RPS": 94.7,
+    "rank": 11,
+    "rank_change": -9,
     "continuous": 6,
-    "ratio": 15.6,
-    "stock_count": 45,
-    "rps50_above_90": 7
+    "ratio": 71.4,
+    "stock_count": 7,
+    "rps50_above_90": 5
+   },
+   {
+    "name": "定制家居",
+    "RPS": 92.8,
+    "rank": 15,
+    "rank_change": 0,
+    "continuous": 4,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
    }
   ]
  },
  "tier": {
   "tier1": [
    {
-    "name": "医疗研发外包",
+    "name": "黄金",
     "RPS": 99.5,
     "rank": 1,
     "rank_change": 0,
-    "continuous": 6,
-    "ratio": 93.1,
-    "stock_count": 29,
-    "rps50_above_90": 27
+    "continuous": 4,
+    "ratio": 88.9,
+    "stock_count": 9,
+    "rps50_above_90": 8
    },
    {
-    "name": "线下药店",
-    "RPS": 98.6,
-    "rank": 3,
-    "rank_change": 5,
-    "continuous": 3,
-    "ratio": 50.0,
-    "stock_count": 8,
+    "name": "其他化学原料",
+    "RPS": 99.0,
+    "rank": 2,
+    "rank_change": 4,
+    "continuous": 5,
+    "ratio": 33.3,
+    "stock_count": 12,
     "rps50_above_90": 4
    },
    {
-    "name": "医院",
+    "name": "疫苗",
     "RPS": 98.1,
     "rank": 4,
-    "rank_change": 1,
-    "continuous": 2,
-    "ratio": 21.4,
-    "stock_count": 14,
-    "rps50_above_90": 3
+    "rank_change": 8,
+    "continuous": 4,
+    "ratio": 50.0,
+    "stock_count": 12,
+    "rps50_above_90": 6
    },
    {
-    "name": "其他生物制品",
-    "RPS": 97.1,
-    "rank": 6,
-    "rank_change": -4,
-    "continuous": 5,
-    "ratio": 70.0,
-    "stock_count": 30,
-    "rps50_above_90": 21
-   },
-   {
-    "name": "医药流通",
-    "RPS": 96.6,
-    "rank": 7,
+    "name": "钟表珠宝",
+    "RPS": 97.6,
+    "rank": 5,
     "rank_change": 3,
     "continuous": 3,
-    "ratio": 30.4,
-    "stock_count": 23,
-    "rps50_above_90": 7
+    "ratio": 16.7,
+    "stock_count": 12,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "航运",
+    "RPS": 96.2,
+    "rank": 8,
+    "rank_change": -3,
+    "continuous": 5,
+    "ratio": 33.3,
+    "stock_count": 18,
+    "rps50_above_90": 6
+   },
+   {
+    "name": "动力煤",
+    "RPS": 95.7,
+    "rank": 9,
+    "rank_change": -2,
+    "continuous": 2,
+    "ratio": 33.3,
+    "stock_count": 15,
+    "rps50_above_90": 5
+   },
+   {
+    "name": "炼油化工",
+    "RPS": 95.2,
+    "rank": 10,
+    "rank_change": -7,
+    "continuous": 5,
+    "ratio": 44.4,
+    "stock_count": 9,
+    "rps50_above_90": 4
    }
   ],
   "tier2": [
    {
-    "name": "其他塑料制品",
+    "name": "种子",
     "RPS": 94.7,
     "rank": 11,
-    "rank_change": 24,
-    "continuous": 1,
-    "ratio": 11.1,
-    "stock_count": 18,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "其他酒类",
-    "RPS": 94.2,
-    "rank": 12,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 16.7,
-    "stock_count": 6,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "激光设备",
-    "RPS": 92.8,
-    "rank": 15,
-    "rank_change": 11,
-    "continuous": 1,
-    "ratio": 10.0,
-    "stock_count": 10,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "仪器仪表",
-    "RPS": 91.8,
-    "rank": 17,
-    "rank_change": 19,
-    "continuous": 1,
-    "ratio": 10.2,
-    "stock_count": 49,
+    "rank_change": -9,
+    "continuous": 6,
+    "ratio": 71.4,
+    "stock_count": 7,
     "rps50_above_90": 5
    },
    {
-    "name": "体外诊断",
-    "RPS": 90.4,
-    "rank": 20,
-    "rank_change": -8,
-    "continuous": 2,
-    "ratio": 19.4,
-    "stock_count": 36,
-    "rps50_above_90": 7
+    "name": "定制家居",
+    "RPS": 92.8,
+    "rank": 15,
+    "rank_change": 0,
+    "continuous": 4,
+    "ratio": 15.4,
+    "stock_count": 13,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "跨境物流",
+    "RPS": 91.8,
+    "rank": 17,
+    "rank_change": 6,
+    "continuous": 1,
+    "ratio": 27.3,
+    "stock_count": 11,
+    "rps50_above_90": 3
    }
   ],
   "tier3": []
@@ -398,442 +392,426 @@
  "rotation": {
   "new_in": [
    {
-    "name": "其他塑料制品",
-    "RPS": 94.7,
-    "rank": 11,
-    "rank_change": 24,
-    "continuous": 1,
-    "ratio": 11.1,
-    "stock_count": 18,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "其他酒类",
-    "RPS": 94.2,
-    "rank": 12,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 16.7,
-    "stock_count": 6,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "其他电源设备Ⅲ",
-    "RPS": 93.8,
-    "rank": 13,
-    "rank_change": 15,
+    "name": "金融控股",
+    "RPS": 97.1,
+    "rank": 6,
+    "rank_change": 20,
     "continuous": 1,
     "ratio": 0.0,
-    "stock_count": 24,
+    "stock_count": 8,
     "rps50_above_90": 0
    },
    {
-    "name": "通信网络设备及器件",
-    "RPS": 93.3,
-    "rank": 14,
-    "rank_change": 10,
+    "name": "物业管理",
+    "RPS": 93.8,
+    "rank": 13,
+    "rank_change": 35,
     "continuous": 1,
-    "ratio": 5.7,
-    "stock_count": 35,
-    "rps50_above_90": 2
+    "ratio": 0.0,
+    "stock_count": 6,
+    "rps50_above_90": 0
    },
    {
-    "name": "激光设备",
-    "RPS": 92.8,
-    "rank": 15,
-    "rank_change": 11,
-    "continuous": 1,
-    "ratio": 10.0,
-    "stock_count": 10,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "瓷砖地板",
-    "RPS": 92.3,
-    "rank": 16,
-    "rank_change": 22,
-    "continuous": 1,
-    "ratio": 8.3,
-    "stock_count": 12,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "仪器仪表",
+    "name": "跨境物流",
     "RPS": 91.8,
     "rank": 17,
-    "rank_change": 19,
+    "rank_change": 6,
     "continuous": 1,
-    "ratio": 10.2,
-    "stock_count": 49,
-    "rps50_above_90": 5
+    "ratio": 27.3,
+    "stock_count": 11,
+    "rps50_above_90": 3
    },
    {
-    "name": "膜材料",
+    "name": "自然景区",
     "RPS": 91.3,
     "rank": 18,
-    "rank_change": 15,
+    "rank_change": 14,
     "continuous": 1,
-    "ratio": 4.8,
-    "stock_count": 21,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "综合Ⅲ",
-    "RPS": 90.9,
-    "rank": 19,
-    "rank_change": 26,
-    "continuous": 1,
-    "ratio": 5.3,
-    "stock_count": 19,
-    "rps50_above_90": 1
+    "ratio": 0.0,
+    "stock_count": 13,
+    "rps50_above_90": 0
    }
   ],
   "rank_jump": [
    {
-    "name": "综合Ⅲ",
-    "RPS": 90.9,
-    "rank": 19,
-    "rank_change": 26,
-    "continuous": 1,
-    "ratio": 5.3,
-    "stock_count": 19,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "其他塑料制品",
-    "RPS": 94.7,
-    "rank": 11,
-    "rank_change": 24,
-    "continuous": 1,
-    "ratio": 11.1,
-    "stock_count": 18,
-    "rps50_above_90": 2
-   },
-   {
-    "name": "瓷砖地板",
-    "RPS": 92.3,
-    "rank": 16,
-    "rank_change": 22,
-    "continuous": 1,
-    "ratio": 8.3,
-    "stock_count": 12,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "仪器仪表",
-    "RPS": 91.8,
-    "rank": 17,
-    "rank_change": 19,
-    "continuous": 1,
-    "ratio": 10.2,
-    "stock_count": 49,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "其他电源设备Ⅲ",
+    "name": "物业管理",
     "RPS": 93.8,
     "rank": 13,
-    "rank_change": 15,
+    "rank_change": 35,
     "continuous": 1,
     "ratio": 0.0,
-    "stock_count": 24,
+    "stock_count": 6,
     "rps50_above_90": 0
+   },
+   {
+    "name": "金融控股",
+    "RPS": 97.1,
+    "rank": 6,
+    "rank_change": 20,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 8,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "自然景区",
+    "RPS": 91.3,
+    "rank": 18,
+    "rank_change": 14,
+    "continuous": 1,
+    "ratio": 0.0,
+    "stock_count": 13,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "疫苗",
+    "RPS": 98.1,
+    "rank": 4,
+    "rank_change": 8,
+    "continuous": 4,
+    "ratio": 50.0,
+    "stock_count": 12,
+    "rps50_above_90": 6
    }
   ],
   "out_all": [
+   "煤化工",
+   "钢结构",
+   "铜",
    "铅锌",
-   "软饮料",
-   "摩托车",
-   "火力发电"
+   "光伏加工设备",
+   "分立器件",
+   "农商行Ⅲ",
+   "城商行Ⅲ",
+   "半导体设备",
+   "焦煤",
+   "乳品",
+   "钟表珠宝",
+   "民爆制品"
   ],
-  "out_count": 4,
+  "out_count": 13,
   "exits": [
    {
+    "name": "煤化工",
+    "continuous": 2,
+    "exit_type": "pulse_exit"
+   },
+   {
+    "name": "钢结构",
+    "continuous": 2,
+    "exit_type": "pulse_exit"
+   },
+   {
+    "name": "铜",
+    "continuous": 3,
+    "exit_type": "normal_exit"
+   },
+   {
     "name": "铅锌",
+    "continuous": 2,
+    "exit_type": "pulse_exit"
+   },
+   {
+    "name": "光伏加工设备",
     "continuous": 0,
     "exit_type": "pulse_exit"
    },
    {
-    "name": "软饮料",
+    "name": "分立器件",
     "continuous": 0,
     "exit_type": "pulse_exit"
    },
    {
-    "name": "摩托车",
+    "name": "农商行Ⅲ",
+    "continuous": 1,
+    "exit_type": "pulse_exit"
+   },
+   {
+    "name": "城商行Ⅲ",
+    "continuous": 4,
+    "exit_type": "normal_exit"
+   },
+   {
+    "name": "半导体设备",
     "continuous": 0,
     "exit_type": "pulse_exit"
    },
    {
-    "name": "火力发电",
+    "name": "焦煤",
+    "continuous": 4,
+    "exit_type": "normal_exit"
+   },
+   {
+    "name": "乳品",
+    "continuous": 0,
+    "exit_type": "pulse_exit"
+   },
+   {
+    "name": "钟表珠宝",
+    "continuous": 2,
+    "exit_type": "pulse_exit"
+   },
+   {
+    "name": "民爆制品",
     "continuous": 0,
     "exit_type": "pulse_exit"
    }
   ],
   "repeat": [
-   "仪器仪表",
+   "光学元件",
+   "其他塑料制品",
+   "其他生物制品",
+   "农商行Ⅲ",
+   "分立器件",
+   "动力煤",
+   "半导体材料",
+   "印制电路板",
+   "原料药",
+   "港口",
    "激光设备",
-   "瓷砖地板",
-   "膜材料",
+   "电子化学品Ⅲ",
+   "疫苗",
+   "股份制银行Ⅲ",
+   "跨境物流",
    "通信线缆及配套",
    "通信网络设备及器件",
-   "铅锌",
-   "黄金"
+   "集成电路封测"
   ]
  },
  "health": {
   "expand": [
    {
-    "name": "医疗研发外包",
-    "ratio": 93.1
+    "name": "黄金",
+    "ratio": 88.9
    },
    {
-    "name": "线下药店",
+    "name": "疫苗",
     "ratio": 50.0
    },
    {
-    "name": "其他生物制品",
-    "ratio": 70.0
+    "name": "航运",
+    "ratio": 33.3
    },
    {
-    "name": "医药流通",
-    "ratio": 30.4
+    "name": "动力煤",
+    "ratio": 33.3
+   },
+   {
+    "name": "炼油化工",
+    "ratio": 44.4
+   },
+   {
+    "name": "种子",
+    "ratio": 71.4
    }
   ],
   "mature": [
-   "医疗研发外包",
-   "其他生物制品"
+   "其他化学原料",
+   "焦煤",
+   "航运",
+   "炼油化工",
+   "种子",
+   "城商行Ⅲ"
   ],
   "mature_fatigue": [],
   "seed_high": [],
   "seed_pulse": [
    {
-    "name": "其他塑料制品",
-    "ratio": 11.1
-   },
-   {
-    "name": "其他酒类",
-    "ratio": 16.7
-   },
-   {
-    "name": "其他电源设备Ⅲ",
+    "name": "金融控股",
     "ratio": 0.0
    },
    {
-    "name": "通信网络设备及器件",
-    "ratio": 5.7
+    "name": "物业管理",
+    "ratio": 0.0
    },
    {
-    "name": "激光设备",
-    "ratio": 10.0
+    "name": "跨境物流",
+    "ratio": 27.3
    },
    {
-    "name": "瓷砖地板",
-    "ratio": 8.3
-   },
-   {
-    "name": "仪器仪表",
-    "ratio": 10.2
-   },
-   {
-    "name": "膜材料",
-    "ratio": 4.8
-   },
-   {
-    "name": "综合Ⅲ",
-    "ratio": 5.3
+    "name": "自然景区",
+    "ratio": 0.0
    }
   ]
  },
  "risk": {
-  "batch_out": {
-   "未归类": 5
-  },
-  "diverge": [
-   {
-    "name": "装修装饰Ⅲ",
-    "ratio": 7.1
-   },
-   {
-    "name": "楼宇设备",
-    "ratio": 7.7
-   },
-   {
-    "name": "机床工具",
-    "ratio": 5.9
-   },
-   {
-    "name": "乳品",
-    "ratio": 11.1
-   }
-  ],
+  "batch_out": {},
+  "diverge": [],
   "momentum_decay": false,
-  "warnings": [
-   {
-    "text": "批量调出异动: 今日「未归类」方向调出5个板块, 单日异动, 观察次日确认",
-    "level": "hint"
-   },
-   {
-    "text": "高位顶背离: 装修装饰Ⅲ 排名靠前但内部个股达标率低(7%), 指数虚高警惕回落",
-    "level": "warning"
-   }
-  ],
-  "level": "warning"
+  "warnings": [],
+  "level": "safe"
  },
  "watch": {
   "seed_high": [],
   "seed_pulse": [
    {
-    "name": "其他塑料制品",
-    "ratio": 11.1
-   },
-   {
-    "name": "其他酒类",
-    "ratio": 16.7
-   },
-   {
-    "name": "其他电源设备Ⅲ",
+    "name": "金融控股",
     "ratio": 0.0
    },
    {
-    "name": "通信网络设备及器件",
-    "ratio": 5.7
+    "name": "物业管理",
+    "ratio": 0.0
    },
    {
-    "name": "激光设备",
-    "ratio": 10.0
+    "name": "跨境物流",
+    "ratio": 27.3
    },
    {
-    "name": "瓷砖地板",
-    "ratio": 8.3
-   },
-   {
-    "name": "仪器仪表",
-    "ratio": 10.2
-   },
-   {
-    "name": "膜材料",
-    "ratio": 4.8
-   },
-   {
-    "name": "综合Ⅲ",
-    "ratio": 5.3
+    "name": "自然景区",
+    "ratio": 0.0
    }
   ],
   "critical": [],
   "diverge_watch": [
    {
-    "name": "印制电路板",
-    "drop_days": 1
+    "name": "其他塑料制品",
+    "drop_days": 2,
+    "diverge_note": "良性分歧(掉2天)"
    },
    {
-    "name": "黄金",
-    "drop_days": 2
+    "name": "铅锌",
+    "drop_days": 1,
+    "diverge_note": "良性分歧(掉1天)"
    }
   ],
   "diverge_dropped": [
    {
-    "name": "其他小金属",
-    "drop_days": 3
+    "name": "仪器仪表",
+    "drop_days": 5,
+    "diverge_note": "逐步衰竭(掉≥5天)"
    },
    {
-    "name": "地面兵装Ⅲ",
-    "drop_days": 12
+    "name": "其他自动化设备",
+    "drop_days": 6,
+    "diverge_note": "逐步衰竭(掉≥6天)"
+   },
+   {
+    "name": "其他运输设备",
+    "drop_days": 9,
+    "diverge_note": "逐步衰竭(掉≥9天)"
+   },
+   {
+    "name": "医疗研发外包",
+    "drop_days": 6,
+    "diverge_note": "逐步衰竭(掉≥6天)"
+   },
+   {
+    "name": "半导体设备",
+    "drop_days": 5,
+    "diverge_note": "逐步衰竭(掉≥5天)"
+   },
+   {
+    "name": "印制电路板",
+    "drop_days": 5,
+    "diverge_note": "逐步衰竭(掉≥5天)"
    },
    {
     "name": "培训教育",
-    "drop_days": 7
+    "drop_days": 14,
+    "diverge_note": "逐步衰竭(掉≥14天)"
    },
    {
-    "name": "横向通用软件",
-    "drop_days": 6
+    "name": "涂料油墨",
+    "drop_days": 41,
+    "diverge_note": "逐步衰竭(掉≥41天)"
    },
    {
-    "name": "民爆制品",
-    "drop_days": 8
+    "name": "激光设备",
+    "drop_days": 3,
+    "diverge_note": "逐步衰竭(掉≥3天)"
    },
    {
-    "name": "线缆部件及其他",
-    "drop_days": 12
+    "name": "照明设备Ⅲ",
+    "drop_days": 41,
+    "diverge_note": "逐步衰竭(掉≥41天)"
    },
    {
-    "name": "营销代理",
-    "drop_days": 6
+    "name": "装修装饰Ⅲ",
+    "drop_days": 5,
+    "diverge_note": "逐步衰竭(掉≥5天)"
    },
    {
-    "name": "被动元件",
-    "drop_days": 3
+    "name": "通信线缆及配套",
+    "drop_days": 3,
+    "diverge_note": "逐步衰竭(掉≥3天)"
    },
    {
-    "name": "输变电设备",
-    "drop_days": 12
+    "name": "通信网络设备及器件",
+    "drop_days": 5,
+    "diverge_note": "逐步衰竭(掉≥5天)"
    },
    {
-    "name": "通信工程及服务",
-    "drop_days": 6
-   },
-   {
-    "name": "通信应用增值服务",
-    "drop_days": 8
-   },
-   {
-    "name": "铅锌",
-    "drop_days": 3
-   },
-   {
-    "name": "铜",
-    "drop_days": 14
+    "name": "鞋帽及其他",
+    "drop_days": 41,
+    "diverge_note": "逐步衰竭(掉≥41天)"
    }
-  ]
+  ],
+  "diverge_note": "主线分歧池: 掉1~2天=良性分歧(低吸观察), 掉≥3天=逐步衰竭(移出跟踪)"
  },
  "sentiment": {
   "main": "震荡期",
-  "signal": [
-   "退潮信号"
-  ],
+  "signal": [],
+  "signals": [],
   "phase": "震荡期",
-  "seed_n": 9,
-  "out_n": 0,
-  "core_n": 3,
-  "high_n": 20,
+  "seed_n": 4,
+  "out_n": 4,
+  "core_n": 4,
+  "high_n": 18,
   "seed_high_n": 0
  },
  "style": {
   "rps5": {
    "未归类": {
-    "count": 11,
-    "pct": 55.0
+    "count": 10,
+    "pct": 50.0
    },
-   "医药": {
-    "count": 4,
-    "pct": 20.0
-   },
-   "制造": {
+   "周期": {
     "count": 3,
     "pct": 15.0
    },
-   "科技": {
+   "公用": {
+    "count": 3,
+    "pct": 15.0
+   },
+   "金融": {
     "count": 2,
     "pct": 10.0
+   },
+   "医药": {
+    "count": 1,
+    "pct": 5.0
+   },
+   "消费": {
+    "count": 1,
+    "pct": 5.0
    }
   },
   "rps10": {
-   "科技": {
-    "count": 8,
-    "pct": 40.0
-   },
    "未归类": {
-    "count": 6,
-    "pct": 30.0
+    "count": 11,
+    "pct": 55.0
    },
-   "制造": {
+   "科技": {
     "count": 3,
     "pct": 15.0
    },
-   "医药": {
+   "制造": {
     "count": 2,
     "pct": 10.0
    },
    "周期": {
+    "count": 1,
+    "pct": 5.0
+   },
+   "公用": {
+    "count": 1,
+    "pct": 5.0
+   },
+   "消费": {
+    "count": 1,
+    "pct": 5.0
+   },
+   "医药": {
     "count": 1,
     "pct": 5.0
    }
@@ -844,18 +822,22 @@
     "pct": 45.0
    },
    "科技": {
-    "count": 5,
-    "pct": 25.0
+    "count": 4,
+    "pct": 20.0
    },
-   "周期": {
+   "制造": {
     "count": 3,
     "pct": 15.0
    },
-   "医药": {
+   "周期": {
     "count": 2,
     "pct": 10.0
    },
-   "制造": {
+   "医药": {
+    "count": 1,
+    "pct": 5.0
+   },
+   "消费": {
     "count": 1,
     "pct": 5.0
    }
@@ -866,33 +848,199 @@
   "warning": ""
  },
  "market_status_rec": {
-  "is_safe": true,
-  "rule": "至少 1 个指数站上 20 日线",
-  "reason": "",
+  "is_safe": false,
+  "level": "reject",
+  "rule": "至少 1 个指数站上 20 日线 且 上涨占比≥40% 且 跌停≤40家",
+  "reason": "上证指数 / 创业板指 未站上20日线",
   "indexes": [
    {
     "code": "000001.SH",
     "name": "上证指数",
-    "close": 3927.18,
-    "ma": 3870.4,
-    "above": true
+    "close": 3889.44,
+    "ma": 3898.27,
+    "above": false
    },
    {
     "code": "399006.SZ",
     "name": "创业板指",
-    "close": 3626.3,
-    "ma": 3497.17,
-    "above": true
+    "close": 3397.52,
+    "ma": 3503.16,
+    "above": false
    }
   ],
-  "advance_ratio": 0.45,
-  "limit_down_count": 19,
+  "advance_ratio": 0.77,
+  "limit_down_count": 7,
+  "limit_up_count": 95,
   "main_flow": {
-   "days": 1,
+   "days": 3,
    "neg_days": 1,
-   "total_net_yi": -104.7,
+   "total_net_yi": -507.0,
    "verdict": "资金正常"
   },
-  "note": "大盘环境合格, 继续选股"
+  "sector_strong_count": 20,
+  "alt_pass": false,
+  "hsgt_breadth": {
+   "up": 2535,
+   "down": 947,
+   "ratio": 0.73
+  },
+  "note": "大盘环境不合格, 终止选股"
+ },
+ "news": null,
+ "rec_accuracy": {
+  "has_data": true,
+  "update_date": "20260821",
+  "horizon": 3,
+  "samples": 44,
+  "hit_rate": 0.205,
+  "avg_gain": -3.68,
+  "avg_up_prob": 69.5,
+  "prev_dates": [
+   "20260812",
+   "20260814",
+   "20260817",
+   "20260818"
+  ],
+  "by_confidence": {
+   "高": {
+    "samples": 10,
+    "hit_rate": 0.4,
+    "avg_gain": 3.86
+   },
+   "中": {
+    "samples": 32,
+    "hit_rate": 0.156,
+    "avg_gain": -5.73
+   },
+   "低": {
+    "samples": 2,
+    "hit_rate": 0.0,
+    "avg_gain": -8.56
+   }
+  },
+  "best": [
+   {
+    "name": "士兰微",
+    "code": "600460.SH",
+    "gain": 2.9,
+    "hit": true,
+    "pred_date": "20260818",
+    "confidence": "中"
+   },
+   {
+    "name": "华微电子",
+    "code": "600360.SH",
+    "gain": -4.54,
+    "hit": false,
+    "pred_date": "20260818",
+    "confidence": "中"
+   },
+   {
+    "name": "依顿电子",
+    "code": "603328.SH",
+    "gain": -4.98,
+    "hit": false,
+    "pred_date": "20260818",
+    "confidence": "中"
+   }
+  ],
+  "worst": [
+   {
+    "name": "强一股份",
+    "code": "688809.SH",
+    "gain": -12.8,
+    "hit": false,
+    "pred_date": "20260818",
+    "confidence": "中"
+   },
+   {
+    "name": "山东玻纤",
+    "code": "605006.SH",
+    "gain": -11.48,
+    "hit": false,
+    "pred_date": "20260817",
+    "confidence": "中"
+   },
+   {
+    "name": "华亚智能",
+    "code": "003043.SZ",
+    "gain": -9.93,
+    "hit": false,
+    "pred_date": "20260818",
+    "confidence": "中"
+   }
+  ],
+  "today_count": 0,
+  "today_avg_prob": null,
+  "note": "命中率=预测后3日收盘≥预测日现价"
+ },
+ "potential_sectors": [],
+ "sector_life_cycle": {
+  "rps5": {
+   "黄金": "growth",
+   "其他化学原料": "accelerate",
+   "焦煤": "accelerate",
+   "疫苗": "growth",
+   "钟表珠宝": "growth",
+   "金融控股": "base",
+   "股份制银行Ⅲ": "growth",
+   "航运": "accelerate",
+   "动力煤": "base",
+   "炼油化工": "accelerate",
+   "种子": "growth",
+   "农商行Ⅲ": "base",
+   "物业管理": "base",
+   "房屋建设Ⅲ": "base",
+   "定制家居": "growth",
+   "其他石化": "growth",
+   "跨境物流": "base",
+   "自然景区": "base",
+   "城商行Ⅲ": "growth",
+   "港口": "base"
+  },
+  "rps10": {
+   "种子": "accelerate",
+   "通信线缆及配套": "fatigue",
+   "黄金": "accelerate",
+   "其他塑料制品": "growth",
+   "其他化学原料": "growth",
+   "航运": "growth",
+   "定制家居": "growth",
+   "疫苗": "growth",
+   "焦煤": "growth",
+   "照明设备Ⅲ": "base",
+   "激光设备": "base",
+   "装修装饰Ⅲ": "growth",
+   "其他农产品加工": "base",
+   "其他石化": "base",
+   "仪器仪表": "fatigue",
+   "通信终端及配件": "base",
+   "通信网络设备及器件": "base",
+   "制冷空调设备": "base",
+   "涤纶": "base",
+   "物业管理": "base"
+  },
+  "rps20": {
+   "黄金": "accelerate",
+   "半导体设备": "accelerate",
+   "通信线缆及配套": "growth",
+   "仪器仪表": "fatigue",
+   "医疗研发外包": "accelerate",
+   "种子": "base",
+   "印制电路板": "accelerate",
+   "其他运输设备": "fatigue",
+   "培训教育": "fatigue",
+   "其他塑料制品": "accelerate",
+   "定制家居": "growth",
+   "激光设备": "base",
+   "铅锌": "growth",
+   "其他自动化设备": "base",
+   "装修装饰Ⅲ": "growth",
+   "通信网络设备及器件": "base",
+   "其他化学原料": "base",
+   "鞋帽及其他": "growth",
+   "照明设备Ⅲ": "base",
+   "涂料油墨": "growth"
+  }
  }
 }

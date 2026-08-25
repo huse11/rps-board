@@ -585,6 +585,66 @@ class TestBuildAndRender(unittest.TestCase):
             tmp.cleanup()
 
 
+class TestSentimentHistory(unittest.TestCase):
+    """情绪周期历史文件: 幂等追加 + 保留上限 + 空日期跳过"""
+
+    def _stats(self, date="20260810", phase="震荡期"):
+        return {
+            "update_date": date,
+            "sentiment": {"main": phase, "phase": phase,
+                          "high_n": 20, "seed_n": 9, "core_n": 3, "out_n": 0},
+        }
+
+    def _read(self, tmp):
+        return dr._load_json(Path(tmp.name) / dr.SENTIMENT_HISTORY_NAME)
+
+    def test_append_creates_file(self):
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            with mock.patch.object(dr, "STATIC_DIR", Path(tmp.name)):
+                dr._append_sentiment_history(self._stats())
+                data = self._read(tmp)
+                self.assertEqual(len(data), 1)
+                self.assertEqual(data[0]["date"], "20260810")
+                self.assertEqual(data[0]["phase"], "震荡期")
+                self.assertEqual(data[0]["high_n"], 20)
+        finally:
+            tmp.cleanup()
+
+    def test_append_idempotent_same_day(self):
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            with mock.patch.object(dr, "STATIC_DIR", Path(tmp.name)):
+                dr._append_sentiment_history(self._stats("20260810", "震荡期"))
+                dr._append_sentiment_history(self._stats("20260810", "高潮期"))  # 同日 → 跳过
+                data = self._read(tmp)
+                self.assertEqual(len(data), 1)
+                self.assertEqual(data[0]["phase"], "震荡期")  # 不覆盖
+        finally:
+            tmp.cleanup()
+
+    def test_append_keeps_max(self):
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            with mock.patch.object(dr, "STATIC_DIR", Path(tmp.name)):
+                for i in range(dr.SENTIMENT_HISTORY_MAX + 5):
+                    dr._append_sentiment_history(self._stats("2026" + str(i).zfill(4)))
+                data = self._read(tmp)
+                self.assertLessEqual(len(data), dr.SENTIMENT_HISTORY_MAX)
+                self.assertEqual(data[-1]["date"], "2026" + str(dr.SENTIMENT_HISTORY_MAX + 4).zfill(4))
+        finally:
+            tmp.cleanup()
+
+    def test_append_skip_empty_date(self):
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            with mock.patch.object(dr, "STATIC_DIR", Path(tmp.name)):
+                dr._append_sentiment_history(self._stats(""))
+                self.assertIsNone(self._read(tmp))
+        finally:
+            tmp.cleanup()
+
+
 class TestPotentialSectors(unittest.TestCase):
     """早期启动挖掘: 临界潜力板块 (RPS5∈[88,90) + 板块内部达标率合格)"""
 
@@ -661,6 +721,217 @@ class TestFmtMarketStatus(unittest.TestCase):
             {"is_safe": True, "advance_ratio": 0.75, "note": "合格"}), "大盘环境合格；上涨占比75%；合格")
         self.assertEqual(dr._fmt_market_status({"is_safe": False}), "大盘环境不合格")
         self.assertEqual(dr._fmt_market_status(None), "")
+
+
+class TestNewsReview(unittest.TestCase):
+    """消息面复盘: 聚合日度+早期推荐中的新闻/人气/大宗信号 (2026-08-23)"""
+
+    @staticmethod
+    def _stock(name="测试", news=None, tags="", score_news=0):
+        return {"name": name, "ts_code": "000001", "news": news,
+                "tags": tags, "score_news": score_news}
+
+    @staticmethod
+    def _news(op=0, on=0, rp=0, rn=0, title=None):
+        return {"official_pos": op, "official_neg": on,
+                "rumor_pos": rp, "rumor_neg": rn,
+                "headlines": [{"title": title or "新闻标题"}] if title else []}
+
+    def _call(self, recs=None, early=None):
+        with mock.patch.object(dr, "load_recommendations", return_value={}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            return dr.news_review(recs, early)
+
+    def test_pos_news_env_warm(self):
+        recs = {"stocks": [self._stock("兴业银锡", self._news(op=1, title="业绩预增"),
+                                        tags="日度入选 + 利好消息", score_news=2)]}
+        out = self._call(recs, None)
+        self.assertIsNotNone(out)
+        self.assertTrue(out["has_news"])
+        self.assertEqual(out["env"], "偏暖")
+        self.assertEqual(out["hit_count"], 1)
+        self.assertEqual(out["score_sum"], 2)
+        self.assertEqual(out["official_pos_list"][0]["name"], "兴业银锡")
+        self.assertEqual(out["official_pos_list"][0]["count"], 1)
+        self.assertIn("业绩预增", out["official_pos_list"][0]["headline"])
+        self.assertEqual(out["tags_count"]["利好消息"], 1)
+
+    def test_neg_news_env_cold(self):
+        recs = {"stocks": [self._stock("某股", self._news(on=1, title="业绩预减"),
+                                        tags="日度入选 + 利空消息", score_news=-3)]}
+        out = self._call(recs, None)
+        self.assertEqual(out["env"], "偏冷")
+        self.assertEqual(out["score_sum"], -3)
+        self.assertEqual(out["official_neg_list"][0]["name"], "某股")
+        self.assertEqual(out["tags_count"]["利空消息"], 1)
+        self.assertIn("偏冷", out["note"])
+
+    def test_mixed_env_neg_priority(self):
+        # 利空优先: 同股同时有权威利好+利空 → env 偏冷 (防御性)
+        recs = {"stocks": [self._stock("双信号", self._news(op=1, on=1),
+                                        tags="利好消息 + 利空消息", score_news=-1)]}
+        out = self._call(recs, None)
+        self.assertEqual(out["env"], "偏冷")
+        self.assertEqual(len(out["official_pos_list"]), 1)
+        self.assertEqual(len(out["official_neg_list"]), 1)
+
+    def test_rumor_only_tags(self):
+        recs = {"stocks": [self._stock("传闻股", self._news(rp=1, rn=1),
+                                        tags="日度入选 + 传闻利好")]}
+        out = self._call(recs, None)
+        self.assertEqual(len(out["rumor_list"]), 1)
+        self.assertEqual(out["rumor_list"][0]["pos"], 1)
+        self.assertEqual(out["rumor_list"][0]["neg"], 1)
+        self.assertEqual(out["env"], "中性偏杂")  # 无权威列表 → 按标签计数
+
+    def test_tags_extra_dzjy_hotrank(self):
+        recs = {"stocks": [self._stock("大宗A", self._news(), tags="机构大宗买入"),
+                           self._stock("人气B", self._news(), tags="人气榜TOP")]}
+        out = self._call(recs, None)
+        self.assertEqual(out["tags_count"]["机构大宗买入"], 1)
+        self.assertEqual(out["tags_count"]["人气榜TOP"], 1)
+        self.assertNotIn("利好消息", out["tags_count"])
+
+    def test_score_sum_aggregation(self):
+        recs = {"stocks": [self._stock("A", self._news(op=1), score_news=2),
+                           self._stock("B", self._news(on=1), score_news=-3),
+                           self._stock("C", self._news(), score_news=0)]}
+        out = self._call(recs, None)
+        self.assertEqual(out["score_sum"], -1)
+        self.assertEqual(out["stock_count"], 3)
+
+    def test_early_plus_daily_merge(self):
+        daily = {"stocks": [self._stock("日度股", self._news(op=1), score_news=2)]}
+        early = {"stocks": [self._stock("早期股", self._news(on=1), score_news=-3)]}
+        out = self._call(daily, early)
+        self.assertEqual(out["stock_count"], 2)
+        self.assertEqual(out["score_sum"], -1)
+        self.assertEqual(len(out["official_pos_list"]), 1)
+        self.assertEqual(len(out["official_neg_list"]), 1)
+
+    def test_same_stock_dedup_merge(self):
+        # 日度+早期同股都有权威利好 → 合并计数, 不重复列出 (2026-08-23)
+        daily = {"stocks": [self._stock("白银有色", self._news(op=4, title="银价大涨"),
+                                        tags="利好消息", score_news=2)]}
+        early = {"stocks": [self._stock("白银有色", self._news(op=4, title="白银新高"),
+                                        tags="利好消息", score_news=2)]}
+        out = self._call(daily, early)
+        self.assertEqual(out["stock_count"], 2)
+        self.assertEqual(len(out["official_pos_list"]), 1)
+        self.assertEqual(out["official_pos_list"][0]["name"], "白银有色")
+        self.assertEqual(out["official_pos_list"][0]["count"], 8)  # 4+4 合并
+        self.assertEqual(out["score_sum"], 4)
+
+    def test_old_no_news_field(self):
+        # 旧版推荐无 news 字段 → None, 前端不展示消息面卡片
+        recs = {"stocks": [self._stock("旧版", None, tags="日度入选")]}
+        self.assertIsNone(self._call(recs, None))
+
+    def test_no_stocks(self):
+        self.assertIsNone(self._call({"stocks": []}, None))
+        self.assertIsNone(self._call(None, {"stocks": None}))
+
+    def test_render_markdown_news_section(self):
+        r5 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        recs = {"stocks": [self._stock("兴业银锡", self._news(op=1, title="业绩预增"),
+                                        tags="利好消息", score_news=2)]}
+        with patch_index(above=True), \
+             mock.patch.object(dr, "load_recommendations", return_value={"market_status": {}}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        stats["news"] = dr.news_review(recs, None)
+        md = dr.render_markdown(stats)
+        self.assertIn("消息面复盘", md)
+        self.assertIn("偏暖", md)
+        self.assertIn("兴业银锡", md)
+
+
+class TestRecAccuracy(unittest.TestCase):
+    """推荐准确率复盘: 读取 prediction_review.json + recommendations.json"""
+
+    def _review_data(self):
+        return {
+            "update_date": "20260821", "horizon": 3,
+            "summary": {"samples": 44, "hit_rate": 0.205,
+                        "avg_gain": -3.68, "avg_up_prob": 69.5,
+                        "prev_dates": ["20260812", "20260818"]},
+            "by_confidence": {
+                "高": {"samples": 10, "hit_rate": 0.4, "avg_gain": 3.86},
+                "中": {"samples": 32, "hit_rate": 0.156, "avg_gain": -5.73},
+            },
+            "recent": [
+                {"pred_date": "20260818", "code": "600460.SH", "name": "士兰微",
+                 "up_prob": 59, "confidence": "中", "sector_count": 1,
+                 "gain": 2.9, "hit": True},
+                {"pred_date": "20260818", "code": "300980.SZ", "name": "祥源新材",
+                 "up_prob": 62, "confidence": "中", "sector_count": 1,
+                 "gain": -7.74, "hit": False},
+            ],
+            "note": "测试说明",
+        }
+
+    def _recs_data(self, count=2):
+        stocks = []
+        for i in range(count):
+            stocks.append({"ts_code": "00000%d.SZ" % i, "name": "测试%d" % i,
+                           "prediction": {"up_prob": 65 + i}})
+        return {"stocks": stocks}
+
+    def test_no_data(self):
+        with mock.patch.object(dr, "_load_json", return_value=None):
+            out = dr.rec_accuracy()
+        self.assertFalse(out["has_data"])
+
+    def test_with_data(self):
+        rev = self._review_data()
+        recs = self._recs_data(2)
+        with mock.patch.object(dr, "_load_json", side_effect=[rev, recs]):
+            out = dr.rec_accuracy()
+        self.assertTrue(out["has_data"])
+        self.assertEqual(out["samples"], 44)
+        self.assertEqual(out["hit_rate"], 0.205)
+        self.assertEqual(out["avg_gain"], -3.68)
+        self.assertEqual(out["today_count"], 2)
+        self.assertEqual(out["today_avg_prob"], 65.5)
+        self.assertIn("高", out["by_confidence"])
+        self.assertEqual(len(out["best"]), 2)
+        self.assertEqual(out["best"][0]["name"], "士兰微")
+        self.assertEqual(out["worst"][0]["name"], "祥源新材")
+
+    def test_zero_today_recs(self):
+        rev = self._review_data()
+        recs = {"stocks": []}
+        with mock.patch.object(dr, "_load_json", side_effect=[rev, recs]):
+            out = dr.rec_accuracy()
+        self.assertTrue(out["has_data"])
+        self.assertEqual(out["today_count"], 0)
+        self.assertIsNone(out["today_avg_prob"])
+
+    def test_markdown_render(self):
+        # 使用完整 rps 数据(含 rps5/rps10/rps20 level) 避免 _in_sectors(None) 崩溃
+        r5 = make_level([make_sector("黄金", rank=1, rank_change=4, continuous=4,
+                                     stock_count=10, rps50_above_90=8)])
+        r10 = make_level([make_sector("黄金", rank=1)])
+        r20 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r10, rps20=r20)
+        rev = self._review_data()
+        recs = self._recs_data(1)
+        with mock.patch.object(dr, "load_recommendations", return_value=recs), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}), \
+             mock.patch.object(dr, "_load_json", return_value=rev), \
+             mock.patch.object(dr, "index_ma20_status",
+                               return_value={"ok": True, "close": 100, "ma20": 99,
+                                              "above": True, "days": 30}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        self.assertIn("rec_accuracy", stats)
+        md = dr.render_markdown(stats)
+        self.assertIn("推荐准确率复盘", md)
+        self.assertIn("21%", md)  # 0.205 → 21%
 
 
 if __name__ == "__main__":

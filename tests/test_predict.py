@@ -18,6 +18,10 @@ import predict
 
 import pandas as pd
 
+# 单元测试隔离: 禁用概率校准(防止本地 prediction_review.json 影响既有断言;
+# 校准逻辑在 TestCalibration 中通过桩单独验证)
+predict._load_calib = lambda: None
+
 
 def base_features(**kw):
     """构造默认特征 dict (单板块共振, 中性数据)"""
@@ -197,6 +201,100 @@ class TestRecordPredictions(unittest.TestCase):
             self.assertIn("20260807", data)
 
 
+class TestMomentumChasePenalty(unittest.TestCase):
+    """预测修正: 追高抑制 (近5日暴涨 / 乖离MA20过大 / 当天大涨未涨停)"""
+
+    def test_chg5_hot_penalty(self):
+        """近5日涨幅>12% → 动量维度概率降低 (追高惩罚)"""
+        hot = predict._momentum_prob(base_features(chg5=15.0, chg3=5.0))[0]
+        ok = predict._momentum_prob(base_features(chg5=8.0, chg3=5.0))[0]
+        self.assertLess(hot, ok)
+
+    def test_ma20_dev_penalty(self):
+        """乖离MA20>25% → 动量维度扣分 + 风险标签"""
+        dev = predict._momentum_prob(base_features(ma20_dev=30.0))[0]
+        mild = predict._momentum_prob(base_features(ma20_dev=10.0))[0]
+        self.assertLess(dev, mild)
+        _, notes = predict._momentum_prob(base_features(ma20_dev=30.0))
+        self.assertTrue(any("偏离MA20过大" in x for x in notes))
+
+    def test_high_pos_penalty(self):
+        """当天涨7%~9.8%未涨停 → 高位追涨扣分 + 标签"""
+        high = predict._momentum_prob(base_features(pct_chg=8.0))[0]
+        mild = predict._momentum_prob(base_features(pct_chg=3.0))[0]
+        self.assertLess(high, mild)
+        _, notes = predict._momentum_prob(base_features(pct_chg=8.0))
+        self.assertTrue(any("高位追涨" in x for x in notes))
+
+    def test_high_position_no_high_confidence(self):
+        """chg5>12 或 ma20_dev>25 → 置信度不为"高" (位置约束, 即使概率达档)"""
+        base = dict(sector_count=3, rps50=95, hit_count=5, net_inflow_3d=3e7,
+                    tech_hits=["20日新高", "均线多头", "MACD多头", "量价齐升", "RPS50强势"],
+                    consec_up=6, continuous=6)
+        p1 = predict.build_prediction(base_features(chg5=15.0, **base), market_ok(adv=0.62))
+        self.assertNotEqual(p1["confidence"], "高")
+        p2 = predict.build_prediction(base_features(ma20_dev=30.0, **base), market_ok(adv=0.62))
+        self.assertNotEqual(p2["confidence"], "高")
+        # 对照: 无位置风险 → 高
+        p3 = predict.build_prediction(base_features(chg5=8.0, ma20_dev=10.0, **base),
+                                      market_ok(adv=0.62))
+        self.assertEqual(p3["confidence"], "高")
+
+
+class TestCalibration(unittest.TestCase):
+    """概率校准: 用实测命中率压缩虚高概率 (防过度乐观, 校准逻辑单独桩验证)"""
+
+    def _calib(self, hit, avg, samples=10):
+        return {"hit": hit, "avg_prob": avg, "samples": samples}
+
+    def _patch(self, calib):
+        orig = predict._load_calib
+        predict._load_calib = lambda: calib
+        return orig
+
+    def test_no_calib_without_data(self):
+        orig = self._patch(None)
+        try:
+            self.assertEqual(predict.calibrate_prob(80), 80)
+        finally:
+            predict._load_calib = orig
+
+    def test_small_gap_no_calibration(self):
+        """误差 ≤3pp → 不校准 (避免过度修正)"""
+        orig = self._patch(self._calib(hit=60, avg=62))
+        try:
+            self.assertEqual(predict.calibrate_prob(80), 80)
+        finally:
+            predict._load_calib = orig
+
+    def test_big_gap_compresses(self):
+        """avg=82 vs hit=50, gap=32 → k=0.68; 80 → 55+25*0.68=72"""
+        orig = self._patch(self._calib(hit=50, avg=82))
+        try:
+            self.assertEqual(predict.calibrate_prob(80), 72)
+        finally:
+            predict._load_calib = orig
+
+    def test_compression_ratio(self):
+        """越接近基准55压缩越少, 越高概率压缩越多 (仍保持排序)"""
+        orig = self._patch(self._calib(hit=50, avg=82))
+        try:
+            hi = predict.calibrate_prob(88)
+            lo = predict.calibrate_prob(60)
+            self.assertGreater(hi, lo)
+            self.assertLessEqual(hi, 88)
+        finally:
+            predict._load_calib = orig
+
+    def test_never_below_floor(self):
+        """校准后概率不跌破 PROB_MIN+5=35"""
+        orig = self._patch(self._calib(hit=30, avg=90))
+        try:
+            self.assertGreaterEqual(predict.calibrate_prob(30), 35)
+        finally:
+            predict._load_calib = orig
+
+
 class TestCalcAccuracy(unittest.TestCase):
     def _make_daily_map(self, latest_date="20260807"):
         """mock daily_map: 5 个交易日 × 2 只股票, 价格逐步上行"""
@@ -253,6 +351,30 @@ class TestCalcAccuracy(unittest.TestCase):
             dm, dates = self._make_daily_map()
             log.write_text("{}", encoding="utf-8")
             self.assertIsNone(predict.calc_prediction_accuracy(dm, dates[-1], log, review))
+
+
+class TestCloseIndex(unittest.TestCase):
+    """N+1 修复回归: 按日期预构建 {code: close} 索引, O(1) 查询替代全表布尔过滤"""
+
+    def test_build_close_index_skips_nan(self):
+        df = pd.DataFrame([
+            {"ts_code": "000001.SZ", "close": 10.5},
+            {"ts_code": "000002.SZ", "close": None},
+            {"ts_code": "000003.SZ", "close": 8.0},
+        ])
+        idx = predict._build_close_index(df)
+        self.assertEqual(idx, {"000001.SZ": 10.5, "000003.SZ": 8.0})
+        self.assertNotIn("000002.SZ", idx)
+
+    def test_lookup_with_cache_reuses_index(self):
+        dm = {"20260801": pd.DataFrame([{"ts_code": "000001.SZ", "close": 10.0}])}
+        cache = {}
+        v1 = predict._lookup_close(dm, "20260801", "000001.SZ", cache)
+        v2 = predict._lookup_close(dm, "20260801", "000001.SZ", cache)
+        self.assertEqual((v1, v2), (10.0, 10.0))
+        self.assertIn("20260801", cache)
+        self.assertIsNone(predict._lookup_close(dm, "20260802", "000001.SZ", cache))
+        self.assertIsNone(predict._lookup_close(dm, "20260801", "000099.SZ", cache))
 
 
 if __name__ == "__main__":
