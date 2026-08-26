@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4123.0897,
-   "ma20": 4122.835120000001,
+   "close": 3912.524,
+   "ma20": 3902.4753000000005,
    "above": true,
    "days": 132
   },
-  "note": "上证指数站上20日线(4123点)"
+  "note": "上证指数站上20日线(3902点)"
  },
  "resonance": {
   "core": [
@@ -535,16 +535,7 @@
    "其他商业",
    "装修装饰"
   ],
-  "critical": [
-   {
-    "name": "钢加工",
-    "rps5": 89.1
-   },
-   {
-    "name": "普钢",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "专用机械",
    "元器件",
@@ -555,11 +546,11 @@
   ]
  },
  "sentiment": {
-  "phase": "退潮期",
+  "phase": "冰点期",
   "seed_n": 6,
   "out_n": 6,
   "core_n": 2,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
