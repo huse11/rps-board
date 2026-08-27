@@ -1,198 +1,201 @@
 {
-  "update_date": "20260821",
-  "horizon": 3,
+  "update_date": "20260827",
+  "horizon": 1,
   "summary": {
-    "samples": 44,
-    "hit_rate": 0.205,
-    "avg_gain": -3.68,
-    "avg_up_prob": 69.5,
+    "samples": 80,
+    "hit_rate": 0.4,
+    "avg_gain": -0.49,
+    "avg_up_prob": 66.2,
     "prev_dates": [
       "20260812",
       "20260814",
       "20260817",
-      "20260818"
+      "20260818",
+      "20260820",
+      "20260821",
+      "20260826"
     ]
   },
   "by_confidence": {
     "高": {
       "samples": 10,
-      "hit_rate": 0.4,
-      "avg_gain": 3.86
+      "hit_rate": 0.2,
+      "avg_gain": -2.02
     },
     "中": {
-      "samples": 32,
-      "hit_rate": 0.156,
-      "avg_gain": -5.73
+      "samples": 68,
+      "hit_rate": 0.441,
+      "avg_gain": -0.15
     },
     "低": {
       "samples": 2,
       "hit_rate": 0.0,
-      "avg_gain": -8.56
+      "avg_gain": -4.37
     }
   },
   "by_sector_count": {
     "2": {
       "samples": 16,
-      "hit_rate": 0.5,
-      "avg_gain": 2.4
+      "hit_rate": 0.188,
+      "avg_gain": -2.29
     },
     "1": {
-      "samples": 28,
-      "hit_rate": 0.036,
-      "avg_gain": -7.15
+      "samples": 64,
+      "hit_rate": 0.453,
+      "avg_gain": -0.04
     }
   },
   "recent": [
     {
-      "pred_date": "20260817",
-      "code": "300980.SZ",
-      "name": "祥源新材",
-      "up_prob": 62,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -7.74,
-      "hit": false
-    },
-    {
-      "pred_date": "20260817",
-      "code": "301630.SZ",
-      "name": "同宇新材",
+      "pred_date": "20260821",
+      "code": "300841.SZ",
+      "name": "康华生物",
       "up_prob": 61,
       "confidence": "中",
       "sector_count": 1,
-      "gain": -9.28,
+      "gain": -5.72,
       "hit": false
     },
     {
-      "pred_date": "20260817",
-      "code": "600459.SH",
-      "name": "贵研铂业",
-      "up_prob": 62,
+      "pred_date": "20260821",
+      "code": "300945.SZ",
+      "name": "曼卡龙",
+      "up_prob": 63,
       "confidence": "中",
       "sector_count": 1,
-      "gain": -7.27,
-      "hit": false
-    },
-    {
-      "pred_date": "20260817",
-      "code": "605006.SH",
-      "name": "山东玻纤",
-      "up_prob": 61,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -11.48,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "003026.SZ",
-      "name": "中晶科技",
-      "up_prob": 59,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -5.92,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "003043.SZ",
-      "name": "华亚智能",
-      "up_prob": 58,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -9.93,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "300088.SZ",
-      "name": "长信科技",
-      "up_prob": 57,
-      "confidence": "低",
-      "sector_count": 1,
-      "gain": -7.12,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "300973.SZ",
-      "name": "立高食品",
-      "up_prob": 59,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -8.74,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "600360.SH",
-      "name": "华微电子",
-      "up_prob": 58,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -4.54,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "600460.SH",
-      "name": "士兰微",
-      "up_prob": 59,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": 2.9,
+      "gain": 1.89,
       "hit": true
     },
     {
-      "pred_date": "20260818",
-      "code": "603328.SH",
-      "name": "依顿电子",
-      "up_prob": 59,
-      "confidence": "中",
-      "sector_count": 1,
-      "gain": -4.98,
-      "hit": false
-    },
-    {
-      "pred_date": "20260818",
-      "code": "688584.SH",
-      "name": "上海合晶",
+      "pred_date": "20260821",
+      "code": "301190.SZ",
+      "name": "善水科技",
       "up_prob": 61,
       "confidence": "中",
       "sector_count": 1,
-      "gain": -7.85,
-      "hit": false
+      "gain": 7.14,
+      "hit": true
     },
     {
-      "pred_date": "20260818",
-      "code": "688689.SH",
-      "name": "银河微电",
+      "pred_date": "20260821",
+      "code": "600338.SH",
+      "name": "西藏珠峰",
       "up_prob": 60,
       "confidence": "中",
       "sector_count": 1,
-      "gain": -5.73,
+      "gain": 0.58,
+      "hit": true
+    },
+    {
+      "pred_date": "20260821",
+      "code": "600531.SH",
+      "name": "豫光金铅",
+      "up_prob": 63,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": -0.07,
       "hit": false
     },
     {
-      "pred_date": "20260818",
-      "code": "688726.SH",
-      "name": "拉普拉斯",
-      "up_prob": 58,
+      "pred_date": "20260821",
+      "code": "600916.SH",
+      "name": "中国黄金",
+      "up_prob": 62,
       "confidence": "中",
       "sector_count": 1,
-      "gain": -6.49,
+      "gain": -0.25,
       "hit": false
     },
     {
-      "pred_date": "20260818",
-      "code": "688809.SH",
-      "name": "强一股份",
-      "up_prob": 59,
+      "pred_date": "20260821",
+      "code": "601083.SH",
+      "name": "锦江航运",
+      "up_prob": 63,
       "confidence": "中",
       "sector_count": 1,
-      "gain": -12.8,
+      "gain": 9.98,
+      "hit": true
+    },
+    {
+      "pred_date": "20260821",
+      "code": "601212.SH",
+      "name": "白银有色",
+      "up_prob": 61,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": 10.02,
+      "hit": true
+    },
+    {
+      "pred_date": "20260821",
+      "code": "601975.SH",
+      "name": "招商南油",
+      "up_prob": 61,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": 0.76,
+      "hit": true
+    },
+    {
+      "pred_date": "20260821",
+      "code": "603900.SH",
+      "name": "莱绅通灵",
+      "up_prob": 61,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": -1.25,
       "hit": false
+    },
+    {
+      "pred_date": "20260826",
+      "code": "000737.SZ",
+      "name": "北方铜业",
+      "up_prob": 65,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": -0.84,
+      "hit": false
+    },
+    {
+      "pred_date": "20260826",
+      "code": "600362.SH",
+      "name": "江西铜业",
+      "up_prob": 63,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": 1.3,
+      "hit": true
+    },
+    {
+      "pred_date": "20260826",
+      "code": "600497.SH",
+      "name": "驰宏锌锗",
+      "up_prob": 61,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": 1.25,
+      "hit": true
+    },
+    {
+      "pred_date": "20260826",
+      "code": "600711.SH",
+      "name": "盛屯矿业",
+      "up_prob": 60,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": 0.42,
+      "hit": true
+    },
+    {
+      "pred_date": "20260826",
+      "code": "603900.SH",
+      "name": "莱绅通灵",
+      "up_prob": 62,
+      "confidence": "中",
+      "sector_count": 1,
+      "gain": 10.02,
+      "hit": true
     }
   ],
-  "note": "每日校准: 命中=预测后3个交易日收盘价≥预测日现价; 分维度胜率用于动态调整因子权重"
+  "note": "每日校准: 命中=预测后1个交易日收盘价>预测日现价(严格上涨); 分维度胜率用于动态调整因子权重"
 }

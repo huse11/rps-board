@@ -136,13 +136,13 @@ class TestIndexMa20(unittest.TestCase):
 # ========================== 方向1: 市场定调(双约束) ==========================
 
 class TestMarketTone(unittest.TestCase):
-    def _hist(self, dates_high):
-        """dates_high: [(date, n)] → 三档高分数量均为 n"""
+    def _hist(self, dates_high, chg5=0.0):
+        """dates_high: [(date, n)] → 三档高分数量均为 n; chg5: 高分板块统一5日涨幅(强度维度)"""
         hist = {}
         for date, n in dates_high:
             sectors = {}
             for i in range(n):
-                sectors["板块%d" % i] = {"RPS5": 95, "RPS10": 95, "RPS20": 95}
+                sectors["板块%d" % i] = {"RPS5": 95, "RPS10": 95, "RPS20": 95, "chg5": chg5}
             hist[date] = sectors
         return hist
 
@@ -151,49 +151,52 @@ class TestMarketTone(unittest.TestCase):
         return make_rps_data(rps5=lv, rps10=lv, rps20=lv)
 
     def test_full_strong(self):
-        # diff≥+3 且 高分≥20 且 指数站上20日线
+        # RPS95下: 数量≥10 + 高分平均涨幅≥8% + 指数站上20日线 → 全面强
         with patch_index(above=True):
-            t = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 22)]))
+            t = dr.market_tone(self._rps(), self._hist([("20260807", 8), ("20260810", 10)], chg5=12))
         self.assertEqual(t["tone"], "全面强")
-        self.assertEqual(t["high5"], 22)
-        self.assertEqual(t["diff5"], 12)
+        self.assertEqual(t["high5"], 10)
+        self.assertEqual(t["avg_gain"], 12.0)
 
     def test_structural_strong_even_index_below(self):
-        # 高分≥25 且 沪指跌破20日线 → 结构性强
+        # 指数跌破20日线但高分平均涨幅≥8% 且 数量≥10 → 结构性强
         with patch_index(above=False):
-            t = dr.market_tone(self._rps(), self._hist([("20260807", 25), ("20260810", 28)]))
+            t = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 10)], chg5=10))
         self.assertEqual(t["tone"], "结构性强")
         self.assertIn("结构性", t["note"])
 
-    def test_weak_when_big_decrease(self):
+    def test_weak_when_avg_low(self):
+        # 高分平均涨幅≤3% → 弱 (数量恒定下强度主导)
         with patch_index(above=True):
-            t = dr.market_tone(self._rps(), self._hist([("20260807", 15), ("20260810", 9)]))
+            t = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 9)], chg5=2))
         self.assertEqual(t["tone"], "弱")
 
     def test_weak_when_total_low(self):
         with patch_index(above=True):
-            # 三档合计=6 ≤10
+            # 三档合计=6 ≤15
             t = dr.market_tone(self._rps(), self._hist([("20260807", 1), ("20260810", 2)]))
         self.assertEqual(t["tone"], "弱")
 
-    def test_neutral_weak_absolute_floor(self):
-        # diff=+3 增长, 但绝对数 16→19 <20, 且不满足结构性强 → 中性偏强
+    def test_neutral_strong_floor(self):
+        # diff=+3 增长 + 平均涨幅≥6% + 数量≥10 → 中性偏强
         with patch_index(above=True):
-            t = dr.market_tone(self._rps(), self._hist([("20260807", 16), ("20260810", 19)]))
+            t = dr.market_tone(self._rps(), self._hist([("20260807", 8), ("20260810", 10)], chg5=6))
         self.assertEqual(t["tone"], "中性偏强")
-        # 回落 16→12 → 中性偏弱
-        t2 = dr.market_tone(self._rps(), self._hist([("20260807", 16), ("20260810", 12)]))
+        # 平均涨幅≤4% → 中性偏弱
+        t2 = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 10)], chg5=3.5))
         self.assertEqual(t2["tone"], "中性偏弱")
 
     def test_neutral(self):
+        # 平均涨幅居中(4~6%), 数量≥10, diff=0 → 中性
         with patch_index(above=True):
-            t = dr.market_tone(self._rps(), self._hist([("20260807", 16), ("20260810", 16)]))
+            t = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 10)], chg5=5))
         self.assertEqual(t["tone"], "中性")
 
     def test_hist_percentile_field(self):
         with patch_index(above=True):
-            t = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 20)]))
+            t = dr.market_tone(self._rps(), self._hist([("20260807", 10), ("20260810", 10)], chg5=5))
         self.assertIn("high_score_count_pct", t)
+        self.assertIn("avg_gain", t)
 
 
 # ========================== 方向2: 主线识别(硬核/韧性) ==========================
@@ -384,10 +387,10 @@ class TestRisk(unittest.TestCase):
         self.assertTrue(risk["momentum_decay"])
         self.assertTrue(any("动量衰减" in w["text"] for w in risk["warnings"]))
         self.assertEqual(risk["level"], "warning")
-        # 低位回落(高分≤15)不触发
-        hist_low = {"20260805": {str(i): {"RPS5": 95} for i in range(15)},
-                    "20260806": {str(i): {"RPS5": 95} for i in range(12)},
-                    "20260807": {str(i): {"RPS5": 95} for i in range(10)}}
+        # 低位回落(高分≤8)不触发 (RPS95下 decay_high_floor=8)
+        hist_low = {"20260805": {str(i): {"RPS5": 95} for i in range(8)},
+                    "20260806": {str(i): {"RPS5": 95} for i in range(6)},
+                    "20260807": {str(i): {"RPS5": 95} for i in range(5)}}
         risk_low = dr.risk_analysis(r5, make_level([]), make_level([]), hist_low)
         self.assertFalse(risk_low["momentum_decay"])
 
@@ -458,7 +461,7 @@ class TestSentiment(unittest.TestCase):
         return make_level(sectors)
 
     def test_ice_phase(self):
-        hist = {"20260810": {str(i): {"RPS5": 95} for i in range(8)}}
+        hist = {"20260810": {str(i): {"RPS5": 95} for i in range(3)}}
         sent = dr.sentiment_phase(self._rps5(5), make_level([]), make_level([]), hist)
         self.assertEqual(sent["main"], "冰点期")
         self.assertEqual(sent["signal"], [])
@@ -479,8 +482,9 @@ class TestSentiment(unittest.TestCase):
         self.assertIn("退潮信号", sent["signal"])
 
     def test_startup_with_seed_high(self):
-        hist = {"20260810": {str(i): {"RPS5": 95} for i in range(12)}}
-        sent = dr.sentiment_phase(self._rps5(12, continuous=1), make_level([]),
+        # high_n=10 < high_burst(12) → 不触发高潮; seed_high_n≥4 → 启动期
+        hist = {"20260810": {str(i): {"RPS5": 95} for i in range(10)}}
+        sent = dr.sentiment_phase(self._rps5(10, continuous=1), make_level([]),
                                   make_level([]), hist, seed_high_n=4)
         self.assertEqual(sent["main"], "启动期")
 
@@ -854,7 +858,7 @@ class TestRecAccuracy(unittest.TestCase):
 
     def _review_data(self):
         return {
-            "update_date": "20260821", "horizon": 3,
+            "update_date": "20260821", "horizon": 1,
             "summary": {"samples": 44, "hit_rate": 0.205,
                         "avg_gain": -3.68, "avg_up_prob": 69.5,
                         "prev_dates": ["20260812", "20260818"]},

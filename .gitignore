@@ -31,6 +31,9 @@ run_debug.py
 # 阿里云部署用的 SSH 私钥（严禁提交）
 .deploy_keys/
 
+# Tushare token 文件（含凭据，严禁提交）
+tk.csv
+
 # 调试/临时文件（含token的脚本严禁提交）
 _*.py
 _*.html

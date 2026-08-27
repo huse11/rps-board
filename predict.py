@@ -2,7 +2,7 @@
 """
 日度股票推荐「预测化」模块 v1.0
 ==================================================
-核心: 从「描述当前强弱」升级为「预判未来 3 个交易日上涨概率 / 预期空间 / 风险边界」
+核心: 从「描述当前强弱」升级为「预判未来 1 个交易日(次日)上涨概率 / 预期空间 / 风险边界」
 所有预测均基于「历史同类情况 → 统计后续表现 → 推导当前概率」的量化逻辑,
 不依赖主观判断; 输出为概率预判, 非确定性结论。
 
@@ -29,11 +29,11 @@ STATIC_DIR = Path(__file__).parent / "static"
 LOG_FILE = STATIC_DIR / "predictions_log.json"
 REVIEW_FILE = STATIC_DIR / "prediction_review.json"
 
-PRED_HORIZON = 3  # 预测周期: 3 个交易日 (可扩展 5/10)
+PRED_HORIZON = 1  # 预测周期: 次日验证 (2026-08-26 由 3 改为 1: 命中=昨日推荐今日上涨)
 
-# 基准胜率库: 各维度单独估算的 3 日上行概率基准值
-# 依据: A 股动量因子历史回测 (RPS≥90 个股 5 日上行约 60-65%, 板块前三约 70%)
-PROB_BASE = 55          # 综合基准概率 (所有修正叠加后上下限夹取)
+# 基准胜率库: 各维度单独估算的次日上行概率基准值 (PRED_HORIZON=1, 2026-08-26 由3日改次日)
+# 依据: A 股动量因子历史回测 (RPS≥90 个股次日上行约 50-55%, 板块前三约 60%)
+PROB_BASE = 52          # 综合基准概率 (所有修正叠加后上下限夹取)
 PROB_MIN, PROB_MAX = 30, 88
 
 # 各因子修正增量 (delta, 单位 % 概率)
@@ -73,8 +73,8 @@ DELTA = {
     "regime_weak": -4,       # 市场偏弱 (上涨占比低)
 }
 
-# 预期 3 日涨幅空间映射 (按综合上涨概率分档, 中值 %)
-EXPECTED_GAIN = ((75, 9.0), (68, 7.0), (60, 5.5), (0, 4.0))
+# 预期次日涨幅空间映射 (按综合上涨概率分档, 中值 %; PRED_HORIZON=1 由3日量级调小)
+EXPECTED_GAIN = ((75, 3.0), (68, 2.5), (60, 2.0), (0, 1.5))
 
 
 def _clamp(v, lo=PROB_MIN, hi=PROB_MAX):
@@ -390,7 +390,7 @@ def build_prediction(f, market_status=None):
         "confidence": confidence,
         "logic": _pick_logic(notes, 3),
         "factors": factors,
-        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "basis": "基于历史动量统计: RPS≥90个股次日上行概率约50-55%, 板块前三约60%; 综合概率为量化预判, 非确定结论",
         "regime": regime["regime"],
     }
 
@@ -479,7 +479,8 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
                 "pred_date": date, "code": p.get("code"), "name": p.get("name"),
                 "up_prob": p.get("up_prob"), "confidence": p.get("confidence"),
                 "sector_count": p.get("sector_count"), "gain": round(gain, 2),
-                "hit": close_t >= p["price"],
+                # 命中=严格上涨: 昨日推荐 → 今日收盘价 > 推荐时价格 (平盘/下跌均不计命中)
+                "hit": close_t > p["price"],
             })
     if not verified:
         return None
@@ -512,7 +513,7 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
         "by_confidence": _group("confidence"),
         "by_sector_count": _group("sector_count"),
         "recent": sorted(verified, key=lambda x: (x["pred_date"], x["code"]))[-15:],
-        "note": "每日校准: 命中=预测后%s个交易日收盘价≥预测日现价; 分维度胜率用于动态调整因子权重" % PRED_HORIZON,
+        "note": "每日校准: 命中=预测后%s个交易日收盘价>预测日现价(严格上涨); 分维度胜率用于动态调整因子权重" % PRED_HORIZON,
     }
     with open(review_file, "w", encoding="utf-8") as f:
         json.dump(review, f, ensure_ascii=False, indent=2, allow_nan=False)

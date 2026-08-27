@@ -125,7 +125,7 @@ class TestBuildPrediction(unittest.TestCase):
         """综合概率必须在 [30,88] 区间内"""
         p = predict.build_prediction(base_features(), market_ok())
         self.assertTrue(30 <= p["up_prob"] <= 88)
-        self.assertEqual(p["horizon"], 3)
+        self.assertEqual(p["horizon"], 1)  # 次日口径 (2026-08-26 由 3 改 1)
 
     def test_confidence_high(self):
         """高置信: 概率≥68 + 双档共振 + 技术≥4 + 主力流入"""

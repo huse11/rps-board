@@ -303,10 +303,10 @@ class TestCheckMarketEnv(unittest.TestCase):
         self.assertIn("跌停", status["reason"])
 
     def test_count_strong_sectors(self):
-        # 仅统计 RPS5 ≥ 90 的板块, 异常/缺失值跳过
+        # 仅统计 RPS5 ≥ 95 的板块, 异常/缺失值跳过 (RPS95 校准后阈值)
         self.assertEqual(recommend.count_strong_sectors([
             {"name": "A", "RPS5": 95.0}, {"name": "B", "RPS5": 88},
-            {"name": "C", "RPS5": 91.5}, {"name": "D", "RPS5": None},
+            {"name": "C", "RPS5": 96.5}, {"name": "D", "RPS5": None},
             {"name": "E", "RPS5": "x"}, {"name": "F"}, "bad",
         ]), 2)
         self.assertEqual(recommend.count_strong_sectors([]), 0)

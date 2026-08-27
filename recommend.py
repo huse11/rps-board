@@ -98,7 +98,7 @@ CONFIG = {
         # 板块动量替代路径: 指数站上20日线 + 跌停可控 时, 若 RPS5 入选(强势)板块数 ≥ sector_strong_min,
         # 视为"板块动量强" → 豁免"上涨家数占比"条件 (结构性行情: 板块强但全市场广度不足时不误否决)
         "sector_alt_allow": True,
-        "sector_strong_min": 15,   # 替代路径: RPS5 入选板块数 ≥ 该值 → 板块动量强
+        "sector_strong_min": 8,    # 替代路径: RPS5 入选板块数 ≥ 该值 → 板块动量强 (RPS95下恒~10, 8=强度充足)
         # 北向广度提示 (2026-08-23): 北向成分股上涨占比 < 该值 → note 附加"北向广度偏弱"(仅提示不否决)
         "hsgt_ratio_warn": 0.40,
     },
@@ -1532,7 +1532,7 @@ def fetch_yjyg(latest_date):
 # 7. 第一层: 大盘环境全局校验 (20日均线, 不合格终止选股)
 # ============================================================
 
-def count_strong_sectors(in_list_records, threshold=90):
+def count_strong_sectors(in_list_records, threshold=95):
     """统计 RPS5 入选(强势)板块数: RPS5 ≥ threshold 的板块数量
     供"板块动量强"替代路径判定 (结构性行情: 板块强但全市场广度不足时豁免上涨占比)
     """
@@ -1558,7 +1558,7 @@ def check_market_env(index_map, daily_map, latest_date, market_flow=None, strong
         - 跌停家数 ≤ limit_down_max
       广度条件 (二选一通过):
         - 上涨家数占比 ≥ advance_ratio_min (40%)
-        - 板块动量替代: sector_alt_allow 开启 且 strong_sector_count ≥ sector_strong_min (15)
+        - 板块动量替代: sector_alt_allow 开启 且 strong_sector_count ≥ sector_strong_min (8)
           → 视为板块动量强, 豁免上涨占比 (结构性行情: 少数主线强但全市场普跌时不误否决)
       - 大盘主力资金: market_flow 仅做提示标签(近N日连续净流出→note), 完全不参与否决
       - 北向广度: hsgt_breadth 仅做提示标签(北向成分股上涨占比低→note), 完全不参与否决
@@ -1626,12 +1626,12 @@ def check_market_env(index_map, daily_map, latest_date, market_flow=None, strong
         # 板块动量替代: 指数/跌停为硬底线不豁免; 仅豁免"上涨占比"广度条件
         alt_allow = bool(cfg.get("sector_alt_allow", True))
         sector_strong = alt_allow and strong_sector_count is not None \
-            and strong_sector_count >= cfg.get("sector_strong_min", 15)
+            and strong_sector_count >= cfg.get("sector_strong_min", 8)
         if pass_ma and pass_ld and (pass_sent or sector_strong):
             level, reason = "pass", ""
             if not pass_sent and sector_strong:
                 alt_note = (f"；上涨占比{advance_ratio:.0%}<{cfg['advance_ratio_min']:.0%} 但强势板块"
-                            f"{strong_sector_count}个≥{cfg.get('sector_strong_min', 15)}, 板块动量强, 豁免通过")
+                            f"{strong_sector_count}个≥{cfg.get('sector_strong_min', 8)}, 板块动量强, 豁免通过")
         else:
             level = "reject"
             if not pass_ma:

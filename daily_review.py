@@ -33,7 +33,7 @@ SENTIMENT_HISTORY_MAX = 60
 
 # ========================== 配置 ==========================
 CONFIG_REVIEW = {
-    "high_rps_threshold": 90,        # RPS≥90 视为高分板块(与看板入选阈值一致)
+    "high_rps_threshold": 95,        # RPS≥95 视为高分板块(与看板入选阈值一致)
     "tier1_top": 10,                 # 第一梯队 Top10
     "tier2_top": 30,                 # 第二梯队 11~30
     "tier1_min_ratio": 0.15,         # 第一梯队最低内部达标率(过滤小体量脉冲)
@@ -48,23 +48,25 @@ CONFIG_REVIEW = {
     "expand_ratio_mid": 0.30,        # 中板块扩散健康阈值
     "expand_ratio_large": 0.20,      # 大板块扩散健康阈值
     "decay_days": 3,                 # 动量衰减观察窗口(天)
-    "decay_high_floor": 15,          # 动量衰减判定: 当前高分>15 才触发(低位回落不重复告警)
+    "decay_high_floor": 8,           # 动量衰减判定: 当前高分>8 才触发 (RPS95下数量恒~10, 低位回落不重复告警)
     "critical_low": 88,              # 临界晋级池: RPS 处于 [88, 阈值] 区间
     "batch_out": 5,                  # 批量调出预警阈值(个)
     "batch_style_n": 3,              # 同风格调出≥3 触发提示
-    "high_burst": 25,                # 情绪高潮: 高分板块 ≥25
-    "high_ice": 8,                   # 情绪冰点: 高分板块 ≤8
+    "high_burst": 12,                # 情绪高潮: 高分板块 ≥12 (RPS95下数量恒~10, 12=数量饱和+扩散)
+    "high_ice": 3,                   # 情绪冰点: 高分板块 ≤3 (RPS95下数量恒~10, 3以下=极度收缩)
     "seed_phase": 4,                 # 情绪启动/发酵: 高质量种子 ≥4
     "jump_top": 5,                   # 排名跃升榜前 N
     "jump_min_gain": 8,              # 排名跃升最小值(过滤小幅名次变动)
     "pulse_continuous": 2,           # 调出分类: 上榜≤2天调出 = 脉冲行情
     "mainline_continuous": 5,        # 调出分类: 上榜≥5天调出 = 老主线终结
     "strong_min_diff": 3,            # 全面强: diff≥+3
-    "strong_min_high": 20,           # 全面强: 今日高分≥20
-    "structural_high": 25,           # 结构性强: 高分≥25(沪指破20日线也允许)
-    "weak_min_diff": -5,             # 弱: diff≤-5
-    "weak_max_high": 14,             # 弱: 且高分≤14
-    "weak_total_max": 10,            # 弱: 三档合计≤10
+    "structural_high": 10,           # 结构性强: 高分≥10(数量维度接近饱和时, 用均涨幅区分)
+    "weak_max_high": 6,              # 弱: 高分≤6 (RPS95下数量恒~10, 6以下才算弱)
+    "weak_total_max": 15,            # 弱: 三档合计≤15 (数量维度弱阈值)
+    # 强度维度: 高分板块平均5日涨幅 (RPS95下数量恒定~10, 涨幅强度成为市场定调主信号)
+    "strong_avg_min": 8.0,           # 全面强: 高分板块平均5日涨幅 ≥8% (如 20260819~21 ≈20%)
+    "weak_avg_max": 3.0,             # 弱: 高分板块平均5日涨幅 ≤3% (如 20260825 ≈2.6%)
+    "neutral_avg_high": 6.0,         # 中性偏强分界: 平均涨幅 ≥6% 偏向走强
     "hist_percentile_days": 120,     # 高分数量历史分位窗口
     "repeat_window": 10,             # 反复轮动观察窗口(交易日)
     "repeat_flips": 3,               # 反复轮动: 近10日在榜状态翻转≥3次
@@ -178,7 +180,7 @@ def _is_noise_sector(name):
     nm = str(name or "")
     return any(kw in nm for kw in ("ST", "退", "停", "*", "其他"))
 
-def high_rps_counts(history, period="RPS5", threshold=90):
+def high_rps_counts(history, period="RPS5", threshold=95):
     """统计每个交易日 RPS≥threshold 的板块数量 → {date: count}(按日期升序)
     过滤 ST/退市/停牌等噪声板块, 保证历史分位统计干净"""
     if not history:
@@ -190,6 +192,21 @@ def high_rps_counts(history, period="RPS5", threshold=90):
                 and v.get(period) is not None and _num(v.get(period)) >= threshold)
         counts[date] = n
     return dict(sorted(counts.items()))
+
+
+def high_rps_avg_gain(history, period="RPS5", chg_col="chg5", threshold=95):
+    """统计每个交易日高分板块的平均 N 日涨幅 → {date: avg} (按日期升序)
+    RPS95 下高分板块数量恒定~10, 数量维度无区分度; 平均涨幅强度才是市场定调主信号"""
+    if not history:
+        return {}
+    out = {}
+    for date, sectors in history.items():
+        gains = [v.get(chg_col) for ind, v in sectors.items()
+                 if not _is_noise_sector(ind) and v.get(period) is not None
+                 and _num(v.get(period)) >= threshold and v.get(chg_col) is not None]
+        if gains:
+            out[date] = round(sum(gains) / len(gains), 2)
+    return dict(sorted(out.items()))
 
 
 def index_ma20_status(index_cache_file="000001.SH.json"):
@@ -208,7 +225,7 @@ def index_ma20_status(index_cache_file="000001.SH.json"):
             "above": closes[-1] >= ma20, "days": len(closes)}
 
 
-def _history_set(history, date, period="RPS5", threshold=90):
+def _history_set(history, date, period="RPS5", threshold=95):
     """历史某日 RPS≥threshold 的板块名集合(过滤噪声板块)"""
     if not history or date not in history:
         return set()
@@ -230,13 +247,15 @@ def _percentile(counts, today_count, window=None):
 
 # ========================== 方向1: 市场整体强弱定调 ==========================
 
-def market_tone(rps_data, history, threshold=90):
-    """市场整体强弱定调(变化量 + 绝对水位双约束, 区分全面强/结构性强)
-    → {tone, high5, high10, high20, diff5, high_score_count_pct, index, note}
+def market_tone(rps_data, history, threshold=95):
+    """市场整体强弱定调(数量 + 强度双维度, 区分全面强/结构性强/弱)
+    RPS95 下高分板块数量恒定~10, 数量维度仅作辅助; 高分板块平均5日涨幅(强度)是主信号
+    → {tone, high5, high10, high20, diff5, avg_gain, high_score_count_pct, index, note}
     """
     c5 = high_rps_counts(history, "RPS5", threshold)
     c10 = high_rps_counts(history, "RPS10", threshold)
     c20 = high_rps_counts(history, "RPS20", threshold)
+    g5 = high_rps_avg_gain(history, "RPS5", "chg5", threshold)
     dates = sorted(c5.keys())
     high5 = c5[dates[-1]] if dates else 0
     high10 = c10[dates[-1]] if dates else 0
@@ -245,19 +264,21 @@ def market_tone(rps_data, history, threshold=90):
     total = high5 + high10 + high20
     idx = index_ma20_status()
     avg_high = total / 3.0 if total else 0
-    # 双约束判定(变化量 + 绝对水位)
-    if diff5 >= CONFIG_REVIEW["strong_min_diff"] and high5 >= CONFIG_REVIEW["strong_min_high"] \
-            and (idx is None or idx["above"]):
+    avg_gain = g5[dates[-1]] if dates and dates[-1] in g5 else 0  # 高分板块平均5日涨幅
+    strong_avg = CONFIG_REVIEW["strong_avg_min"]
+    weak_avg = CONFIG_REVIEW["weak_avg_max"]
+    neutral_avg = CONFIG_REVIEW["neutral_avg_high"]
+    # 强度 + 数量双维度判定 (RPS95 下数量恒定, 强度主导)
+    if idx is not None and idx["above"] and avg_gain >= strong_avg \
+            and (diff5 >= CONFIG_REVIEW["strong_min_diff"] or high5 >= CONFIG_REVIEW["structural_high"]):
         tone = "全面强"
-    elif high5 >= CONFIG_REVIEW["structural_high"]:
+    elif avg_gain >= strong_avg and high5 >= CONFIG_REVIEW["structural_high"]:
         tone = "结构性强"
-    elif diff5 <= CONFIG_REVIEW["weak_min_diff"] and high5 <= CONFIG_REVIEW["weak_max_high"]:
+    elif avg_gain <= weak_avg or total <= CONFIG_REVIEW["weak_total_max"]:
         tone = "弱"
-    elif total <= CONFIG_REVIEW["weak_total_max"]:
-        tone = "弱"
-    elif diff5 > 0 and high5 >= 15:
+    elif diff5 >= CONFIG_REVIEW["strong_min_diff"] or (avg_gain >= neutral_avg and high5 >= CONFIG_REVIEW["structural_high"]):
         tone = "中性偏强"
-    elif diff5 < 0 or high5 <= CONFIG_REVIEW["weak_max_high"]:
+    elif avg_gain <= CONFIG_REVIEW["weak_avg_max"] + 1.0 or high5 <= CONFIG_REVIEW["weak_max_high"]:
         tone = "中性偏弱"
     else:
         tone = "中性"
@@ -267,12 +288,14 @@ def market_tone(rps_data, history, threshold=90):
         note.append("高分板块数量增加")
     elif diff5 < 0:
         note.append("高分板块数量减少")
+    if avg_gain:
+        note.append("高分板块平均5日涨幅%.1f%%" % avg_gain)
     if idx is not None:
         note.append("沪指%s20日线(%.0f点)" % ("站上" if idx["above"] else "跌破", idx["ma20"]))
     if tone == "结构性强":
         note.append("结构性行情")
     return {"tone": tone, "high5": high5, "high10": high10, "high20": high20,
-            "diff5": diff5, "avg_high": avg_high,
+            "diff5": diff5, "avg_high": avg_high, "avg_gain": avg_gain,
             "high_score_count_pct": pct, "index": idx,
             "note": "；".join(note) if note else ""}
 
@@ -372,7 +395,7 @@ def rotation_analysis(rps5, rps10, rps20, history=None):
             "out_count": len(out_all), "exits": exits, "repeat": repeat}
 
 
-def _consecutive_in_days(history, name, threshold=90):
+def _consecutive_in_days(history, name, threshold=95):
     """板块调出前连续在榜天数(被调出板块今天已不在榜, 从最新一个交易日往前数)"""
     if not history:
         return 0
@@ -523,7 +546,7 @@ def risk_analysis(rps5, rps10, rps20, history):
 
 # ========================== 方向6: 次日跟踪清单 ==========================
 
-def _rps5_drop_days(history, name, threshold=90):
+def _rps5_drop_days(history, name, threshold=95):
     """板块 RPS5 连续掉榜天数(今天起往前数, 今天也算)"""
     if not history:
         return 0
@@ -537,7 +560,7 @@ def _rps5_drop_days(history, name, threshold=90):
     return days
 
 
-def watchlist(rps5, rps10, rps20, history, threshold=90):
+def watchlist(rps5, rps10, rps20, history, threshold=95):
     """次日清单(分池 + 掉榜天数 + 达标率过滤)
     → {seed_high, seed_pulse, critical, diverge_watch, diverge_dropped}
     """
@@ -591,7 +614,7 @@ def watchlist(rps5, rps10, rps20, history, threshold=90):
 #  EARLY_STAGE_START 分支构建"刚启动"候选池)
 
 def potential_sectors(history, potential_stats=None, threshold=None):
-    """临界潜力板块(给早期启动选股): RPS5∈[critical_low, 90) + 板块内部达标率合格
+    """临界潜力板块(给早期启动选股): RPS5∈[critical_low, 95) + 板块内部达标率合格
     → [{name, rps5, ratio, rank5, rank_change, continuous, stock_count}]
     候选池前半部分数据源: RPS 接近阈值但未入选高分板块 = "刚要启动"的潜力板块
     potential_stats: rps_calc 提供的临界板块成分股统计 (非入选板块无 stocks 数据,
@@ -875,7 +898,7 @@ def rec_accuracy():
     return {
         "has_data": True,
         "update_date": review.get("update_date", ""),
-        "horizon": review.get("horizon", 3),
+        "horizon": review.get("horizon", 1),
         "samples": s.get("samples", 0),
         "hit_rate": s.get("hit_rate", 0),
         "avg_gain": s.get("avg_gain", 0),
@@ -892,7 +915,7 @@ def rec_accuracy():
                    "confidence": x.get("confidence")} for x in worst],
         "today_count": today_count,
         "today_avg_prob": today_avg_prob,
-        "note": "命中率=预测后%d日收盘≥预测日现价" % review.get("horizon", 3),
+        "note": "命中率=次日收盘>预测日现价(昨日推荐今日严格上涨, 平盘/下跌不计)",
     }
 
 
@@ -920,7 +943,7 @@ def build_review_stats(rps_data, history=None, potential_stats=None):
         "update_date": rps_data.get("update_date", ""),
         "prev_date": rps_data.get("prev_date", ""),
         "total_industries": rps_data.get("total_industries", 0),
-        "threshold": rps_data.get("threshold", 90),
+        "threshold": rps_data.get("threshold", 95),
         "market": mkt,
         "resonance": _slim_sections(res),
         "tier": _slim_tiers(tier_analysis(in5)),
@@ -1033,7 +1056,7 @@ def render_markdown(stats):
     L.append("")
     # 大盘强度
     L.append("## 【大盘强度】")
-    L.append("今日市场动量**%s**: RPS5≥90 板块 %d 个(较前日 %+d)、RPS10≥90 %d 个、RPS20≥90 %d 个(近%d日%.0f%%分位)。%s"
+    L.append("今日市场动量**%s**: RPS5≥95 板块 %d 个(较前日 %+d)、RPS10≥95 %d 个、RPS20≥95 %d 个(近%d日%.0f%%分位)。%s"
              % (m["tone"], m["high5"], m["diff5"], m["high10"], m["high20"],
                 CONFIG_REVIEW["hist_percentile_days"], m.get("high_score_count_pct") or 0, m["note"]))
     if stats.get("market_status_rec"):
@@ -1200,7 +1223,7 @@ def render_markdown(stats):
     if cons.get("conflict"):
         L.append("## 【矛盾提示】")
         L.append("- %s" % cons["warning"])
-        L.append("- RPS 推导市场强度: **%s** (RPS5≥90 板块 %d 个)" % (m["tone"], m["high5"]))
+        L.append("- RPS 推导市场强度: **%s** (RPS5≥95 板块 %d 个)" % (m["tone"], m["high5"]))
         ms_txt = _fmt_market_status(stats.get("market_status_rec"))
         L.append("- recommendations.json 大盘判定: **%s**" % (ms_txt or "无数据"))
         L.append("")

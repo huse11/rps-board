@@ -37,10 +37,10 @@ CONFIG_WEEKLY = {
     "mainline_days": 3,    # 本周在榜≥3天 = 本周主线
     "sustained_days": 4,   # 全周在榜(≥4/5天) = 持续主线
     "new_in_days": 2,      # 本周在榜天数≤2 且 最新在榜 = 新晋板块
-    "strong_avg": 22,      # 周均高分板块数≥22 → 周度强
-    "weak_last": 10,       # 周末高分≤10 → 周度弱
-    "rise": 3,             # 周内高分增幅≥+3 → 走强
-    "fall": -3,            # 周内降幅≤-3 → 走弱
+    "strong_avg": 10,      # 周均高分板块数≥10 → 周度强 (RPS95下数量恒~10, 饱和即强)
+    "weak_last": 4,        # 周末高分≤4 → 周度弱 (RPS95下数量恒~10, 4以下=收缩)
+    "rise": 1,             # 周内高分增幅≥+1 → 走强
+    "fall": -1,            # 周内降幅≤-1 → 走弱
     "hot_top": 8,          # 周度热度榜前 N
     "watch_top": 10,       # 下周关注数量上限
 }
@@ -82,10 +82,10 @@ def _week_dates(history, days=None):
 # ========================== 1. 周度定调 ==========================
 
 def week_tone(history, days=None):
-    """周度强弱定调: 每日高分板块数序列(RPS5≥90) 的周均值/周内趋势
+    """周度强弱定调: 每日高分板块数序列(RPS5≥95) 的周均值/周内趋势
     → {dates, series:[{date, high_n}], first, last, avg, diff, tone, note}
     """
-    counts = dr.high_rps_counts(history, "RPS5", 90)
+    counts = dr.high_rps_counts(history, "RPS5", 95)
     dates = _week_dates(history, days)
     series = [{"date": d, "high_n": int(counts.get(d, 0))} for d in dates]
     if not series:
@@ -115,14 +115,14 @@ def week_tone(history, days=None):
 # ========================== 2. 本周主线 ==========================
 
 def _week_sector_days(history, dates):
-    """本周窗口内每个板块 RPS5≥90 的在榜天数 + 最新 RPS5/排名"""
+    """本周窗口内每个板块 RPS5≥95 的在榜天数 + 最新 RPS5/排名"""
     result = {}
     for ind in (set().union(*[set((history[d] or {}).keys()) for d in dates]) if dates else set()):
         days_on = 0
         latest_rps, latest_rank = None, None
         for d in dates:
             v = (history.get(d) or {}).get(ind) or {}
-            if _num(v.get("RPS5")) >= 90:
+            if _num(v.get("RPS5")) >= 95:
                 days_on += 1
             latest_rps = _num(v.get("RPS5"), latest_rps)
             latest_rank = _num(v.get("rank5"), latest_rank)
@@ -156,8 +156,8 @@ def week_rotation(history, days=None):
     dates = _week_dates(history, days)
     if len(dates) < 2:
         return {"new_in": [], "sustained": [], "dropped": []}
-    first_set = dr._history_set(history, dates[0], "RPS5", 90)
-    last_set = dr._history_set(history, dates[-1], "RPS5", 90)
+    first_set = dr._history_set(history, dates[0], "RPS5", 95)
+    last_set = dr._history_set(history, dates[-1], "RPS5", 95)
     stats = _week_sector_days(history, dates)
     new_in, sustained, dropped = [], [], []
     for ind in sorted(last_set):
@@ -254,13 +254,17 @@ def week_rec_accuracy(history=None):
     if not review or not review.get("summary"):
         return {"has_data": False, "note": "暂无预测准确率数据"}
     week_dates = set(_week_dates(history))
-    recent = review.get("recent") or []
+    # 完整验证列表(all 含每日校准全部已验证样本, 与每日口径一致=次日收盘≥预测日现价)
+    # 优先用 all 避免 recent(仅最近15条)截断导致本周样本遗漏
+    full = review.get("all")
+    if not full:
+        full = review.get("recent") or []
     # 本周验证的预测 (pred_date 在本周窗口内)
-    week_preds = [x for x in recent if x.get("pred_date") in week_dates]
+    week_preds = [x for x in full if x.get("pred_date") in week_dates]
     if not week_preds:
-        # 本周无验证样本(可能本周推荐尚未到 horizon 天验证)
-        # 退而用全部 recent 做整体展示
-        week_preds = recent
+        # 本周无验证样本(可能本周推荐尚未到次日验证窗口)
+        # 退而用全部已验证样本做整体展示
+        week_preds = full
     if not week_preds:
         return {"has_data": False, "note": "暂无已验证预测样本"}
     hits = [x for x in week_preds if x.get("hit")]
@@ -289,8 +293,8 @@ def week_rec_accuracy(history=None):
         "by_confidence": by_conf,
         "best": best,
         "worst": worst,
-        "horizon": review.get("horizon", 3),
-        "note": "本周预测中已过%d日验证窗口的样本统计" % review.get("horizon", 3),
+        "horizon": review.get("horizon", 1),
+        "note": "本周预测中已完成次日验证的样本统计",
     }
 
 
@@ -446,7 +450,7 @@ def render_markdown(st):
         L.append("- **高质量种子**(首日入选+扩散达标): %s"
                  % "、".join("%s(%.0f%%)" % (s["name"], s["ratio"]) for s in w["seed_high"][:8]))
     if w.get("potential"):
-        L.append("- **潜力板块**(RPS5∈[88,90) 内部达标): %s"
+        L.append("- **潜力板块**(RPS5∈[88,95) 内部达标): %s"
                  % "、".join("%s(%.0f)" % (p["name"], p["rps5"]) for p in w["potential"][:8]))
     if w.get("diverge_watch"):
         L.append("- **主线分歧**(RPS20在榜RPS5掉, 良性低吸观察): %s"

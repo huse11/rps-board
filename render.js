@@ -586,37 +586,37 @@
         html += card('一、市场整体定调', reviewChartMkt(m, data.total_industries) + mBody);
         // 二、主线识别: 主线构成图 + 梯队达标率图 + 精简名单
         var sec2 = [];
-        if (res.core && res.core.length) sec2.push('<b>硬核主线</b>（三周期' + res.core.length + '）：' + fmtReviewSectorList(res.core));
-        if (res.tough && res.tough.length) sec2.push('<b>韧性主线</b>（' + res.tough.length + '）：' + fmtReviewSectorList(res.tough));
-        if (res.pulse && res.pulse.length) sec2.push('<b>短期脉冲</b>（' + res.pulse.length + '）：' + fmtReviewSectorList(res.pulse));
-        if (res.diverge && res.diverge.length) sec2.push('<b>主线分歧</b>（在榜,RPS5回落）：' + fmtReviewNames(res.diverge));
-        if (tier.tier1 && tier.tier1.length) sec2.push('<b>第一梯队</b>（Top10）：' + fmtReviewSectorList(tier.tier1, 10));
-        if (tier.tier2 && tier.tier2.length) sec2.push('<b>第二梯队</b>（11~30）：' + fmtReviewSectorList(tier.tier2, 10));
+        if (res.core && res.core.length) sec2.push('<b>硬核主线</b>（三周期共振' + res.core.length + '条）：' + fmtReviewSectorList(res.core));
+        if (res.tough && res.tough.length) sec2.push('<b>韧性主线</b>（RPS10/20在榜、RPS5掉1天' + res.tough.length + '条）：' + fmtReviewSectorList(res.tough));
+        if (res.pulse && res.pulse.length) sec2.push('<b>短期脉冲</b>（仅RPS5上榜' + res.pulse.length + '个）：' + fmtReviewSectorList(res.pulse));
+        if (res.diverge && res.diverge.length) sec2.push('<b>主线分歧</b>（RPS10/20在榜、RPS5回落）：' + fmtReviewNames(res.diverge));
+        if (tier.tier1 && tier.tier1.length) sec2.push('<b>第一梯队</b>（Top10, 达标率≥15%）：' + fmtReviewSectorList(tier.tier1, 10));
+        if (tier.tier2 && tier.tier2.length) sec2.push('<b>第二梯队</b>（11~30, 达标率≥10%）：' + fmtReviewSectorList(tier.tier2, 10));
         html += card('二、板块强弱梯队与主线',
             reviewChartResonance(res) + reviewChartTier(tier) + reviewChartSectorHeat(tier) + (sec2.length ? sec2.join('<br/>') : '暂无数据'));
         // 三、轮动动向: 轮动数量图 + 精简名单
         var sec3 = [];
-        if (rot.new_in && rot.new_in.length) sec3.push('<b>今日新调入</b>（' + rot.new_in.length + '）：' + fmtReviewSectorList(rot.new_in));
+        if (rot.new_in && rot.new_in.length) sec3.push('<b>今日新调入</b>（' + rot.new_in.length + '个）：' + fmtReviewSectorList(rot.new_in));
         if (rot.rank_jump && rot.rank_jump.length) {
-            sec3.push('<b>排名跃升Top' + rot.rank_jump.length + '</b>：' + rot.rank_jump.map(function (s) {
+            sec3.push('<b>排名大幅跃升Top' + rot.rank_jump.length + '</b>（≥8名）：' + rot.rank_jump.map(function (s) {
                 return _escTxt(s.name) + '(名次+' + s.rank_change + '→第' + s.rank + '名)';
             }).join('、'));
         }
         if (rot.exits && rot.exits.length) {
-            var eMap = { mainline_exit: '主线调出', pulse_exit: '脉冲调出', normal_exit: '普通调出' };
+            var eMap = { mainline_exit: '主线调出(上榜≥5天)', pulse_exit: '脉冲调出(上榜≤2天)', normal_exit: '普通调出' };
             sec3.push('<b>调出分类</b>：' + rot.exits.map(function (e) {
-                return _escTxt(e.name) + '[' + _escTxt(eMap[e.exit_type] || e.exit_type) + ' ' + e.continuous + '天]';
+                return _escTxt(e.name) + '[' + _escTxt(eMap[e.exit_type] || e.exit_type) + ' 连续' + e.continuous + '天]';
             }).join('、'));
         }
-        if (rot.repeat && rot.repeat.length) sec3.push('<b>反复轮动</b>：' + fmtReviewNames(rot.repeat));
+        if (rot.repeat && rot.repeat.length) sec3.push('<b>反复轮动</b>（近10日多次调入调出, 持续性差）：' + fmtReviewNames(rot.repeat));
         html += card('三、板块轮动动向', reviewChartRotation(rot) + (sec3.length ? sec3.join('<br/>') : '暂无数据'));
         // 四、健康度: 达标率图 + 精简名单
         var sec4 = [];
-        if (heal.seed_high && heal.seed_high.length) sec4.push('<b>高质量种子</b>：' + heal.seed_high.map(fmtRatio).join('、'));
-        if (heal.seed_pulse && heal.seed_pulse.length) sec4.push('<b>脉冲种子</b>：' + fmtReviewNames(heal.seed_pulse));
-        if (heal.expand && heal.expand.length) sec4.push('<b>扩散健康</b>：' + heal.expand.map(fmtRatio).join('、'));
-        if (heal.mature && heal.mature.length) sec4.push('<b>成熟主线</b>（≥5天）：' + fmtReviewNames(heal.mature));
-        if (heal.mature_fatigue && heal.mature_fatigue.length) sec4.push('<b>成熟疲劳</b>（≥8天,回落）：' + heal.mature_fatigue.map(fmtRatio).join('、'));
+        if (heal.seed_high && heal.seed_high.length) sec4.push('<b>高质量种子</b>（首日入选+扩散达标）：' + heal.seed_high.map(fmtRatio).join('、'));
+        if (heal.seed_pulse && heal.seed_pulse.length) sec4.push('<b>脉冲种子</b>（首日入选但扩散不足）：' + fmtReviewNames(heal.seed_pulse));
+        if (heal.expand && heal.expand.length) sec4.push('<b>扩散健康</b>（达标率≥规模阈值）：' + heal.expand.map(fmtRatio).join('、'));
+        if (heal.mature && heal.mature.length) sec4.push('<b>成熟主线</b>（连续上榜≥5天）：' + fmtReviewNames(heal.mature));
+        if (heal.mature_fatigue && heal.mature_fatigue.length) sec4.push('<b>成熟疲劳</b>（≥8天且达标率下滑）：' + heal.mature_fatigue.map(fmtRatio).join('、'));
         html += card('四、题材/板块健康度', reviewChartHealth(heal) + (sec4.length ? sec4.join('<br/>') : '暂无数据'));
         // 五、风险预警: 批量调出构成图 + 风险等级 + 分级预警
         var lvColor = { safe: DARK.green, hint: DARK.label, warning: DARK.amber, danger: DARK.red };
@@ -626,11 +626,11 @@
             reviewChartRisk(risk) + fmtReviewWarnings(risk.warnings));
         // 六、次日跟踪清单: 跟踪池构成图 + 精简名单
         var sec6 = [];
-        if (watch.seed_high && watch.seed_high.length) sec6.push('<b>高质量种子池</b>：' + watch.seed_high.map(fmtRatio).join('、'));
-        if (watch.seed_pulse && watch.seed_pulse.length) sec6.push('<b>脉冲种子池</b>：' + fmtReviewNames(watch.seed_pulse));
-        if (watch.critical && watch.critical.length) sec6.push('<b>临界晋级池</b>（RPS≈阈值）：' + watch.critical.slice(0, 8).map(function (c) { return _escTxt(c.name) + '(' + Number(c.rps5).toFixed(0) + ')'; }).join('、'));
-        if (watch.diverge_watch && watch.diverge_watch.length) sec6.push('<b>主线分歧池</b>（掉榜分歧）：' + watch.diverge_watch.map(function (x) { return _escTxt(x.name) + '(掉' + x.drop_days + '天)'; }).join('、'));
-        if (watch.diverge_dropped && watch.diverge_dropped.length) sec6.push('<span style="color:' + DARK.red + ';"><b>主线衰竭</b>（掉榜≥3天）：' + watch.diverge_dropped.map(function (x) { return _escTxt(x.name) + '(掉' + x.drop_days + '天)'; }).join('、') + '</span>');
+        if (watch.seed_high && watch.seed_high.length) sec6.push('<b>高质量种子池</b>（次日连榜则确认强度）：' + watch.seed_high.map(fmtRatio).join('、'));
+        if (watch.seed_pulse && watch.seed_pulse.length) sec6.push('<b>脉冲种子池</b>（需扩散确认）：' + fmtReviewNames(watch.seed_pulse));
+        if (watch.critical && watch.critical.length) sec6.push('<b>临界晋级池</b>（RPS≈阈值且排名连续上升）：' + watch.critical.slice(0, 8).map(function (c) { return _escTxt(c.name) + '(' + Number(c.rps5).toFixed(0) + ')'; }).join('、'));
+        if (watch.diverge_watch && watch.diverge_watch.length) sec6.push('<b>主线分歧池</b>（RPS20在榜、RPS5掉榜, 良性分歧低吸观察）：' + watch.diverge_watch.map(function (x) { return _escTxt(x.name) + '(掉' + x.drop_days + '天)'; }).join('、'));
+        if (watch.diverge_dropped && watch.diverge_dropped.length) sec6.push('<span style="color:' + DARK.red + ';"><b>主线衰竭</b>（RPS5掉榜≥3天, 移出跟踪）：' + watch.diverge_dropped.map(function (x) { return _escTxt(x.name) + '(掉' + x.drop_days + '天)'; }).join('、') + '</span>');
         html += card('六、次日跟踪清单', reviewChartWatch(watch) + (sec6.length ? sec6.join('<br/>') : '暂无跟踪标的'));
         // 消息面复盘 (2026-08-23): 推荐股票中的新闻/人气/大宗信号聚合
         html += card('消息面复盘', fmtReviewNews(data.news));
@@ -651,7 +651,7 @@
     // 消息面统计 → HTML 摘要 (环境/权威利好利空/传闻/主力散户动向)
     function fmtReviewNews(nws) {
         if (!nws || !nws.has_news) {
-            return '<span style="color:' + DARK.label + ';">暂无消息面信号</span>';
+            return '<span style="color:' + DARK.label + ';">暂无消息面信号(推荐不含新闻/人气/大宗数据)</span>';
         }
         var envColor = { '偏暖': DARK.green, '偏冷': DARK.blue, '中性偏杂': DARK.amber };
         var parts = [];
@@ -660,21 +660,21 @@
             '推荐<b>' + (nws.stock_count || 0) + '</b>只中<b>' + (nws.hit_count || 0) + '</b>只命中, ' +
             '净影响<b>' + fmtSignedNum(nws.score_sum) + '</b>分');
         if (nws.official_pos_list && nws.official_pos_list.length) {
-            parts.push('<span style="color:' + DARK.green + ';">✔ 权威利好(+2分/条):</span> ' +
+            parts.push('<span style="color:' + DARK.green + ';">✔ 权威利好(真实性采信, +2分/条):</span> ' +
                 nws.official_pos_list.map(function (x) {
                     var h = x.headline ? (' — ' + _escTxt(x.headline)) : '';
                     return _escTxt(x.name) + '(' + x.count + '条)' + h;
                 }).join('、'));
         }
         if (nws.official_neg_list && nws.official_neg_list.length) {
-            parts.push('<span style="color:' + DARK.red + ';">✘ 权威利空(-3分/条):</span> ' +
+            parts.push('<span style="color:' + DARK.red + ';">✘ 权威利空(真实性采信, -3分/条):</span> ' +
                 nws.official_neg_list.map(function (x) {
                     var h = x.headline ? (' — ' + _escTxt(x.headline)) : '';
                     return _escTxt(x.name) + '(' + x.count + '条)' + h;
                 }).join('、'));
         }
         if (nws.rumor_list && nws.rumor_list.length) {
-            parts.push('<span style="color:' + DARK.amber + ';">◯ 传闻消息(仅提示):</span> ' +
+            parts.push('<span style="color:' + DARK.amber + ';">◯ 传闻消息(散户平台, 仅提示不采信):</span> ' +
                 nws.rumor_list.map(function (x) {
                     return _escTxt(x.name) + '(好' + x.pos + '/空' + x.neg + ')';
                 }).join('、'));
@@ -701,7 +701,7 @@
         return '0';
     }
 
-    /* ===== 推荐准确率复盘渲染 (每日复盘 + 每周复盘共用) ===== */
+    /* ===== 每周复盘渲染 (2026-08-23, 可单测) ===== */
 
     // 日度推荐准确率 → HTML 摘要
     function fmtReviewAccuracy(acc) {
@@ -783,8 +783,6 @@
         if (acc.note) parts.push('<span style="color:' + DARK.label + ';">' + _escTxt(acc.note) + '</span>');
         return parts.join('<br/>');
     }
-
-    /* ===== 每周复盘渲染 (2026-08-23, 可单测) ===== */
 
     // 每周复盘统计 → 完整 HTML (本周定调/本周主线/本周轮动/情绪演变/消息面/下周关注)
     function buildWeeklyReviewHtml(data) {
@@ -1267,6 +1265,161 @@
     }
 
 
+    /* ===== 四级板块下钻渲染 (fmtDrill* / buildDrill*, 2026-08-25) ===== */
+
+    // RPS 值: ≥90红 / ≥70蓝 / 其余纯文本 / 空值--
+    function fmtDrillRps(v) {
+        if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
+        var n = Number(v);
+        var txt = n.toFixed(1);
+        if (n >= 90) return '<span class="tag-red">' + txt + '</span>';
+        if (n >= 70) return '<span class="tag-blue">' + txt + '</span>';
+        return txt;
+    }
+
+    // 排名变化: 刚入榜(连续1天) → "新", 正↑ / 负↓ / 0→
+    function fmtDrillRankChange(change, continuous) {
+        if (continuous === 1) return '<span class="tag-green">新</span>';
+        if (change === null || change === undefined || change === '' || isNaN(Number(change))) return '--';
+        var n = Number(change);
+        if (n > 0) return '<span class="rank-up">↑' + n + '</span>';
+        if (n < 0) return '<span class="rank-down">↓' + Math.abs(n) + '</span>';
+        return '<span class="rank-flat">→</span>';
+    }
+
+    // 状态标签: 调入/调出/在榜/空
+    function fmtDrillStatus(status) {
+        if (status === '调入') return '<span class="tag-green">调入</span>';
+        if (status === '调出') return '<span class="tag-red">调出</span>';
+        if (status === '在榜') return '<span class="tag-blue">在榜</span>';
+        return '--';
+    }
+
+    // 涨跌幅/换手率: 红涨绿跌 (A股口径, .pos=红 .neg=绿)
+    function fmtDrillPct(v) {
+        if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
+        var n = Number(v);
+        return n > 0 ? '<span class="pos">+' + n.toFixed(2) + '</span>'
+            : n < 0 ? '<span class="neg">' + n.toFixed(2) + '</span>'
+            : n.toFixed(2);
+    }
+
+    // 普通数值 (价/量比等): 保留2位小数, 去尾零
+    function fmtDrillNum(v) {
+        if (v === null || v === undefined || v === '' || isNaN(Number(v))) return '--';
+        return Number(v).toFixed(2).replace(/\.?0+$/, '');
+    }
+
+    // 面包屑: state={level1Name, level2Name, stockName}; 首页>一级>二级>个股, 每级可点击返回
+    function buildDrillBreadcrumb(state) {
+        var s = state || {};
+        var parts = ['<a class="crumb-link" href="javascript:;" onclick="drillGoHome()">首页</a>'];
+        if (s.level1Name) {
+            parts.push('<span class="crumb-sep">›</span>');
+            parts.push(s.level2Name
+                ? '<a class="crumb-link" href="javascript:;" onclick="drillGoLevel2(\'' + _escJs(s.level1Name) + '\')">' + _escTxt(s.level1Name) + '</a>'
+                : '<span class="crumb-cur">' + _escTxt(s.level1Name) + '</span>');
+        }
+        if (s.level2Name) {
+            parts.push('<span class="crumb-sep">›</span>');
+            parts.push(s.stockName
+                ? '<a class="crumb-link" href="javascript:;" onclick="drillGoLevel3(\'' + _escJs(s.level2Name) + '\')">' + _escTxt(s.level2Name) + '</a>'
+                : '<span class="crumb-cur">' + _escTxt(s.level2Name) + '</span>');
+        }
+        if (s.stockName) {
+            parts.push('<span class="crumb-sep">›</span>');
+            parts.push('<span class="crumb-cur">' + _escTxt(s.stockName) + '</span>');
+        }
+        return parts.join('');
+    }
+
+    // 第1级: 一级板块 RPS 排行 (level1_rps API 响应 {level1:[...]})
+    function buildDrillLevel1Html(d) {
+        var list = (d && d.level1) || [];
+        if (!list.length) return '<div class="empty-msg">暂无一级板块数据</div>';
+        var html = '<div style="overflow-x:auto;"><table class="drill-table"><thead><tr>' +
+            '<th>排名</th><th>一级板块</th><th>RPS5</th><th>RPS10</th><th>RPS20</th>' +
+            '<th>排名变化</th><th>连续上榜</th><th>状态</th></tr></thead><tbody>';
+        list.forEach(function (r, i) {
+            html += '<tr>' +
+                '<td>' + (r.display_rank || i + 1) + '</td>' +
+                '<td style="text-align:left;padding-left:6px;"><a class="drill-link" href="javascript:;" onclick="drillGoLevel2(\'' + _escJs(r.name) + '\')">' + _escTxt(r.name) + '</a>' +
+                (r.level2_count ? '<span class="badge-mini">' + r.level2_count + '个二级</span>' : '') + '</td>' +
+                '<td class="rps-val">' + fmtDrillRps(r.RPS5) + '</td>' +
+                '<td>' + fmtDrillRps(r.RPS10) + '</td>' +
+                '<td>' + fmtDrillRps(r.RPS20) + '</td>' +
+                '<td>' + fmtDrillRankChange(r.rank5_change, r.continuous5) + '</td>' +
+                '<td>' + (r.continuous5 === null || r.continuous5 === undefined ? '--' : r.continuous5) + '</td>' +
+                '<td>' + fmtDrillStatus(r.status) + '</td>' +
+                '</tr>';
+        });
+        return html + '</tbody></table></div>';
+    }
+
+    // 第2级: 二级板块 RPS 排行 (level2_rps API 响应 {level2:[...]}, 组内RPS)
+    function buildDrillLevel2Html(d) {
+        var list = (d && d.level2) || [];
+        if (!list.length) return '<div class="empty-msg">该一级板块暂无二级板块数据</div>';
+        var html = '<div style="overflow-x:auto;"><table class="drill-table"><thead><tr>' +
+            '<th>排名</th><th>二级板块</th><th>RPS5</th><th>RPS10</th><th>RPS20</th>' +
+            '<th>排名变化</th><th>连续上榜</th><th>状态</th></tr></thead><tbody>';
+        list.forEach(function (r, i) {
+            html += '<tr>' +
+                '<td>' + (r.display_rank || i + 1) + '</td>' +
+                '<td style="text-align:left;padding-left:6px;"><a class="drill-link" href="javascript:;" onclick="drillGoLevel3(\'' + _escJs(r.name) + '\')">' + _escTxt(r.name) + '</a>' +
+                (r.stock_count ? '<span class="badge-mini">' + r.stock_count + '只</span>' : '') + '</td>' +
+                '<td class="rps-val">' + fmtDrillRps(r.RPS5) + '</td>' +
+                '<td>' + fmtDrillRps(r.RPS10) + '</td>' +
+                '<td>' + fmtDrillRps(r.RPS20) + '</td>' +
+                '<td>' + fmtDrillRankChange(r.rank5_change, r.continuous5) + '</td>' +
+                '<td>' + (r.continuous5 === null || r.continuous5 === undefined ? '--' : r.continuous5) + '</td>' +
+                '<td>' + fmtDrillStatus(r.status) + '</td>' +
+                '</tr>';
+        });
+        return html + '</tbody></table></div>';
+    }
+
+    // 第3级: 成分股列表 (level2_stocks API 响应 {stocks:[...]})
+    // 默认按 RPS50 降序(空值排后), 再按当日涨跌幅降序
+    function buildDrillLevel3Html(d) {
+        var list = (d && d.stocks) || [];
+        if (!list.length) return '<div class="empty-msg">该二级板块暂无成分股数据</div>';
+        var sorted = list.slice().sort(function (a, b) {
+            var ra = (a.rps50 === null || a.rps50 === undefined || isNaN(Number(a.rps50))) ? -1 : Number(a.rps50);
+            var rb = (b.rps50 === null || b.rps50 === undefined || isNaN(Number(b.rps50))) ? -1 : Number(b.rps50);
+            if (rb !== ra) return rb - ra;
+            var pa = (a.pct_chg === null || a.pct_chg === undefined || isNaN(Number(a.pct_chg))) ? -Infinity : Number(a.pct_chg);
+            var pb = (b.pct_chg === null || b.pct_chg === undefined || isNaN(Number(b.pct_chg))) ? -Infinity : Number(b.pct_chg);
+            return pb - pa;
+        });
+        var html = '<div style="overflow-x:auto;"><table class="drill-table"><thead><tr>' +
+            '<th>代码</th><th>个股名称</th><th>最新价</th><th>涨跌幅%</th><th>换手率%</th><th>量比</th><th>RPS50</th><th>细分行业</th></tr></thead><tbody>';
+        sorted.forEach(function (s) {
+            var price = (s.price === null || s.price === undefined) ? (s.Price === null || s.Price === undefined ? '--' : s.Price) : s.price;
+            html += '<tr>' +
+                '<td>' + _escTxt(s.ts_code || '--') + '</td>' +
+                '<td style="text-align:left;padding-left:6px;"><a class="drill-link" href="javascript:;" onclick="openDrillStock(\'' + _escJs(s.ts_code) + '\',\'' + _escJs(s.name || '') + '\')">' + _escTxt(s.name || '--') + '</a></td>' +
+                '<td>' + fmtDrillNum(price) + '</td>' +
+                '<td>' + fmtDrillPct(s.pct_chg) + '</td>' +
+                '<td>' + fmtDrillPct(s.turnover) + '</td>' +
+                '<td>' + fmtDrillNum(s.vol_ratio) + '</td>' +
+                '<td>' + fmtDrillRps(s.rps50) + '</td>' +
+                '<td style="text-align:left;">' + _escTxt(s.industry || '--') + '</td>' +
+                '</tr>';
+        });
+        return html + '</tbody></table></div>';
+    }
+
+    root.fmtDrillRps = fmtDrillRps;
+    root.fmtDrillRankChange = fmtDrillRankChange;
+    root.fmtDrillStatus = fmtDrillStatus;
+    root.fmtDrillPct = fmtDrillPct;
+    root.fmtDrillNum = fmtDrillNum;
+    root.buildDrillBreadcrumb = buildDrillBreadcrumb;
+    root.buildDrillLevel1Html = buildDrillLevel1Html;
+    root.buildDrillLevel2Html = buildDrillLevel2Html;
+    root.buildDrillLevel3Html = buildDrillLevel3Html;
+
     // 浏览器: 挂到全局（index.html 主脚本直接按函数名调用）
     root.fmtStockNum = fmtStockNum;
     root.fmtStockPct = fmtStockPct;
@@ -1327,9 +1480,9 @@
     root.fmtDetailTechnical = fmtDetailTechnical;
     // 每日复盘消息面 + 每周复盘 (2026-08-23): 必须挂 root 供浏览器直接调用
     root.fmtReviewNews = fmtReviewNews;
-    root.fmtSignedNum = fmtSignedNum;
     root.fmtReviewAccuracy = fmtReviewAccuracy;
     root.fmtReviewWeekAccuracy = fmtReviewWeekAccuracy;
+    root.fmtSignedNum = fmtSignedNum;
     root.buildWeeklyReviewHtml = buildWeeklyReviewHtml;
 
     // Node: 导出供单元测试
@@ -1352,9 +1505,18 @@
             fmtReviewWarnings: fmtReviewWarnings,
             fmtReviewPhase: fmtReviewPhase,
             fmtReviewNews: fmtReviewNews,
-            fmtSignedNum: fmtSignedNum,
             fmtReviewAccuracy: fmtReviewAccuracy,
             fmtReviewWeekAccuracy: fmtReviewWeekAccuracy,
+            fmtSignedNum: fmtSignedNum,
+            fmtDrillRps: fmtDrillRps,
+            fmtDrillRankChange: fmtDrillRankChange,
+            fmtDrillStatus: fmtDrillStatus,
+            fmtDrillPct: fmtDrillPct,
+            fmtDrillNum: fmtDrillNum,
+            buildDrillBreadcrumb: buildDrillBreadcrumb,
+            buildDrillLevel1Html: buildDrillLevel1Html,
+            buildDrillLevel2Html: buildDrillLevel2Html,
+            buildDrillLevel3Html: buildDrillLevel3Html,
             buildReviewHtml: buildReviewHtml,
             buildWeeklyReviewHtml: buildWeeklyReviewHtml,
             fmtPredUpProb: fmtPredUpProb,

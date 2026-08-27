@@ -35,9 +35,10 @@ class TestCalcFullRpsHistory(unittest.TestCase):
     """全量RPS历史: 涨幅排序 → RPS=(1-排名/总数)*100, 排名变化/连续/60日计数"""
 
     def setUp(self):
-        # 12 个行业, 每日涨幅恒定且互不相同, 保证排名稳定可预测
-        pcts = [2.0, 1.8, 1.6, 1.4, 1.2, 1.0, 0.8, 0.6, 0.4, 0.2, 0.0, -1.0]
-        self.inds = ["IND%02d" % i for i in range(12)]
+        # 24 个行业, 每日涨幅恒定且互不相同, 保证排名稳定可预测
+        # 阈值95: 第1名 RPS=(1-1/24)*100≈95.83 ≥95 达标 (2026-08-25 阈值90→95 后由12扩到24)
+        pcts = [2.0 - 0.2 * i for i in range(24)]
+        self.inds = ["IND%02d" % i for i in range(24)]
         self.pct_by_code = {}
         self.code_industry = {}
         for ind, pct in zip(self.inds, pcts):
@@ -53,7 +54,7 @@ class TestCalcFullRpsHistory(unittest.TestCase):
     def test_output_structure(self):
         df, history = rc.calc_full_rps_history(self.dm, self.ind_df, self.trade_days)
         self.assertIsInstance(df, pd.DataFrame)
-        self.assertEqual(len(df), 12)
+        self.assertEqual(len(df), 24)
         for col in ("RPS5", "RPS10", "RPS20", "rank5", "consecutive5", "days90_5"):
             self.assertIn(col, df.columns)
         # 历史快照覆盖 第20天起 的每个交易日
@@ -69,9 +70,9 @@ class TestCalcFullRpsHistory(unittest.TestCase):
         top = df.loc[df["RPS5"].idxmax(), "industry"]
         bot = df.loc[df["RPS5"].idxmin(), "industry"]
         self.assertEqual(top, "IND00")
-        self.assertEqual(bot, "IND11")
-        # 欧奈尔标准公式: 第1名 = (1-1/12)*100 ≈ 91.67 (≥90 阈值)
-        self.assertAlmostEqual(df.loc[df["industry"] == "IND00", "RPS5"].iloc[0], 100 * (1 - 1 / 12), places=1)
+        self.assertEqual(bot, "IND23")
+        # 欧奈尔标准公式: 第1名 = (1-1/24)*100 ≈ 95.83 (≥95 阈值)
+        self.assertAlmostEqual(df.loc[df["industry"] == "IND00", "RPS5"].iloc[0], 100 * (1 - 1 / 24), places=1)
 
     def test_consecutive_and_days90(self):
         df, history = rc.calc_full_rps_history(self.dm, self.ind_df, self.trade_days)
@@ -90,9 +91,9 @@ class TestCalcFullRpsHistory(unittest.TestCase):
         self.assertEqual(row["rank_chg5"], 0)
 
     def test_calc_consecutive_helpers(self):
-        hist = {"20260801": {"A": {"RPS5": 95.0}}, "20260802": {"A": {"RPS5": 92.0}},
+        hist = {"20260801": {"A": {"RPS5": 95.0}}, "20260802": {"A": {"RPS5": 96.0}},
                 "20260803": {"A": {"RPS5": 88.0}}}
-        # 从今天向前连续达标 (今天本身计入)
+        # 从今天向前连续达标 (今天本身计入); 阈值95: 95/96达标, 88不达标
         self.assertEqual(rc.calc_consecutive(hist, self.trade_days, "A", "RPS5", "20260803"), 0)
         self.assertEqual(rc.calc_consecutive(hist, self.trade_days, "A", "RPS5", "20260802"), 2)
         self.assertEqual(rc.calc_consecutive(hist, self.trade_days, "A", "RPS5", "20260801"), 1)

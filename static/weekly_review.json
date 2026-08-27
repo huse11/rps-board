@@ -1,221 +1,164 @@
 {
  "week_id": "2026W35",
- "update_date": "20260825",
+ "update_date": "20260826",
  "range": [
-  "20260819",
   "20260820",
   "20260821",
   "20260824",
-  "20260825"
+  "20260825",
+  "20260826"
  ],
  "days": 5,
  "tone": {
   "dates": [
-   "20260819",
    "20260820",
    "20260821",
    "20260824",
-   "20260825"
+   "20260825",
+   "20260826"
   ],
   "series": [
    {
-    "date": "20260819",
-    "high_n": 17
-   },
-   {
     "date": "20260820",
-    "high_n": 17
+    "high_n": 8
    },
    {
     "date": "20260821",
-    "high_n": 17
+    "high_n": 9
    },
    {
     "date": "20260824",
-    "high_n": 18
+    "high_n": 9
    },
    {
     "date": "20260825",
-    "high_n": 18
+    "high_n": 9
+   },
+   {
+    "date": "20260826",
+    "high_n": 9
    }
   ],
-  "first": 17,
-  "last": 18,
-  "avg": 17.4,
+  "first": 8,
+  "last": 9,
+  "avg": 8.8,
   "diff": 1,
-  "tone": "周度中性",
-  "note": "周均高分板块17个(首日17→末日18, +1), 周内热度走高"
+  "tone": "周度偏弱",
+  "note": "周均高分板块9个(首日8→末日9, +1), 周内热度走高"
  },
  "mainlines": [
   {
-   "name": "焦煤",
-   "days_on": 5,
-   "rps5": 98.6,
-   "rank": 3
-  },
-  {
-   "name": "航运",
-   "days_on": 5,
-   "rps5": 96.2,
-   "rank": 8
-  },
-  {
-   "name": "炼油化工",
-   "days_on": 5,
-   "rps5": 95.2,
-   "rank": 10
-  },
-  {
-   "name": "种子",
-   "days_on": 5,
-   "rps5": 94.7,
-   "rank": 11
-  },
-  {
-   "name": "城商行Ⅲ",
-   "days_on": 5,
-   "rps5": 90.9,
-   "rank": 19
-  },
-  {
    "name": "黄金",
+   "days_on": 5,
+   "rps5": 97.6,
+   "rank": 5
+  },
+  {
+   "name": "疫苗",
    "days_on": 4,
    "rps5": 99.5,
    "rank": 1
   },
   {
-   "name": "疫苗",
+   "name": "钟表珠宝",
    "days_on": 4,
-   "rps5": 98.1,
-   "rank": 4
+   "rps5": 99.0,
+   "rank": 2
   },
   {
-   "name": "股份制银行Ⅲ",
+   "name": "航运",
    "days_on": 4,
-   "rps5": 96.6,
-   "rank": 7
+   "rps5": 51.4,
+   "rank": 101
+  },
+  {
+   "name": "炼油化工",
+   "days_on": 4,
+   "rps5": 17.8,
+   "rank": 171
+  },
+  {
+   "name": "种子",
+   "days_on": 3,
+   "rps5": 42.8,
+   "rank": 119
   }
  ],
  "rotation": {
   "new_in": [
    {
-    "name": "金融控股",
+    "name": "通信线缆及配套",
+    "days_on": 2,
+    "rps5": 98.6
+   },
+   {
+    "name": "铜",
+    "days_on": 2,
+    "rps5": 98.1
+   },
+   {
+    "name": "铅锌",
     "days_on": 1,
     "rps5": 97.1
    },
    {
-    "name": "物业管理",
-    "days_on": 1,
-    "rps5": 93.8
-   },
-   {
-    "name": "房屋建设Ⅲ",
+    "name": "金融控股",
     "days_on": 2,
-    "rps5": 93.3
+    "rps5": 96.6
    },
    {
-    "name": "跨境物流",
-    "days_on": 2,
-    "rps5": 91.8
-   },
-   {
-    "name": "自然景区",
+    "name": "通信终端及配件",
     "days_on": 1,
-    "rps5": 91.3
+    "rps5": 96.2
+   },
+   {
+    "name": "园林工程",
+    "days_on": 1,
+    "rps5": 95.2
    }
   ],
   "sustained": [
    {
-    "name": "黄金",
+    "name": "疫苗",
     "days_on": 4,
     "rps5": 99.5
    },
    {
-    "name": "焦煤",
-    "days_on": 5,
-    "rps5": 98.6
-   },
-   {
-    "name": "疫苗",
+    "name": "钟表珠宝",
     "days_on": 4,
-    "rps5": 98.1
+    "rps5": 99.0
    },
    {
-    "name": "股份制银行Ⅲ",
-    "days_on": 4,
-    "rps5": 96.6
-   },
-   {
-    "name": "航运",
+    "name": "黄金",
     "days_on": 5,
-    "rps5": 96.2
-   },
-   {
-    "name": "炼油化工",
-    "days_on": 5,
-    "rps5": 95.2
-   },
-   {
-    "name": "种子",
-    "days_on": 5,
-    "rps5": 94.7
-   },
-   {
-    "name": "定制家居",
-    "days_on": 4,
-    "rps5": 92.8
-   },
-   {
-    "name": "城商行Ⅲ",
-    "days_on": 5,
-    "rps5": 90.9
+    "rps5": 97.6
    }
   ],
   "dropped": [
    {
-    "name": "分立器件",
+    "name": "炼油化工",
+    "days_on": 4
+   },
+   {
+    "name": "航运",
+    "days_on": 4
+   },
+   {
+    "name": "种子",
     "days_on": 3
    },
    {
     "name": "复合肥",
-    "days_on": 3
-   },
-   {
-    "name": "烘焙食品",
     "days_on": 2
    },
    {
     "name": "面板",
-    "days_on": 2
-   },
-   {
-    "name": "成品家居",
-    "days_on": 1
-   },
-   {
-    "name": "摩托车",
-    "days_on": 1
-   },
-   {
-    "name": "无机盐",
-    "days_on": 1
-   },
-   {
-    "name": "涤纶",
     "days_on": 1
    }
   ]
  },
  "sentiment": {
   "series": [
-   {
-    "date": "20260819",
-    "phase": "震荡期",
-    "high_n": 17,
-    "seed_n": 15,
-    "core_n": 2,
-    "out_n": 15
-   },
    {
     "date": "20260820",
     "phase": "发酵期",
@@ -247,92 +190,109 @@
     "seed_n": 4,
     "core_n": 4,
     "out_n": 4
+   },
+   {
+    "date": "20260826",
+    "phase": "震荡期",
+    "high_n": 9,
+    "seed_n": 5,
+    "core_n": 2,
+    "out_n": 5
    }
   ],
-  "start_phase": "震荡期",
+  "start_phase": "发酵期",
   "end_phase": "震荡期",
-  "trend": "情绪从震荡期到震荡期(持平)",
-  "phase_change": "持平"
+  "trend": "情绪从发酵期到震荡期(升温)",
+  "phase_change": "升温"
  },
- "news": null,
+ "news": {
+  "has_news": true,
+  "stock_count": 10,
+  "hit_count": 2,
+  "score_sum": 4,
+  "env": "偏暖",
+  "tags_count": {
+   "利好消息": 2
+  },
+  "official_pos_list": [
+   {
+    "name": "江西铜业",
+    "count": 6,
+    "headline": "快速拉升！600362、603979、601212封死涨停"
+   }
+  ],
+  "official_neg_list": [],
+  "rumor_list": [],
+  "note": "消息面偏暖, 推荐股票中权威利好1只(6条)；净影响+4分"
+ },
  "rec_accuracy": {
   "has_data": true,
-  "week_samples": 15,
-  "week_hit_rate": 0.067,
-  "week_avg_gain": -7.13,
+  "week_samples": 31,
+  "week_hit_rate": 0.581,
+  "week_avg_gain": 1.65,
   "by_confidence": {
    "中": {
-    "samples": 14,
-    "hit_rate": 0.071,
-    "avg_gain": -7.13
-   },
-   "低": {
-    "samples": 1,
-    "hit_rate": 0.0,
-    "avg_gain": -7.12
+    "samples": 31,
+    "hit_rate": 0.581,
+    "avg_gain": 1.65
    }
   },
   "best": [
    {
-    "name": "士兰微",
-    "code": "600460.SH",
-    "gain": 2.9,
+    "name": "北陆药业",
+    "code": "300016.SZ",
+    "gain": 20.0,
     "confidence": "中",
-    "pred_date": "20260818"
+    "pred_date": "20260820"
    },
    {
-    "name": "华微电子",
-    "code": "600360.SH",
-    "gain": -4.54,
+    "name": "白银有色",
+    "code": "601212.SH",
+    "gain": 10.02,
     "confidence": "中",
-    "pred_date": "20260818"
+    "pred_date": "20260821"
    },
    {
-    "name": "依顿电子",
-    "code": "603328.SH",
-    "gain": -4.98,
+    "name": "锦江航运",
+    "code": "601083.SH",
+    "gain": 9.98,
     "confidence": "中",
-    "pred_date": "20260818"
+    "pred_date": "20260821"
    }
   ],
   "worst": [
    {
-    "name": "强一股份",
-    "code": "688809.SH",
-    "gain": -12.8,
+    "name": "圣湘生物",
+    "code": "688289.SH",
+    "gain": -9.57,
     "confidence": "中",
-    "pred_date": "20260818"
+    "pred_date": "20260820"
    },
    {
-    "name": "山东玻纤",
-    "code": "605006.SH",
-    "gain": -11.48,
+    "name": "凯莱英",
+    "code": "002821.SZ",
+    "gain": -7.84,
     "confidence": "中",
-    "pred_date": "20260817"
+    "pred_date": "20260820"
    },
    {
-    "name": "华亚智能",
-    "code": "003043.SZ",
-    "gain": -9.93,
+    "name": "药康生物",
+    "code": "688046.SH",
+    "gain": -6.4,
     "confidence": "中",
-    "pred_date": "20260818"
+    "pred_date": "20260820"
    }
   ],
-  "horizon": 3,
-  "note": "本周预测中已过3日验证窗口的样本统计"
+  "horizon": 1,
+  "note": "本周预测中已完成次日验证的样本统计"
  },
  "watch": {
   "critical": [],
   "diverge_watch": [
    {
-    "name": "其他塑料制品",
+    "name": "种子",
     "drop_days": 2,
     "diverge_note": "良性分歧(掉2天)"
-   },
-   {
-    "name": "铅锌",
-    "drop_days": 1,
-    "diverge_note": "良性分歧(掉1天)"
    }
   ],
   "seed_high": [],

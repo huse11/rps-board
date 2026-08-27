@@ -56,25 +56,26 @@ class TestWeekTone(unittest.TestCase):
         h = make_history({d: make_many("S", 25) for d in DATES[:-1]})
         h["20260821"] = {s: {"RPS5": 95.0, "rank5": i} for i, s in enumerate(make_many("S", 30))}
         out = wr.week_tone(h)
-        self.assertEqual(out["tone"], "周度偏强")  # avg≥22 且 diff≥3
+        self.assertEqual(out["tone"], "周度偏强")  # avg≥10 且 diff≥1
         self.assertEqual(out["first"], 25)
         self.assertEqual(out["last"], 30)
         self.assertEqual(out["diff"], 5)
-        self.assertGreaterEqual(out["avg"], 22)
+        self.assertGreaterEqual(out["avg"], 10)
 
     def test_strong(self):
         h = make_history({d: make_many("S", 25) for d in DATES})
         out = wr.week_tone(h)
-        self.assertEqual(out["tone"], "周度强")  # avg≥22 但 diff=0<3
+        self.assertEqual(out["tone"], "周度强")  # avg≥10 但 diff=0<1
 
     def test_weak(self):
-        h = make_history({d: make_many("S", 25) for d in DATES[:-1]})
-        h["20260821"] = {s: {"RPS5": 95.0, "rank5": i} for i, s in enumerate(make_many("S", 5))}
+        # 周内从 8 收缩到 3 (末日≤4 且 diff≤-1) → 周度偏弱
+        h = make_history({d: make_many("S", 8) for d in DATES[:-1]})
+        h["20260821"] = {s: {"RPS5": 95.0, "rank5": i} for i, s in enumerate(make_many("S", 3))}
         out = wr.week_tone(h)
-        self.assertEqual(out["tone"], "周度偏弱")  # 末日≤10
+        self.assertEqual(out["tone"], "周度偏弱")  # 末日≤4 / 周内跌幅≤-1
 
     def test_neutral(self):
-        h = make_history({d: make_many("S", 15) for d in DATES})
+        h = make_history({d: make_many("S", 8) for d in DATES})
         out = wr.week_tone(h)
         self.assertEqual(out["tone"], "周度中性")
 
@@ -286,12 +287,29 @@ class TestWeekRecAccuracy(unittest.TestCase):
 
     def _review_data(self):
         return {
-            "update_date": "20260821", "horizon": 3,
+            "update_date": "20260821", "horizon": 1,
             "summary": {"samples": 10, "hit_rate": 0.3,
                         "avg_gain": -1.0, "avg_up_prob": 65.0,
                         "prev_dates": ["20260817", "20260818"]},
             "by_confidence": {},
-            "recent": [
+            "recent": [  # 最近15条(旧字段, all 缺失时回退用)
+                {"pred_date": "20260818", "code": "600460.SH", "name": "士兰微",
+                 "up_prob": 59, "confidence": "高", "sector_count": 2,
+                 "gain": 2.9, "hit": True},
+                {"pred_date": "20260819", "code": "300980.SZ", "name": "祥源新材",
+                 "up_prob": 62, "confidence": "中", "sector_count": 1,
+                 "gain": -7.74, "hit": False},
+                {"pred_date": "20260812", "code": "002552.SZ", "name": "宝鼎科技",
+                 "up_prob": 77, "confidence": "高", "sector_count": 2,
+                 "gain": 5.0, "hit": True},
+            ],
+            "all": [  # 完整验证列表(周度筛选取用, 与每日口径一致=次日收盘≥预测日现价)
+                {"pred_date": "20260817", "code": "600001.SH", "name": "A股",
+                 "up_prob": 60, "confidence": "高", "sector_count": 1,
+                 "gain": 1.0, "hit": True},
+                {"pred_date": "20260817", "code": "600002.SH", "name": "B股",
+                 "up_prob": 55, "confidence": "中", "sector_count": 1,
+                 "gain": -2.0, "hit": False},
                 {"pred_date": "20260818", "code": "600460.SH", "name": "士兰微",
                  "up_prob": 59, "confidence": "高", "sector_count": 2,
                  "gain": 2.9, "hit": True},
@@ -311,27 +329,27 @@ class TestWeekRecAccuracy(unittest.TestCase):
         self.assertFalse(out["has_data"])
 
     def test_week_filter(self):
-        """本周日期内的预测被筛选"""
+        """本周日期内的预测被筛选 (用 all 完整列表, 避免 recent 截断)"""
         rev = self._review_data()
-        # 本周 = 20260817~20260821, 只有 20260818/20260819 在内
+        # 本周 = 20260817~20260821, all 中 0817(A,B)+0818+0819 在内, 0812 不在
         history = {d: {"A": {"RPS5": 90}} for d in DATES}
         with mock.patch.object(wr, "_load_json", return_value=rev):
             out = wr.week_rec_accuracy(history)
         self.assertTrue(out["has_data"])
-        self.assertEqual(out["week_samples"], 2)  # 0818+0819, 不含 0812
-        # 士兰微 +2.9 > 祥源新材 -7.74 → 1 hit out of 2 = 50%
+        self.assertEqual(out["week_samples"], 4)  # 0817×2 + 0818 + 0819
+        # hit: A(True) B(False) 士兰微(True) 祥源(False) → 2/4 = 50%
         self.assertEqual(out["week_hit_rate"], 0.5)
         self.assertEqual(out["best"][0]["name"], "士兰微")
 
     def test_fallback_all_recent(self):
-        """本周无匹配时退用全部 recent"""
+        """本周无匹配时退用全部已验证样本(all)"""
         rev = self._review_data()
         # 本周日期不含任何 pred_date
         history = {"20260101": {"A": {"RPS5": 90}}}
         with mock.patch.object(wr, "_load_json", return_value=rev):
             out = wr.week_rec_accuracy(history)
         self.assertTrue(out["has_data"])
-        self.assertEqual(out["week_samples"], 3)  # 全部 recent
+        self.assertEqual(out["week_samples"], 5)  # 全部 all
 
     def test_confidence_breakdown(self):
         rev = self._review_data()
@@ -341,8 +359,9 @@ class TestWeekRecAccuracy(unittest.TestCase):
         bc = out["by_confidence"]
         self.assertIn("高", bc)
         self.assertIn("中", bc)
-        self.assertEqual(bc["高"]["samples"], 1)
-        self.assertEqual(bc["中"]["samples"], 1)
+        # 本周4样本: 高=A股+士兰微, 中=B股+祥源
+        self.assertEqual(bc["高"]["samples"], 2)
+        self.assertEqual(bc["中"]["samples"], 2)
 
 
 if __name__ == "__main__":

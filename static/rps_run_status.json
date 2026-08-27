@@ -1,7 +1,7 @@
 {
-  "update_date": "20260824",
+  "update_date": "20260826",
   "success": true,
-  "mode": "calc",
-  "message": "RPS 全量计算成功",
-  "timestamp": "2026-08-24 18:30:53"
+  "mode": "skip",
+  "message": "数据已最新, 幂等跳过计算",
+  "timestamp": "2026-08-26 22:48:51"
 }

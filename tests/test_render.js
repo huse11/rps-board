@@ -1193,7 +1193,8 @@ test('浏览器全局导出: IIFE root 必须暴露全部渲染函数(回归: �
     vm.runInContext(code, sandbox);
     const root = sandbox.window;
     for (const f of ['buildWeeklyReviewHtml', 'fmtReviewNews', 'fmtSignedNum',
-        'fmtReviewAccuracy', 'fmtReviewWeekAccuracy']) {
+        'fmtDrillRps', 'fmtDrillRankChange', 'fmtDrillStatus', 'fmtDrillPct', 'fmtDrillNum',
+        'buildDrillBreadcrumb', 'buildDrillLevel1Html', 'buildDrillLevel2Html', 'buildDrillLevel3Html']) {
         assert.strictEqual(typeof root[f], 'function', 'root.' + f + ' 未暴露, 浏览器将报 is not defined');
     }
     const html = root.buildWeeklyReviewHtml({
@@ -1204,67 +1205,175 @@ test('浏览器全局导出: IIFE root 必须暴露全部渲染函数(回归: �
     assert.ok(html.includes('本周定调') && html.includes('A'), '浏览器作用域渲染正常');
 });
 
-// ---------- 推荐准确率复盘渲染 (fmtReviewAccuracy / fmtReviewWeekAccuracy, 2026-08-25) ----------
+// ---------- 四级下钻渲染函数 (fmtDrill* / buildDrill*) ----------
 
-test('fmtReviewAccuracy: 无数据显示暂无提示', () => {
-    const html = R.fmtReviewAccuracy(null);
-    assert.ok(html.includes('暂无'));
-    assert.ok(R.fmtReviewAccuracy({ has_data: false }).includes('暂无'));
+test('fmtDrillRps: ≥90红 / ≥70蓝 / 其余纯文本 / 空值--', () => {
+    assert.strictEqual(R.fmtDrillRps(95.4), '<span class="tag-red">95.4</span>');
+    assert.strictEqual(R.fmtDrillRps('90'), '<span class="tag-red">90.0</span>');
+    assert.strictEqual(R.fmtDrillRps(75), '<span class="tag-blue">75.0</span>');
+    assert.strictEqual(R.fmtDrillRps(69.9), '69.9');
+    assert.strictEqual(R.fmtDrillRps(0), '0.0');
+    assert.strictEqual(R.fmtDrillRps(null), '--');
+    assert.strictEqual(R.fmtDrillRps(undefined), '--');
+    assert.strictEqual(R.fmtDrillRps(''), '--');
+    assert.strictEqual(R.fmtDrillRps('abc'), '--');
 });
 
-test('fmtReviewAccuracy: 有数据渲染命中率/涨幅/置信度/最佳最差', () => {
-    const acc = {
-        has_data: true, samples: 44, hit_rate: 0.205, avg_gain: -3.68,
-        avg_up_prob: 69.5, today_count: 2, today_avg_prob: 65.5,
-        by_confidence: {
-            '高': { samples: 10, hit_rate: 0.4, avg_gain: 3.86 },
-            '中': { samples: 32, hit_rate: 0.156, avg_gain: -5.73 },
-        },
-        best: [{ name: '士兰微', gain: 2.9 }],
-        worst: [{ name: '祥源新材', gain: -7.74 }],
-        note: '测试说明',
+test('fmtDrillRankChange: 连续1天=新, 正↑/负↓/0→, 空值--', () => {
+    assert.strictEqual(R.fmtDrillRankChange(5, 1), '<span class="tag-green">新</span>');
+    assert.strictEqual(R.fmtDrillRankChange(0, 1), '<span class="tag-green">新</span>', '入榜优先于变化');
+    assert.strictEqual(R.fmtDrillRankChange(3, 2), '<span class="rank-up">↑3</span>');
+    assert.strictEqual(R.fmtDrillRankChange('-2', 2), '<span class="rank-down">↓2</span>');
+    assert.strictEqual(R.fmtDrillRankChange(0, 2), '<span class="rank-flat">→</span>');
+    assert.strictEqual(R.fmtDrillRankChange(0, 0), '<span class="rank-flat">→</span>');
+    assert.strictEqual(R.fmtDrillRankChange(null, 2), '--');
+    assert.strictEqual(R.fmtDrillRankChange(undefined, 2), '--');
+    assert.strictEqual(R.fmtDrillRankChange('', 2), '--');
+    assert.strictEqual(R.fmtDrillRankChange('x', 2), '--');
+});
+
+test('fmtDrillStatus: 调入/调出/在榜三状态 + 空值--', () => {
+    assert.strictEqual(R.fmtDrillStatus('调入'), '<span class="tag-green">调入</span>');
+    assert.strictEqual(R.fmtDrillStatus('调出'), '<span class="tag-red">调出</span>');
+    assert.strictEqual(R.fmtDrillStatus('在榜'), '<span class="tag-blue">在榜</span>');
+    assert.strictEqual(R.fmtDrillStatus(''), '--');
+    assert.strictEqual(R.fmtDrillStatus(null), '--');
+    assert.strictEqual(R.fmtDrillStatus(undefined), '--');
+    assert.strictEqual(R.fmtDrillStatus('未知'), '--');
+});
+
+test('fmtDrillPct: 红涨绿跌(A股口径), 0正常显示, 空值--', () => {
+    assert.strictEqual(R.fmtDrillPct(3.2), '<span class="pos">+3.20</span>');
+    assert.strictEqual(R.fmtDrillPct('-1.5'), '<span class="neg">-1.50</span>');
+    assert.strictEqual(R.fmtDrillPct(0), '0.00');
+    assert.strictEqual(R.fmtDrillPct(0.001), '<span class="pos">+0.00</span>', '正数按绝对值显示');
+    assert.strictEqual(R.fmtDrillPct(null), '--');
+    assert.strictEqual(R.fmtDrillPct(undefined), '--');
+    assert.strictEqual(R.fmtDrillPct(''), '--');
+    assert.strictEqual(R.fmtDrillPct('abc'), '--');
+});
+
+test('fmtDrillNum: 保留2位小数去尾零, 空值--', () => {
+    assert.strictEqual(R.fmtDrillNum(10), '10');
+    assert.strictEqual(R.fmtDrillNum(10.5), '10.5');
+    assert.strictEqual(R.fmtDrillNum(10.56), '10.56');
+    assert.strictEqual(R.fmtDrillNum('3.1400'), '3.14');
+    assert.strictEqual(R.fmtDrillNum(0), '0');
+    assert.strictEqual(R.fmtDrillNum(1.00), '1');
+    assert.strictEqual(R.fmtDrillNum(null), '--');
+    assert.strictEqual(R.fmtDrillNum(undefined), '--');
+    assert.strictEqual(R.fmtDrillNum(''), '--');
+    assert.strictEqual(R.fmtDrillNum('x'), '--');
+});
+
+test('buildDrillBreadcrumb: 四级状态各层级可点击 + 转义', () => {
+    // 首页
+    assert.strictEqual(R.buildDrillBreadcrumb(),
+        '<a class="crumb-link" href="javascript:;" onclick="drillGoHome()">首页</a>');
+    assert.strictEqual(R.buildDrillBreadcrumb({}),
+        '<a class="crumb-link" href="javascript:;" onclick="drillGoHome()">首页</a>');
+    // 一级 (当前级不可点)
+    const l1 = R.buildDrillBreadcrumb({ level1Name: '电子' });
+    assert.ok(l1.includes('>首页</a>') && l1.includes('drillGoHome()'));
+    assert.ok(l1.includes('<span class="crumb-cur">电子</span>'), '当前一级为高亮非链接');
+    assert.ok(!l1.includes('drillGoLevel2'), '一级无下钻按钮');
+    // 一级+二级 (一级可回, 二级当前)
+    const l12 = R.buildDrillBreadcrumb({ level1Name: '电子', level2Name: '半导体' });
+    assert.ok(l12.includes('drillGoLevel2(\'电子\')'), '面包屑一级可点击返回');
+    assert.ok(l12.includes('<span class="crumb-cur">半导体</span>'), '当前二级高亮');
+    assert.ok(!l12.includes('drillGoLevel3'), '二级无下钻按钮');
+    // 三级 (个股, 全部可回)
+    const l123 = R.buildDrillBreadcrumb({ level1Name: '电子', level2Name: '半导体', stockName: '中芯国际' });
+    assert.ok(l123.includes('drillGoLevel2(\'电子\')') && l123.includes('drillGoLevel3(\'半导体\')'));
+    assert.ok(l123.includes('<span class="crumb-cur">中芯国际</span>'), '个股高亮');
+    // JS 字符串转义: 板块名含单引号时 onclick 不破
+    const esc = R.buildDrillBreadcrumb({ level1Name: "建'筑", level2Name: '装饰' });
+    assert.ok(esc.includes('drillGoLevel2(\'建\\\'筑\')'), 'onclick 单引号转义: ' + esc);
+    // HTML 转义: 名含 < > &
+    const escH = R.buildDrillBreadcrumb({ level1Name: '<电子>&' });
+    assert.ok(escH.includes('<span class="crumb-cur">&lt;电子&gt;&amp;</span>'), '显示文本转义');
+});
+
+test('buildDrillLevel1Html: 一级板块表 + 下钻链接 + badge + RPS 高亮', () => {
+    const d = {
+        level1: [
+            { display_rank: 1, name: '电子', level2_count: 12, RPS5: 95, RPS10: 88, RPS20: 60,
+              rank5_change: 2, continuous5: 5, status: '在榜' },
+            { display_rank: 2, name: "建'筑", level2_count: 8, RPS5: 75, RPS10: 50, RPS20: 40,
+              rank5_change: -3, continuous5: 1, status: '调入' }
+        ]
     };
-    const html = R.fmtReviewAccuracy(acc);
-    assert.ok(html.includes('21%'), '命中率 0.205 → 21%');
-    assert.ok(html.includes('-3.7'), '平均涨幅');
-    assert.ok(html.includes('今日推荐<b>2</b>只'), '今日推荐数');
-    assert.ok(html.includes('65.5%'), '今日平均概率');
-    assert.ok(html.includes('士兰微'), '最佳预测');
-    assert.ok(html.includes('祥源新材'), '最差预测');
-    assert.ok(html.includes('高10样本'), '置信度高');
+    const html = R.buildDrillLevel1Html(d);
+    assert.ok(html.includes('<th>排名</th>') && html.includes('<th>一级板块</th>') && html.includes('<th>RPS20</th>'));
+    assert.ok(html.includes('drillGoLevel2(\'电子\')'), '一级名点击下钻');
+    assert.ok(html.includes('12个二级'), '二级数量 badge');
+    assert.ok(html.includes('rank-up') && html.includes('↑2'), '排名上升');
+    assert.ok(html.includes('tag-green') && html.includes('新'), '调入+入榜标记');
+    assert.ok(html.includes('<span class="tag-red">95.0</span>'), 'RPS5≥90 红色');
+    assert.ok(html.includes('<span class="tag-blue">75.0</span>'), 'RPS5≥70 蓝色');
+    assert.ok(html.includes('drillGoLevel2(\'建\\\'筑\')'), '板块名单引号转义');
+    assert.ok(html.includes('排名</th><th>一级板块</th>'), '表头顺序');
 });
 
-test('fmtReviewAccuracy: 空推荐 today_count=0 不显示今日行', () => {
-    const acc = { has_data: true, samples: 5, hit_rate: 0.2, avg_gain: 1.0,
-                  avg_up_prob: 60, today_count: 0, today_avg_prob: null,
-                  by_confidence: {}, best: [], worst: [], note: '' };
-    const html = R.fmtReviewAccuracy(acc);
-    assert.ok(!html.includes('今日推荐'), 'today_count=0 不渲染今日行');
+test('buildDrillLevel1Html: 空数据兜底', () => {
+    assert.ok(R.buildDrillLevel1Html(null).includes('暂无一级板块数据'));
+    assert.ok(R.buildDrillLevel1Html({}).includes('暂无一级板块数据'));
+    assert.ok(R.buildDrillLevel1Html({ level1: [] }).includes('暂无一级板块数据'));
 });
 
-test('fmtReviewWeekAccuracy: 无数据显示暂无', () => {
-    assert.ok(R.fmtReviewWeekAccuracy(null).includes('暂无'));
-    assert.ok(R.fmtReviewWeekAccuracy({ has_data: false }).includes('暂无'));
-});
-
-test('fmtReviewWeekAccuracy: 有数据渲染周度命中率/置信度/最佳最差', () => {
-    const acc = {
-        has_data: true, week_samples: 8, week_hit_rate: 0.375,
-        week_avg_gain: -1.5, horizon: 3,
-        by_confidence: {
-            '高': { samples: 3, hit_rate: 0.667, avg_gain: 4.0 },
-            '中': { samples: 5, hit_rate: 0.2, avg_gain: -4.0 },
-        },
-        best: [{ name: '宝鼎科技', gain: 5.0 }],
-        worst: [{ name: '祥源新材', gain: -7.74 }],
-        note: '本周统计',
+test('buildDrillLevel2Html: 二级板块表 + 成分股数量 badge', () => {
+    const d = {
+        level2: [
+            { display_rank: 1, name: '半导体', stock_count: 45, RPS5: 92, RPS10: 70, RPS20: 55,
+              rank5_change: 0, continuous5: 3, status: '在榜' },
+            { display_rank: 2, name: '消费电子', stock_count: 0, RPS5: 30, RPS10: 20, RPS20: 10,
+              rank5_change: -1, continuous5: 2, status: '调出' }
+        ]
     };
-    const html = R.fmtReviewWeekAccuracy(acc);
-    assert.ok(html.includes('8') && html.includes('38%'), '样本数+命中率');
-    assert.ok(html.includes('-1.5'), '平均涨幅');
-    assert.ok(html.includes('宝鼎科技'), '最佳');
-    assert.ok(html.includes('祥源新材'), '最差');
-    assert.ok(html.includes('高3样本'), '置信度高');
+    const html = R.buildDrillLevel2Html(d);
+    assert.ok(html.includes('<th>二级板块</th>') && html.includes('<th>排名变化</th>'));
+    assert.ok(html.includes('drillGoLevel3(\'半导体\')'), '二级名点击下钻');
+    assert.ok(html.includes('45只'), '成分股数量 badge');
+    assert.ok(!html.includes('0只'), '无成分股不显示 0 只 badge');
+    assert.ok(html.includes('rank-flat') && html.includes('→'), '排名持平');
+    assert.ok(html.includes('<span class="tag-red">调出</span>'), '调出状态');
+    assert.ok(html.includes('<span class="tag-red">92.0</span>'), 'RPS5≥90 红色');
+});
+
+test('buildDrillLevel2Html: 空数据兜底', () => {
+    assert.ok(R.buildDrillLevel2Html(null).includes('暂无二级板块数据'));
+    assert.ok(R.buildDrillLevel2Html({ level2: [] }).includes('暂无二级板块数据'));
+});
+
+test('buildDrillLevel3Html: 按RPS50降序(空值排后)再按涨跌幅降序', () => {
+    const d = {
+        stocks: [
+            { ts_code: '600001', name: '甲', price: 10, pct_chg: 3.2, turnover: 5.1, vol_ratio: 1.8, rps50: 80, industry: '半导体' },
+            { ts_code: '600002', name: '乙', price: null, pct_chg: 6.0, turnover: 2.0, vol_ratio: 0.9, rps50: null, industry: '半导体' },
+            { ts_code: '600003', name: '丙', price: 20, pct_chg: 1.0, turnover: 1.1, vol_ratio: 1.2, rps50: 95, industry: '半导体' },
+            { ts_code: '600004', name: '丁', price: null, pct_chg: -2.0, turnover: 3.0, vol_ratio: 1.0, rps50: 95, industry: '半导体' }
+        ]
+    };
+    const html = R.buildDrillLevel3Html(d);
+    // RPS50 降序: 丙(95)/丁(95) 先, 甲(80) 后, 乙(null) 最后; 丙/丁 再按 pct_chg 降序
+    const iC = html.indexOf('丙'), iD = html.indexOf('丁'), iA = html.indexOf('甲'), iB = html.indexOf('乙');
+    assert.ok(iC !== -1 && iD !== -1 && iA !== -1 && iB !== -1);
+    assert.ok(iC < iD && iD < iA && iA < iB, '排序: 丙 < 丁 < 甲 < 乙, 实际顺序 ' + [iC, iD, iA, iB]);
+    assert.ok(html.includes('<th>个股名称</th>') && html.includes('<th>RPS50</th>') && html.includes('<th>细分行业</th>'));
+    assert.ok(html.includes("openDrillStock('600001','甲')"), '个股名点击下钻');
+    assert.ok(html.includes('<span class="pos">+3.20</span>'), '涨跌幅红涨');
+    assert.ok(html.includes('<span class="neg">-2.00</span>'), '涨跌幅绿跌');
+    assert.ok(html.includes('<span class="tag-red">95.0</span>'), 'RPS50 高亮');
+    assert.ok(html.includes('--'), '空值显示 --');
+    assert.ok(html.includes('600002'), '空 rps50 股票仍在表中');
+});
+
+test('buildDrillLevel3Html: 兼容大写 Price 字段与空数据兜底', () => {
+    const d = { stocks: [{ ts_code: '300001', name: '宁', Price: 55.5, pct_chg: 1.1, rps50: 60, industry: '电池' }] };
+    const html = R.buildDrillLevel3Html(d);
+    assert.ok(html.includes('55.5'), '大写 Price 字段兜底渲染');
+    assert.ok(R.buildDrillLevel3Html(null).includes('暂无成分股数据'));
+    assert.ok(R.buildDrillLevel3Html({ stocks: [] }).includes('暂无成分股数据'));
 });
 
 

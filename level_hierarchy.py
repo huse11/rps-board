@@ -16,7 +16,7 @@ RPS 看板四级下钻层级数据派生
   - 一级 RPS: 31 个申万一级中, 按各自聚合 N 日涨跌幅(其下二级板块有效值等权平均)做百分位排名
   - 二级 RPS: 在其所属一级板块的全部二级板块中, 按 N 日涨跌幅做百分位排名(组内, 非全市场)
   - rank_change = 前日rank - 今日rank (正=排名上升)
-  - continuous = RPS>=90 连续交易日数
+  - continuous = RPS>=95 连续交易日数
 """
 import json
 import os
@@ -28,7 +28,7 @@ RPS_HISTORY_FILE = STATIC_DIR / "rps_history.json"
 RPS_DATA_FILE = STATIC_DIR / "rps_data.json"
 SW_CACHE_FILE = STATIC_DIR / "sw_industry_cache.json"
 SCHEMA_VERSION = 2
-RPS_THRESHOLD = 90
+RPS_THRESHOLD = 95
 
 # (chg列, RPS列, rank列, continuous列)
 PERIODS = [
@@ -145,8 +145,8 @@ def build_level1_board(l1_daily, dates, latest_date, prev_date, level1_meta):
     l1_daily    : build_level1_daily 输出 {date: {l1: {chg*, rank*, RPS*}}}
     level1_meta : {l1: {"days_60": int, "stock_count": int, "rps50_above_90": int, "level2_count": int}}
     口径与 rps_calc.split_in_out 一致 (阈值 RPS_THRESHOLD):
-      入选 = 当日 RPS>=90; 调出 = 前日入选且当日掉出; 调入 = 前日未入选
-    返回 {"threshold": 90, "rps5": {"in_list","out_list","current_names"}, rps10..., rps20...}
+      入选 = 当日 RPS>=95; 调出 = 前日入选且当日掉出; 调入 = 前日未入选
+    返回 {"threshold": 95, "rps5": {"in_list","out_list","current_names"}, rps10..., rps20...}
     """
     today = l1_daily.get(latest_date, {})
     prev = l1_daily.get(prev_date, {}) if prev_date else {}
