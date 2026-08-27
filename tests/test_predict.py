@@ -325,6 +325,11 @@ class TestCalcAccuracy(unittest.TestCase):
             self.assertGreater(rev["summary"]["avg_gain"], 0)
             # by_confidence 分组正确
             self.assertEqual(rev["by_confidence"]["高"]["samples"], 1)
+            # all = 完整已验证列表, recent = 截断最近15条 (周度复盘依赖 all, 避免截断)
+            self.assertEqual(len(rev["all"]), 1)
+            self.assertEqual(rev["all"][0]["code"], "000001.SZ")
+            self.assertEqual(rev["all"][0]["hit"], True)
+            self.assertEqual(rev["recent"], rev["all"])
 
     def test_accuracy_miss_and_skip_insufficient(self):
         with tempfile.TemporaryDirectory() as td:

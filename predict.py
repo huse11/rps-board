@@ -500,6 +500,7 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
                     "avg_gain": round(sum(y["gain"] for y in v) / len(v), 2)} for k, v in out.items()}
 
     avg_prob = sum(x["up_prob"] or 0 for x in verified) / len(verified)
+    _sorted = sorted(verified, key=lambda x: (x["pred_date"], x["code"]))
     review = {
         "update_date": latest_date,
         "horizon": PRED_HORIZON,
@@ -512,7 +513,9 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
         },
         "by_confidence": _group("confidence"),
         "by_sector_count": _group("sector_count"),
-        "recent": sorted(verified, key=lambda x: (x["pred_date"], x["code"]))[-15:],
+        # 完整已验证列表(供周度复盘筛选本周样本, 避免 recent 仅15条截断)
+        "all": _sorted,
+        "recent": _sorted[-15:],
         "note": "每日校准: 命中=预测后%s个交易日收盘价>预测日现价(严格上涨); 分维度胜率用于动态调整因子权重" % PRED_HORIZON,
     }
     with open(review_file, "w", encoding="utf-8") as f:
