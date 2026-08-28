@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4123.0897,
-   "ma20": 4122.835120000001,
+   "close": 3952.179,
+   "ma20": 3916.06505,
    "above": true,
    "days": 134
   },
-  "note": "上证指数站上20日线(4123点)"
+  "note": "上证指数站上20日线(3916点)"
  },
  "resonance": {
   "core": [
@@ -534,12 +534,7 @@
    "房产服务",
    "批发业"
   ],
-  "critical": [
-   {
-    "name": "超市连锁",
-    "rps5": 89.1
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "元器件",
    "半导体",
@@ -551,11 +546,11 @@
   ]
  },
  "sentiment": {
-  "phase": "发酵期",
+  "phase": "冰点期",
   "seed_n": 7,
   "out_n": 10,
   "core_n": 4,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
@@ -586,7 +581,7 @@
     "code": "000001.SH",
     "name": "上证指数",
     "close": 3952.18,
-    "ma": 3916.06,
+    "ma": 3916.07,
     "above": true
    },
    {
