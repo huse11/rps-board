@@ -1,23 +1,23 @@
 {
- "update_date": "20260828",
- "prev_date": "20260827",
+ "update_date": "20260831",
+ "prev_date": "20260828",
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "弱",
-  "high5": 0,
-  "high10": 0,
-  "high20": 0,
+  "tone": "中性",
+  "high5": 11,
+  "high10": 11,
+  "high20": 11,
   "diff5": 0,
-  "avg_high": 0,
+  "avg_high": 11.0,
   "index": {
    "ok": true,
-   "close": 3952.179,
-   "ma20": 3916.06505,
+   "close": 4134.0178,
+   "ma20": 4109.634930000001,
    "above": true,
-   "days": 134
+   "days": 132
   },
-  "note": "上证指数站上20日线(3916点)"
+  "note": "上证指数站上20日线(4110点)"
  },
  "resonance": {
   "core": [
@@ -25,98 +25,68 @@
     "name": "种植业",
     "RPS5": 99.1,
     "rank": 1,
-    "rank_change": 5,
-    "continuous": 2,
-    "ratio": 61.1,
+    "rank_change": 0,
+    "continuous": 3,
+    "ratio": 66.7,
     "stock_count": 18,
-    "rps50_above_90": 11
+    "rps50_above_90": 12
    },
    {
-    "name": "农用机械",
+    "name": "林业",
     "RPS5": 98.2,
     "rank": 2,
     "rank_change": 2,
     "continuous": 2,
-    "ratio": 41.7,
-    "stock_count": 12,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "渔业",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": 9,
-    "continuous": 1,
-    "ratio": 85.7,
-    "stock_count": 7,
-    "rps50_above_90": 6
-   },
-   {
-    "name": "林业",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 10,
-    "continuous": 1,
     "ratio": 25.0,
     "stock_count": 4,
     "rps50_above_90": 1
+   },
+   {
+    "name": "煤炭开采",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": -3,
+    "continuous": 3,
+    "ratio": 64.0,
+    "stock_count": 25,
+    "rps50_above_90": 16
    }
   ],
   "pulse": [
    {
-    "name": "造纸",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 41,
+    "name": "影视音像",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 67,
     "continuous": 1,
-    "ratio": 14.7,
+    "ratio": 8.8,
     "stock_count": 34,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "旅游服务",
-    "RPS5": 91.8,
-    "rank": 9,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 7,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "房产服务",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 48,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
     "rps50_above_90": 3
    },
    {
-    "name": "批发业",
-    "RPS5": 90.0,
-    "rank": 11,
-    "rank_change": 31,
+    "name": "陶瓷",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": 14,
     "continuous": 1,
-    "ratio": 20.0,
+    "ratio": 0.0,
     "stock_count": 5,
-    "rps50_above_90": 1
+    "rps50_above_90": 0
+   },
+   {
+    "name": "造纸",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": 0,
+    "continuous": 2,
+    "ratio": 14.7,
+    "stock_count": 34,
+    "rps50_above_90": 5
    }
   ],
   "diverge": [
    {
     "name": "元器件",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "农业综合",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -136,7 +106,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "染料涂料",
+    "name": "批发业",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -146,7 +116,17 @@
     "rps50_above_90": 0
    },
    {
-    "name": "水运",
+    "name": "焦炭加工",
+    "RPS5": 0.0,
+    "rank": 0,
+    "rank_change": 0,
+    "continuous": 0,
+    "ratio": 0.0,
+    "stock_count": 0,
+    "rps50_above_90": 0
+   },
+   {
+    "name": "电器仪表",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -176,7 +156,7 @@
     "rps50_above_90": 0
    },
    {
-    "name": "铅锌",
+    "name": "通信设备",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -213,113 +193,113 @@
     "name": "种植业",
     "RPS5": 99.1,
     "rank": 1,
-    "rank_change": 5,
-    "continuous": 2,
-    "ratio": 61.1,
+    "rank_change": 0,
+    "continuous": 3,
+    "ratio": 66.7,
     "stock_count": 18,
-    "rps50_above_90": 11
+    "rps50_above_90": 12
    },
    {
-    "name": "农用机械",
+    "name": "林业",
     "RPS5": 98.2,
     "rank": 2,
     "rank_change": 2,
     "continuous": 2,
-    "ratio": 41.7,
-    "stock_count": 12,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "渔业",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": 9,
-    "continuous": 1,
-    "ratio": 85.7,
-    "stock_count": 7,
-    "rps50_above_90": 6
-   },
-   {
-    "name": "林业",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 10,
-    "continuous": 1,
     "ratio": 25.0,
     "stock_count": 4,
     "rps50_above_90": 1
    },
    {
-    "name": "焦炭加工",
-    "RPS5": 95.5,
-    "rank": 5,
+    "name": "影视音像",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 67,
+    "continuous": 1,
+    "ratio": 8.8,
+    "stock_count": 34,
+    "rps50_above_90": 3
+   },
+   {
+    "name": "房产服务",
+    "RPS5": 96.4,
+    "rank": 4,
     "rank_change": 6,
     "continuous": 2,
-    "ratio": 57.1,
-    "stock_count": 7,
+    "ratio": 30.8,
+    "stock_count": 13,
     "rps50_above_90": 4
    },
    {
-    "name": "农药化肥",
+    "name": "农用机械",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": -3,
+    "continuous": 3,
+    "ratio": 33.3,
+    "stock_count": 12,
+    "rps50_above_90": 4
+   },
+   {
+    "name": "陶瓷",
     "RPS5": 94.5,
     "rank": 6,
-    "rank_change": 18,
+    "rank_change": 14,
     "continuous": 1,
-    "ratio": 26.3,
-    "stock_count": 57,
-    "rps50_above_90": 15
+    "ratio": 0.0,
+    "stock_count": 5,
+    "rps50_above_90": 0
    },
    {
     "name": "造纸",
     "RPS5": 93.6,
     "rank": 7,
-    "rank_change": 41,
-    "continuous": 1,
+    "rank_change": 0,
+    "continuous": 2,
     "ratio": 14.7,
     "stock_count": 34,
     "rps50_above_90": 5
    },
    {
-    "name": "煤炭开采",
+    "name": "装修装饰",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": -5,
-    "continuous": 2,
-    "ratio": 72.0,
-    "stock_count": 25,
-    "rps50_above_90": 18
+    "rank_change": 35,
+    "continuous": 1,
+    "ratio": 21.7,
+    "stock_count": 23,
+    "rps50_above_90": 5
    },
    {
-    "name": "旅游服务",
+    "name": "农药化肥",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 7,
-    "rps50_above_90": 0
+    "rank_change": -3,
+    "continuous": 2,
+    "ratio": 19.3,
+    "stock_count": 57,
+    "rps50_above_90": 11
    },
    {
-    "name": "房产服务",
+    "name": "渔业",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 48,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
-    "rps50_above_90": 3
+    "rank_change": -7,
+    "continuous": 2,
+    "ratio": 57.1,
+    "stock_count": 7,
+    "rps50_above_90": 4
    }
   ],
   "tier2": [
    {
-    "name": "批发业",
+    "name": "煤炭开采",
     "RPS5": 90.0,
     "rank": 11,
-    "rank_change": 31,
-    "continuous": 1,
-    "ratio": 20.0,
-    "stock_count": 5,
-    "rps50_above_90": 1
+    "rank_change": -3,
+    "continuous": 3,
+    "ratio": 64.0,
+    "stock_count": 25,
+    "rps50_above_90": 16
    }
   ],
   "tier3": []
@@ -327,249 +307,200 @@
  "rotation": {
   "new_in": [
    {
-    "name": "渔业",
+    "name": "影视音像",
     "RPS5": 97.3,
     "rank": 3,
-    "rank_change": 9,
+    "rank_change": 67,
     "continuous": 1,
-    "ratio": 85.7,
-    "stock_count": 7,
-    "rps50_above_90": 6
-   },
-   {
-    "name": "林业",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 10,
-    "continuous": 1,
-    "ratio": 25.0,
-    "stock_count": 4,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "农药化肥",
-    "RPS5": 94.5,
-    "rank": 6,
-    "rank_change": 18,
-    "continuous": 1,
-    "ratio": 26.3,
-    "stock_count": 57,
-    "rps50_above_90": 15
-   },
-   {
-    "name": "造纸",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 41,
-    "continuous": 1,
-    "ratio": 14.7,
+    "ratio": 8.8,
     "stock_count": 34,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "旅游服务",
-    "RPS5": 91.8,
-    "rank": 9,
-    "rank_change": 14,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 7,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "房产服务",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 48,
-    "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
     "rps50_above_90": 3
    },
    {
-    "name": "批发业",
-    "RPS5": 90.0,
-    "rank": 11,
-    "rank_change": 31,
+    "name": "陶瓷",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": 14,
     "continuous": 1,
-    "ratio": 20.0,
+    "ratio": 0.0,
     "stock_count": 5,
-    "rps50_above_90": 1
+    "rps50_above_90": 0
+   },
+   {
+    "name": "装修装饰",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": 35,
+    "continuous": 1,
+    "ratio": 21.7,
+    "stock_count": 23,
+    "rps50_above_90": 5
    }
   ],
   "rank_jump": [
    {
-    "name": "房产服务",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 48,
+    "name": "影视音像",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 67,
     "continuous": 1,
-    "ratio": 23.1,
-    "stock_count": 13,
+    "ratio": 8.8,
+    "stock_count": 34,
     "rps50_above_90": 3
    },
    {
-    "name": "造纸",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 41,
+    "name": "装修装饰",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": 35,
     "continuous": 1,
-    "ratio": 14.7,
-    "stock_count": 34,
+    "ratio": 21.7,
+    "stock_count": 23,
     "rps50_above_90": 5
    },
    {
-    "name": "批发业",
-    "RPS5": 90.0,
-    "rank": 11,
-    "rank_change": 31,
-    "continuous": 1,
-    "ratio": 20.0,
-    "stock_count": 5,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "农药化肥",
+    "name": "陶瓷",
     "RPS5": 94.5,
     "rank": 6,
-    "rank_change": 18,
-    "continuous": 1,
-    "ratio": 26.3,
-    "stock_count": 57,
-    "rps50_above_90": 15
-   },
-   {
-    "name": "旅游服务",
-    "RPS5": 91.8,
-    "rank": 9,
     "rank_change": 14,
     "continuous": 1,
     "ratio": 0.0,
-    "stock_count": 7,
+    "stock_count": 5,
     "rps50_above_90": 0
+   },
+   {
+    "name": "房产服务",
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": 6,
+    "continuous": 2,
+    "ratio": 30.8,
+    "stock_count": 13,
+    "rps50_above_90": 4
+   },
+   {
+    "name": "林业",
+    "RPS5": 98.2,
+    "rank": 2,
+    "rank_change": 2,
+    "continuous": 2,
+    "ratio": 25.0,
+    "stock_count": 4,
+    "rps50_above_90": 1
    }
   ],
   "out_all": [
-   "多元金融",
-   "酒店餐饮",
-   "旅游景点",
-   "铜",
-   "保险",
+   "旅游服务",
+   "批发业",
+   "焦炭加工",
+   "农业综合",
+   "水运",
    "铅锌",
-   "其他商业",
-   "装修装饰",
-   "黄金",
-   "纺织机械",
-   "银行",
-   "电器仪表",
-   "专用机械",
-   "生物制药"
+   "染料涂料",
+   "渔业",
+   "农用机械"
   ],
-  "out_count": 14
+  "out_count": 9
  },
  "health": {
   "expand": [
    {
     "name": "种植业",
-    "ratio": 61.1
+    "ratio": 66.7
+   },
+   {
+    "name": "房产服务",
+    "ratio": 30.8
    },
    {
     "name": "农用机械",
-    "ratio": 41.7
+    "ratio": 33.3
    },
    {
     "name": "渔业",
-    "ratio": 85.7
-   },
-   {
-    "name": "焦炭加工",
     "ratio": 57.1
    },
    {
     "name": "煤炭开采",
-    "ratio": 72.0
+    "ratio": 64.0
    }
   ],
   "mature": [],
   "seed": [
-   "渔业",
-   "林业",
-   "农药化肥",
-   "造纸",
-   "旅游服务",
-   "房产服务",
-   "批发业"
+   "影视音像",
+   "陶瓷",
+   "装修装饰"
   ]
  },
  "risk": {
-  "batch_out": {
-   "金融": 2,
-   "消费": 3,
-   "其他": 4,
-   "周期": 1
-  },
+  "batch_out": {},
   "diverge": [
+   {
+    "name": "影视音像",
+    "ratio": 8.8
+   },
+   {
+    "name": "陶瓷",
+    "ratio": 0.0
+   },
    {
     "name": "造纸",
     "ratio": 14.7
-   },
-   {
-    "name": "旅游服务",
-    "ratio": 0.0
    }
   ],
   "momentum_decay": false,
   "warnings": [
-   "批量调出预警: 今日调出10个板块, 集中在「其他」(4个), 该方向短期回避",
-   "高位顶背离: 造纸 排名靠前但内部个股达标率低(15%), 指数虚高警惕回落"
+   "高位顶背离: 影视音像 排名靠前但内部个股达标率低(9%), 指数虚高警惕回落"
   ]
  },
  "watch": {
   "seed": [
-   "渔业",
-   "林业",
-   "农药化肥",
-   "造纸",
-   "旅游服务",
-   "房产服务",
-   "批发业"
+   "影视音像",
+   "陶瓷",
+   "装修装饰"
   ],
-  "critical": [],
+  "critical": [
+   {
+    "name": "机械基件",
+    "rps5": 89.1
+   },
+   {
+    "name": "元器件",
+    "rps5": 88.2
+   }
+  ],
   "diverge_watch": [
    "元器件",
    "半导体",
-   "染料涂料",
+   "电器仪表",
    "矿物制品",
-   "铅锌",
+   "通信设备",
    "铜",
    "黄金"
   ]
  },
  "sentiment": {
-  "phase": "冰点期",
-  "seed_n": 7,
-  "out_n": 10,
-  "core_n": 4,
-  "high_n": 0
+  "phase": "震荡期",
+  "seed_n": 3,
+  "out_n": 3,
+  "core_n": 3,
+  "high_n": 11
  },
  "style": {
   "rps5": {
-   "其他": 8,
+   "其他": 9,
    "制造": 1,
-   "周期": 1,
-   "消费": 1
+   "周期": 1
   },
   "rps10": {
-   "其他": 6,
+   "其他": 7,
    "周期": 3,
-   "制造": 1,
-   "消费": 1
+   "制造": 1
   },
   "rps20": {
-   "其他": 7,
-   "周期": 1,
-   "科技": 2,
-   "制造": 1
+   "周期": 2,
+   "科技": 3,
+   "其他": 6
   }
  },
  "market_status_rec": {
@@ -580,20 +511,20 @@
    {
     "code": "000001.SH",
     "name": "上证指数",
-    "close": 3952.18,
-    "ma": 3916.07,
+    "close": 3986.3,
+    "ma": 3924.9,
     "above": true
    },
    {
     "code": "399006.SZ",
     "name": "创业板指",
-    "close": 3424.4,
-    "ma": 3520.43,
+    "close": 3438.68,
+    "ma": 3527.23,
     "above": false
    }
   ],
-  "advance_ratio": 0.56,
-  "limit_down_count": 15,
+  "advance_ratio": 0.59,
+  "limit_down_count": 20,
   "note": "大盘环境合格, 继续选股"
  }
 }
