@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4134.0178,
-   "ma20": 4109.634930000001,
+   "close": 3986.298,
+   "ma20": 3924.8968,
    "above": true,
    "days": 132
   },
-  "note": "上证指数站上20日线(4110点)"
+  "note": "上证指数站上20日线(3925点)"
  },
  "resonance": {
   "core": [
@@ -459,16 +459,7 @@
    "陶瓷",
    "装修装饰"
   ],
-  "critical": [
-   {
-    "name": "机械基件",
-    "rps5": 89.1
-   },
-   {
-    "name": "元器件",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "元器件",
    "半导体",
@@ -480,11 +471,11 @@
   ]
  },
  "sentiment": {
-  "phase": "震荡期",
+  "phase": "冰点期",
   "seed_n": 3,
   "out_n": 3,
   "core_n": 3,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
