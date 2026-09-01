@@ -66,13 +66,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -87,11 +88,11 @@
         "logic": [
           "三档RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
@@ -195,13 +196,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -216,11 +218,11 @@
         "logic": [
           "三档RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
@@ -260,16 +262,17 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "均线支撑"
         ],
-        "hit_count": 4
+        "hit_count": 5
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 86,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -279,12 +282,12 @@
         "confidence": "高",
         "logic": [
           "三档RPS共振",
-          "创20日新高",
-          "主力资金连续流入"
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头"
         ],
         "factors": {
           "momentum": 62,
-          "technical": 58,
+          "technical": 63,
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
@@ -324,13 +327,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -344,12 +348,12 @@
         "confidence": "高",
         "logic": [
           "三档RPS共振",
-          "技术多指标共振5/7",
+          "技术7项共振6/7",
           "主力资金连续流入"
         ],
         "factors": {
           "momentum": 64,
-          "technical": 60,
+          "technical": 62,
           "capital": 64,
           "sector": 67,
           "sentiment": 58,
@@ -582,16 +586,17 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 4
+        "hit_count": 5
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 86,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -602,11 +607,11 @@
         "logic": [
           "双RPS共振",
           "个股RPS50≥90",
-          "主力资金连续流入"
+          "技术多指标共振5/7"
         ],
         "factors": {
           "momentum": 65,
-          "technical": 58,
+          "technical": 60,
           "capital": 62,
           "sector": 62,
           "sentiment": 58,
@@ -709,13 +714,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -730,11 +736,11 @@
         "logic": [
           "双RPS共振",
           "个股RPS50≥90",
-          "技术多指标共振5/7"
+          "技术7项共振6/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 60,
+          "technical": 62,
           "capital": 62,
           "sector": 62,
           "sentiment": 58,
@@ -774,17 +780,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 84,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -799,7 +806,7 @@
         ],
         "factors": {
           "momentum": 61,
-          "technical": 60,
+          "technical": 65,
           "capital": 60,
           "sector": 67,
           "sentiment": 58,
@@ -839,13 +846,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -864,7 +872,7 @@
         ],
         "factors": {
           "momentum": 65,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
@@ -904,13 +912,14 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
@@ -924,12 +933,12 @@
         "confidence": "高",
         "logic": [
           "三档RPS共振",
-          "技术多指标共振5/7",
-          "创20日新高"
+          "技术7项共振6/7",
+          "突破20日新高+放量+均线多头"
         ],
         "factors": {
           "momentum": 64,
-          "technical": 60,
+          "technical": 65,
           "capital": 64,
           "sector": 67,
           "sentiment": 58,
@@ -969,6 +978,7 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "KDJ健康",
           "20日新高",
@@ -976,7 +986,7 @@
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 6
+        "hit_count": 7
       },
       "prediction": {
         "horizon": 3,
@@ -991,11 +1001,11 @@
         "logic": [
           "三档RPS共振",
           "个股RPS50≥90",
-          "技术7项共振6/7"
+          "技术7项共振7/7"
         ],
         "factors": {
           "momentum": 67,
-          "technical": 62,
+          "technical": 65,
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
@@ -1035,17 +1045,18 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "RPS50强势",
           "均线支撑"
         ],
-        "hit_count": 5
+        "hit_count": 6
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 86,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1055,12 +1066,12 @@
         "confidence": "高",
         "logic": [
           "双RPS共振",
-          "技术多指标共振5/7",
-          "创20日新高"
+          "技术7项共振6/7",
+          "突破20日新高+放量+均线多头"
         ],
         "factors": {
           "momentum": 66,
-          "technical": 60,
+          "technical": 65,
           "capital": 62,
           "sector": 62,
           "sentiment": 58,
@@ -1100,16 +1111,17 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "均线支撑"
         ],
-        "hit_count": 4
+        "hit_count": 5
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 79,
+        "up_prob": 84,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1119,12 +1131,12 @@
         "confidence": "高",
         "logic": [
           "双RPS共振",
-          "创20日新高",
-          "主力资金连续流入"
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头"
         ],
         "factors": {
           "momentum": 57,
-          "technical": 58,
+          "technical": 63,
           "capital": 62,
           "sector": 62,
           "sentiment": 58,
@@ -1229,16 +1241,17 @@
       },
       "technical": {
         "hits": [
+          "均线多头",
           "MACD多头",
           "20日新高",
           "量价齐升",
           "均线支撑"
         ],
-        "hit_count": 4
+        "hit_count": 5
       },
       "prediction": {
         "horizon": 3,
-        "up_prob": 87,
+        "up_prob": 88,
         "expected_gain": 9.0,
         "gain_range": [
           5.0,
@@ -1248,12 +1261,12 @@
         "confidence": "高",
         "logic": [
           "三档RPS共振",
-          "创20日新高",
-          "主力资金连续流入"
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头"
         ],
         "factors": {
           "momentum": 62,
-          "technical": 58,
+          "technical": 63,
           "capital": 62,
           "sector": 67,
           "sentiment": 58,
