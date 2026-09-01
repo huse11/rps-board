@@ -205,7 +205,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 15916400.000000002
     },
     {
@@ -229,19 +229,19 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 88544599.99999999
     },
     {
       "code": "600108.SH",
       "name": "亚盛集团",
       "price": 3.92,
-      "up_prob": 88,
+      "up_prob": 86,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 4,
       "net_inflow_3d": 45284700.0
     },
     {
@@ -253,7 +253,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 16763699.999999998
     },
     {
@@ -296,12 +296,12 @@
       "code": "000798.SZ",
       "name": "中水渔业",
       "price": 10.0,
-      "up_prob": 88,
+      "up_prob": 86,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 5,
+      "hit_count": 4,
       "net_inflow_3d": 14876500.0
     },
     {
@@ -325,19 +325,19 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 8865900.0
     },
     {
       "code": "600540.SH",
       "name": "新赛股份",
       "price": 6.12,
-      "up_prob": 88,
+      "up_prob": 84,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 77815200.0
     },
     {
@@ -349,7 +349,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 70025000.0
     },
     {
@@ -361,7 +361,7 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 68900.0
     },
     {
@@ -373,31 +373,31 @@
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 7,
+      "hit_count": 6,
       "net_inflow_3d": 15514400.0
     },
     {
       "code": "600758.SH",
       "name": "辽宁能源",
       "price": 3.88,
-      "up_prob": 88,
+      "up_prob": 86,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 6,
+      "hit_count": 5,
       "net_inflow_3d": 19879900.0
     },
     {
       "code": "002159.SZ",
       "name": "三特索道",
       "price": 14.16,
-      "up_prob": 84,
+      "up_prob": 79,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 2,
-      "hit_count": 5,
+      "hit_count": 4,
       "net_inflow_3d": 11624600.0
     },
     {
@@ -416,12 +416,12 @@
       "code": "600883.SH",
       "name": "博闻科技",
       "price": 8.27,
-      "up_prob": 88,
+      "up_prob": 87,
       "expected_gain": 9.0,
       "horizon": 3,
       "confidence": "高",
       "sector_count": 3,
-      "hit_count": 5,
+      "hit_count": 4,
       "net_inflow_3d": 4896900.0
     }
   ]
