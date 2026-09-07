@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4117.4089,
-   "ma20": 4087.3471900000004,
-   "above": true,
+   "close": 3932.699,
+   "ma20": 3935.82075,
+   "above": false,
    "days": 135
   },
-  "note": "上证指数站上20日线(4087点)"
+  "note": "上证指数跌破20日线(3936点)"
  },
  "resonance": {
   "core": [
@@ -499,16 +499,7 @@
    "酒店餐饮",
    "旅游景点"
   ],
-  "critical": [
-   {
-    "name": "农业综合",
-    "rps5": 89.1
-   },
-   {
-    "name": "农用机械",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "农业综合",
    "农用机械",
@@ -518,11 +509,11 @@
   ]
  },
  "sentiment": {
-  "phase": "发酵期",
+  "phase": "冰点期",
   "seed_n": 6,
   "out_n": 6,
   "core_n": 6,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
