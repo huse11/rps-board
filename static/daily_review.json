@@ -1,130 +1,90 @@
 {
- "update_date": "20260908",
- "prev_date": "20260907",
+ "update_date": "20260909",
+ "prev_date": "20260908",
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "弱",
-  "high5": 0,
-  "high10": 0,
-  "high20": 0,
+  "tone": "中性",
+  "high5": 11,
+  "high10": 11,
+  "high20": 11,
   "diff5": 0,
-  "avg_high": 0,
+  "avg_high": 11.0,
   "index": {
    "ok": true,
-   "close": 4117.4089,
-   "ma20": 4087.3471900000004,
+   "close": 3951.507,
+   "ma20": 3936.3852500000003,
    "above": true,
-   "days": 136
+   "days": 137
   },
-  "note": "上证指数站上20日线(4087点)"
+  "note": "上证指数站上20日线(3936点)"
  },
  "resonance": {
   "core": [
    {
-    "name": "饲料",
+    "name": "种植业",
     "RPS5": 99.1,
     "rank": 1,
-    "rank_change": 2,
-    "continuous": 3,
-    "ratio": 39.1,
-    "stock_count": 23,
-    "rps50_above_90": 9
+    "rank_change": 14,
+    "continuous": 1,
+    "ratio": 73.7,
+    "stock_count": 19,
+    "rps50_above_90": 14
    },
    {
-    "name": "出版业",
+    "name": "渔业",
     "RPS5": 98.2,
     "rank": 2,
-    "rank_change": 7,
-    "continuous": 4,
-    "ratio": 25.9,
-    "stock_count": 27,
+    "rank_change": 2,
+    "continuous": 3,
+    "ratio": 100.0,
+    "stock_count": 7,
     "rps50_above_90": 7
    },
    {
     "name": "百货",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": -1,
-    "continuous": 2,
-    "ratio": 25.7,
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": -2,
+    "continuous": 3,
+    "ratio": 37.1,
     "stock_count": 35,
-    "rps50_above_90": 9
+    "rps50_above_90": 13
    },
    {
-    "name": "渔业",
-    "RPS5": 96.4,
-    "rank": 4,
-    "rank_change": 2,
+    "name": "饲料",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": -6,
+    "continuous": 4,
+    "ratio": 26.1,
+    "stock_count": 23,
+    "rps50_above_90": 6
+   },
+   {
+    "name": "批发业",
+    "RPS5": 90.0,
+    "rank": 11,
+    "rank_change": -5,
     "continuous": 2,
-    "ratio": 100.0,
-    "stock_count": 7,
-    "rps50_above_90": 7
+    "ratio": 20.0,
+    "stock_count": 5,
+    "rps50_above_90": 1
    }
   ],
   "pulse": [
    {
-    "name": "旅游景点",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 5,
-    "continuous": 2,
-    "ratio": 27.8,
-    "stock_count": 18,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "酒店餐饮",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 0,
-    "continuous": 2,
-    "ratio": 33.3,
-    "stock_count": 9,
-    "rps50_above_90": 3
-   },
-   {
-    "name": "石油贸易",
-    "RPS5": 91.8,
-    "rank": 9,
-    "rank_change": 76,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 4,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "食品",
+    "name": "红黄酒",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 4,
-    "continuous": 1,
-    "ratio": 26.7,
-    "stock_count": 90,
-    "rps50_above_90": 24
-   },
-   {
-    "name": "红黄酒",
-    "RPS5": 90.0,
-    "rank": 11,
-    "rank_change": 0,
-    "continuous": 3,
-    "ratio": 12.5,
+    "rank_change": 1,
+    "continuous": 4,
+    "ratio": 37.5,
     "stock_count": 8,
-    "rps50_above_90": 1
+    "rps50_above_90": 3
    }
   ],
   "diverge": [
-   {
-    "name": "农业综合",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
    {
     "name": "农用机械",
     "RPS5": 0.0,
@@ -137,16 +97,6 @@
    },
    {
     "name": "影视音像",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "旅游服务",
     "RPS5": 0.0,
     "rank": 0,
     "rank_change": 0,
@@ -174,131 +124,121 @@
     "ratio": 0.0,
     "stock_count": 0,
     "rps50_above_90": 0
-   },
-   {
-    "name": "种植业",
-    "RPS5": 0.0,
-    "rank": 0,
-    "rank_change": 0,
-    "continuous": 0,
-    "ratio": 0.0,
-    "stock_count": 0,
-    "rps50_above_90": 0
    }
   ]
  },
  "tier": {
   "tier1": [
    {
-    "name": "饲料",
+    "name": "种植业",
     "RPS5": 99.1,
     "rank": 1,
-    "rank_change": 2,
-    "continuous": 3,
-    "ratio": 39.1,
-    "stock_count": 23,
-    "rps50_above_90": 9
-   },
-   {
-    "name": "出版业",
-    "RPS5": 98.2,
-    "rank": 2,
-    "rank_change": 7,
-    "continuous": 4,
-    "ratio": 25.9,
-    "stock_count": 27,
-    "rps50_above_90": 7
-   },
-   {
-    "name": "百货",
-    "RPS5": 97.3,
-    "rank": 3,
-    "rank_change": -1,
-    "continuous": 2,
-    "ratio": 25.7,
-    "stock_count": 35,
-    "rps50_above_90": 9
+    "rank_change": 14,
+    "continuous": 1,
+    "ratio": 73.7,
+    "stock_count": 19,
+    "rps50_above_90": 14
    },
    {
     "name": "渔业",
-    "RPS5": 96.4,
-    "rank": 4,
+    "RPS5": 98.2,
+    "rank": 2,
     "rank_change": 2,
-    "continuous": 2,
+    "continuous": 3,
     "ratio": 100.0,
     "stock_count": 7,
     "rps50_above_90": 7
    },
    {
-    "name": "旅游景点",
-    "RPS5": 95.5,
-    "rank": 5,
-    "rank_change": 5,
-    "continuous": 2,
-    "ratio": 27.8,
-    "stock_count": 18,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "批发业",
-    "RPS5": 94.5,
-    "rank": 6,
-    "rank_change": 17,
+    "name": "水运",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 19,
     "continuous": 1,
-    "ratio": 20.0,
-    "stock_count": 5,
-    "rps50_above_90": 1
+    "ratio": 42.1,
+    "stock_count": 19,
+    "rps50_above_90": 8
    },
    {
-    "name": "酒店餐饮",
-    "RPS5": 93.6,
-    "rank": 7,
-    "rank_change": 0,
-    "continuous": 2,
-    "ratio": 33.3,
-    "stock_count": 9,
+    "name": "船舶",
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": 12,
+    "continuous": 1,
+    "ratio": 27.3,
+    "stock_count": 11,
     "rps50_above_90": 3
    },
    {
+    "name": "百货",
+    "RPS5": 95.5,
+    "rank": 5,
+    "rank_change": -2,
+    "continuous": 3,
+    "ratio": 37.1,
+    "stock_count": 35,
+    "rps50_above_90": 13
+   },
+   {
     "name": "超市连锁",
+    "RPS5": 94.5,
+    "rank": 6,
+    "rank_change": 2,
+    "continuous": 3,
+    "ratio": 25.0,
+    "stock_count": 8,
+    "rps50_above_90": 2
+   },
+   {
+    "name": "饲料",
+    "RPS5": 93.6,
+    "rank": 7,
+    "rank_change": -6,
+    "continuous": 4,
+    "ratio": 26.1,
+    "stock_count": 23,
+    "rps50_above_90": 6
+   },
+   {
+    "name": "焦炭加工",
     "RPS5": 92.7,
     "rank": 8,
-    "rank_change": -3,
-    "continuous": 2,
-    "ratio": 12.5,
-    "stock_count": 8,
-    "rps50_above_90": 1
+    "rank_change": 82,
+    "continuous": 1,
+    "ratio": 57.1,
+    "stock_count": 7,
+    "rps50_above_90": 4
    },
    {
-    "name": "石油贸易",
+    "name": "农业综合",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": 76,
+    "rank_change": 5,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 4,
-    "rps50_above_90": 0
+    "ratio": 32.5,
+    "stock_count": 40,
+    "rps50_above_90": 13
    },
    {
-    "name": "食品",
+    "name": "红黄酒",
     "RPS5": 90.9,
     "rank": 10,
-    "rank_change": 4,
-    "continuous": 1,
-    "ratio": 26.7,
-    "stock_count": 90,
-    "rps50_above_90": 24
+    "rank_change": 1,
+    "continuous": 4,
+    "ratio": 37.5,
+    "stock_count": 8,
+    "rps50_above_90": 3
    }
   ],
   "tier2": [
    {
-    "name": "红黄酒",
+    "name": "批发业",
     "RPS5": 90.0,
     "rank": 11,
-    "rank_change": 0,
-    "continuous": 3,
-    "ratio": 12.5,
-    "stock_count": 8,
+    "rank_change": -5,
+    "continuous": 2,
+    "ratio": 20.0,
+    "stock_count": 5,
     "rps50_above_90": 1
    }
   ],
@@ -307,175 +247,211 @@
  "rotation": {
   "new_in": [
    {
-    "name": "批发业",
-    "RPS5": 94.5,
-    "rank": 6,
-    "rank_change": 17,
+    "name": "种植业",
+    "RPS5": 99.1,
+    "rank": 1,
+    "rank_change": 14,
     "continuous": 1,
-    "ratio": 20.0,
-    "stock_count": 5,
-    "rps50_above_90": 1
+    "ratio": 73.7,
+    "stock_count": 19,
+    "rps50_above_90": 14
    },
    {
-    "name": "石油贸易",
+    "name": "水运",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 19,
+    "continuous": 1,
+    "ratio": 42.1,
+    "stock_count": 19,
+    "rps50_above_90": 8
+   },
+   {
+    "name": "船舶",
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": 12,
+    "continuous": 1,
+    "ratio": 27.3,
+    "stock_count": 11,
+    "rps50_above_90": 3
+   },
+   {
+    "name": "焦炭加工",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": 82,
+    "continuous": 1,
+    "ratio": 57.1,
+    "stock_count": 7,
+    "rps50_above_90": 4
+   },
+   {
+    "name": "农业综合",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": 76,
+    "rank_change": 5,
     "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 4,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "食品",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 4,
-    "continuous": 1,
-    "ratio": 26.7,
-    "stock_count": 90,
-    "rps50_above_90": 24
+    "ratio": 32.5,
+    "stock_count": 40,
+    "rps50_above_90": 13
    }
   ],
   "rank_jump": [
    {
-    "name": "石油贸易",
+    "name": "焦炭加工",
+    "RPS5": 92.7,
+    "rank": 8,
+    "rank_change": 82,
+    "continuous": 1,
+    "ratio": 57.1,
+    "stock_count": 7,
+    "rps50_above_90": 4
+   },
+   {
+    "name": "水运",
+    "RPS5": 97.3,
+    "rank": 3,
+    "rank_change": 19,
+    "continuous": 1,
+    "ratio": 42.1,
+    "stock_count": 19,
+    "rps50_above_90": 8
+   },
+   {
+    "name": "种植业",
+    "RPS5": 99.1,
+    "rank": 1,
+    "rank_change": 14,
+    "continuous": 1,
+    "ratio": 73.7,
+    "stock_count": 19,
+    "rps50_above_90": 14
+   },
+   {
+    "name": "船舶",
+    "RPS5": 96.4,
+    "rank": 4,
+    "rank_change": 12,
+    "continuous": 1,
+    "ratio": 27.3,
+    "stock_count": 11,
+    "rps50_above_90": 3
+   },
+   {
+    "name": "农业综合",
     "RPS5": 91.8,
     "rank": 9,
-    "rank_change": 76,
-    "continuous": 1,
-    "ratio": 0.0,
-    "stock_count": 4,
-    "rps50_above_90": 0
-   },
-   {
-    "name": "批发业",
-    "RPS5": 94.5,
-    "rank": 6,
-    "rank_change": 17,
-    "continuous": 1,
-    "ratio": 20.0,
-    "stock_count": 5,
-    "rps50_above_90": 1
-   },
-   {
-    "name": "出版业",
-    "RPS5": 98.2,
-    "rank": 2,
-    "rank_change": 7,
-    "continuous": 4,
-    "ratio": 25.9,
-    "stock_count": 27,
-    "rps50_above_90": 7
-   },
-   {
-    "name": "旅游景点",
-    "RPS5": 95.5,
-    "rank": 5,
     "rank_change": 5,
-    "continuous": 2,
-    "ratio": 27.8,
-    "stock_count": 18,
-    "rps50_above_90": 5
-   },
-   {
-    "name": "食品",
-    "RPS5": 90.9,
-    "rank": 10,
-    "rank_change": 4,
     "continuous": 1,
-    "ratio": 26.7,
-    "stock_count": 90,
-    "rps50_above_90": 24
+    "ratio": 32.5,
+    "stock_count": 40,
+    "rps50_above_90": 13
    }
   ],
   "out_all": [
-   "旅游服务",
-   "种植业",
-   "普钢",
-   "旅游景点",
+   "食品",
+   "石油贸易",
+   "出版业",
    "酒店餐饮",
-   "装修装饰"
+   "旅游景点",
+   "旅游服务"
   ],
   "out_count": 6
  },
  "health": {
   "expand": [
    {
-    "name": "饲料",
-    "ratio": 39.1
+    "name": "种植业",
+    "ratio": 73.7
    },
    {
     "name": "渔业",
     "ratio": 100.0
    },
    {
-    "name": "酒店餐饮",
-    "ratio": 33.3
+    "name": "水运",
+    "ratio": 42.1
+   },
+   {
+    "name": "百货",
+    "ratio": 37.1
+   },
+   {
+    "name": "焦炭加工",
+    "ratio": 57.1
+   },
+   {
+    "name": "农业综合",
+    "ratio": 32.5
+   },
+   {
+    "name": "红黄酒",
+    "ratio": 37.5
    }
   ],
   "mature": [],
   "seed": [
-   "批发业",
-   "石油贸易",
-   "食品"
+   "种植业",
+   "水运",
+   "船舶",
+   "焦炭加工",
+   "农业综合"
   ]
  },
  "risk": {
-  "batch_out": {},
-  "diverge": [
-   {
-    "name": "超市连锁",
-    "ratio": 12.5
-   },
-   {
-    "name": "石油贸易",
-    "ratio": 0.0
-   }
-  ],
+  "batch_out": {
+   "消费": 3,
+   "周期": 1,
+   "其他": 1
+  },
+  "diverge": [],
   "momentum_decay": false,
   "warnings": [
-   "高位顶背离: 超市连锁 排名靠前但内部个股达标率低(12%), 指数虚高警惕回落"
+   "批量调出预警: 今日调出5个板块, 集中在「消费」(3个), 该方向短期回避"
   ]
  },
  "watch": {
   "seed": [
-   "批发业",
-   "石油贸易",
-   "食品"
+   "种植业",
+   "水运",
+   "船舶",
+   "焦炭加工",
+   "农业综合"
   ],
-  "critical": [],
+  "critical": [
+   {
+    "name": "铜",
+    "rps5": 89.1
+   }
+  ],
   "diverge_watch": [
-   "农业综合",
    "农用机械",
-   "旅游服务",
    "普钢",
-   "林业",
-   "种植业"
+   "林业"
   ]
  },
  "sentiment": {
-  "phase": "冰点期",
-  "seed_n": 3,
-  "out_n": 3,
-  "core_n": 4,
-  "high_n": 0
+  "phase": "发酵期",
+  "seed_n": 5,
+  "out_n": 5,
+  "core_n": 5,
+  "high_n": 11
  },
  "style": {
   "rps5": {
-   "其他": 7,
-   "消费": 3,
-   "周期": 1
-  },
-  "rps10": {
    "其他": 9,
    "制造": 1,
    "消费": 1
   },
+  "rps10": {
+   "其他": 9,
+   "制造": 2
+  },
   "rps20": {
-   "其他": 8,
-   "制造": 1,
-   "消费": 2
+   "其他": 9,
+   "消费": 1,
+   "制造": 1
   }
  },
  "market_status_rec": {
@@ -486,20 +462,20 @@
    {
     "code": "000001.SH",
     "name": "上证指数",
-    "close": 3940.55,
-    "ma": 3936.14,
+    "close": 3951.51,
+    "ma": 3936.39,
     "above": true
    },
    {
     "code": "399006.SZ",
     "name": "创业板指",
-    "close": 3359.72,
-    "ma": 3470.93,
+    "close": 3354.97,
+    "ma": 3458.58,
     "above": false
    }
   ],
-  "advance_ratio": 0.63,
-  "limit_down_count": 6,
+  "advance_ratio": 0.33,
+  "limit_down_count": 12,
   "note": "大盘环境合格, 继续选股"
  }
 }
