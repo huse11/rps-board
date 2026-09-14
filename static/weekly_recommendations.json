@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
-  "update_date": "20260907",
-  "week": "2026W37",
-  "prev_date": "20260904",
+  "update_date": "20260914",
+  "week": "2026W38",
+  "prev_date": "20260911",
   "market_status": {
     "is_safe": false,
     "level": "bad",
@@ -12,21 +12,21 @@
       {
         "code": "000001.SH",
         "name": "上证指数",
-        "close": 3932.7,
-        "ma": 3991.19,
+        "close": 3885.33,
+        "ma": 3977.62,
         "above": false
       },
       {
         "code": "399006.SZ",
         "name": "创业板指",
-        "close": 3398.68,
-        "ma": 3728.72,
+        "close": 3285.58,
+        "ma": 3705.31,
         "above": false
       }
     ],
-    "advance_ratio": 0.43,
-    "big_drop_count": 104,
-    "macd_ok": null,
+    "advance_ratio": 0.21,
+    "big_drop_count": 282,
+    "macd_ok": false,
     "note": "周度大盘环境恶劣, 本周无推荐"
   },
   "position_advice": "建议空仓或轻仓观望",
