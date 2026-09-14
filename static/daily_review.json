@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4146.6311,
-   "ma20": 4064.771080000001,
-   "above": true,
+   "close": 3885.333,
+   "ma20": 3929.9379,
+   "above": false,
    "days": 138
   },
-  "note": "上证指数站上20日线(4065点)"
+  "note": "上证指数跌破20日线(3930点)"
  },
  "resonance": {
   "core": [
@@ -440,16 +440,7 @@
    "供气供热",
    "陶瓷"
   ],
-  "critical": [
-   {
-    "name": "港口",
-    "rps5": 89.1
-   },
-   {
-    "name": "汽车服务",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "农用机械",
    "旅游景点",
@@ -462,11 +453,11 @@
   ]
  },
  "sentiment": {
-  "phase": "震荡期",
+  "phase": "冰点期",
   "seed_n": 3,
   "out_n": 3,
   "core_n": 1,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
