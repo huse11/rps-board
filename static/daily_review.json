@@ -12,12 +12,12 @@
   "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 3891.601,
-   "ma20": 3923.4955999999997,
-   "above": false,
+   "close": 4182.5909,
+   "ma20": 4039.435815,
+   "above": true,
    "days": 138
   },
-  "note": "上证指数跌破20日线(3923点)"
+  "note": "上证指数站上20日线(4039点)"
  },
  "resonance": {
   "core": [
