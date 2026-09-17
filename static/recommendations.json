@@ -1,7 +1,7 @@
 {
   "schema_version": 3,
-  "update_date": "20260916",
-  "prev_date": "20260915",
+  "update_date": "20260917",
+  "prev_date": "20260916",
   "market_status": {
     "is_safe": false,
     "rule": "至少 1 个指数站上 20 日线",
@@ -10,20 +10,20 @@
       {
         "code": "000001.SH",
         "name": "上证指数",
-        "close": 3891.6,
-        "ma": 3923.5,
+        "close": 3875.6,
+        "ma": 3922.09,
         "above": false
       },
       {
         "code": "399006.SZ",
         "name": "创业板指",
-        "close": 3311.47,
-        "ma": 3377.27,
+        "close": 3298.31,
+        "ma": 3367.41,
         "above": false
       }
     ],
-    "advance_ratio": 0.78,
-    "limit_down_count": 5,
+    "advance_ratio": 0.48,
+    "limit_down_count": 4,
     "note": "大盘环境不合格, 终止选股"
   },
   "multi_sector_count": 0,
