@@ -4,12 +4,12 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
    "close": 3911.871,
@@ -481,12 +481,7 @@
    "房产服务",
    "电器仪表"
   ],
-  "critical": [
-   {
-    "name": "染料涂料",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "农用机械",
    "出版业",
@@ -500,11 +495,11 @@
   ]
  },
  "sentiment": {
-  "phase": "启动期",
+  "phase": "冰点期",
   "seed_n": 4,
   "out_n": 4,
   "core_n": 2,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
