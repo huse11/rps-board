@@ -1,32 +1,32 @@
 {
   "schema_version": 3,
-  "update_date": "20260917",
-  "prev_date": "20260916",
+  "update_date": "20260918",
+  "prev_date": "20260917",
   "market_status": {
-    "is_safe": false,
+    "is_safe": true,
     "rule": "至少 1 个指数站上 20 日线",
-    "reason": "上证指数 / 创业板指 跌破20日线",
+    "reason": "",
     "indexes": [
       {
         "code": "000001.SH",
         "name": "上证指数",
-        "close": 3875.6,
-        "ma": 3922.09,
+        "close": 3911.87,
+        "ma": 3922.42,
         "above": false
       },
       {
         "code": "399006.SZ",
         "name": "创业板指",
-        "close": 3298.31,
-        "ma": 3367.41,
-        "above": false
+        "close": 3372.68,
+        "ma": 3358.76,
+        "above": true
       }
     ],
-    "advance_ratio": 0.48,
-    "limit_down_count": 4,
-    "note": "大盘环境不合格, 终止选股"
+    "advance_ratio": 0.79,
+    "limit_down_count": 1,
+    "note": "大盘环境合格, 继续选股"
   },
-  "multi_sector_count": 0,
+  "multi_sector_count": 69,
   "prediction_status": {
     "regime": "震荡市",
     "note": "震荡市, 动量因子权重最高",
@@ -34,6 +34,4466 @@
     "warning": false
   },
   "disclaimer": "⚠️ 全部为量化规则/软件算法逻辑参考,绝对不构成任何个股投资建议;中短线交易天然高风险,任何公式都无法100%胜率,系统必须绑定强制止损;本工具仅个人研究使用,严禁对外收费荐股、批量推送盈利承诺,违反监管法规。严禁杠杆借贷炒股。",
-  "count": 0,
-  "stocks": []
+  "count": 70,
+  "stocks": [
+    {
+      "ts_code": "600059.SH",
+      "name": "古越龙山",
+      "industry": "红黄酒",
+      "sectors": [
+        "红黄酒"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 10.7,
+      "pct_chg": 8.63,
+      "pe_ttm": 43.6302,
+      "circ_mv": 97.54,
+      "score_total": 91,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 12.06,
+        "vol_ratio": 2.24,
+        "amount": 1159483545.0,
+        "net_inflow_3d": 43483600.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 88,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "个股RPS50≥90",
+          "技术7项共振6/7"
+        ],
+        "factors": {
+          "momentum": 60,
+          "technical": 65,
+          "capital": 62,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688257.SH",
+      "name": "新锐股份",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 58.2,
+      "pct_chg": 6.46,
+      "pe_ttm": 29.9452,
+      "circ_mv": 206.76,
+      "score_total": 91,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.37,
+        "vol_ratio": 1.57,
+        "amount": 1087931133.0,
+        "net_inflow_3d": 138249400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "三档RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300260.SZ",
+      "name": "新莱应材",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 64.27,
+      "pct_chg": 6.58,
+      "pe_ttm": 157.0037,
+      "circ_mv": 184.71,
+      "score_total": 89,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.77,
+        "vol_ratio": 1.7,
+        "amount": 1400223443.0,
+        "net_inflow_3d": 181525700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 52,
+          "technical": 58,
+          "capital": 62,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300277.SZ",
+      "name": "汽轮科技",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 量价齐升 + MACD多头",
+      "price": 13.04,
+      "pct_chg": 4.82,
+      "pe_ttm": 193.8189,
+      "circ_mv": 99.81,
+      "score_total": 84,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.84,
+        "vol_ratio": 1.9,
+        "amount": 376526951.0,
+        "net_inflow_3d": 22413100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 82,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 58,
+          "capital": 60,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002185.SZ",
+      "name": "华天科技",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 18.03,
+      "pct_chg": 10.01,
+      "pe_ttm": 46.2309,
+      "circ_mv": 599.68,
+      "score_total": 83,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 10.92,
+        "vol_ratio": 1.8,
+        "amount": 6386880067.0,
+        "net_inflow_3d": 2661255600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "601369.SH",
+      "name": "陕鼓动力",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 9.02,
+      "pct_chg": 7.38,
+      "pe_ttm": 23.3383,
+      "circ_mv": 153.9,
+      "score_total": 83,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.45,
+        "vol_ratio": 7.12,
+        "amount": 367794729.0,
+        "net_inflow_3d": 73388700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 86,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -8.1,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 60,
+          "capital": 60,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688028.SH",
+      "name": "沃尔德",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 127.12,
+      "pct_chg": 2.86,
+      "pe_ttm": 175.5205,
+      "circ_mv": 191.89,
+      "score_total": 82,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.43,
+        "vol_ratio": 1.13,
+        "amount": 1402923895.0,
+        "net_inflow_3d": 49069799.99999999
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 82,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 60,
+          "capital": 60,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002134.SZ",
+      "name": "天津普林",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 27.1,
+      "pct_chg": 9.98,
+      "pe_ttm": 158.3731,
+      "circ_mv": 66.86,
+      "score_total": 81,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 13.35,
+        "vol_ratio": 1.56,
+        "amount": 883303689.0,
+        "net_inflow_3d": 173910600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 77,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002747.SZ",
+      "name": "埃斯顿",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 量价齐升 + MACD多头",
+      "price": 29.79,
+      "pct_chg": 0.74,
+      "pe_ttm": 144.5608,
+      "circ_mv": 233.66,
+      "score_total": 81,
+      "score_sector": 40,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.36,
+        "vol_ratio": 1.46,
+        "amount": 1013505295.0,
+        "net_inflow_3d": 6343300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 81,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -5.3,
+        "confidence": "中",
+        "logic": [
+          "三档RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "603068.SH",
+      "name": "博通集成",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + KDJ健康",
+      "price": 39.81,
+      "pct_chg": 10.0,
+      "pe_ttm": 112.9301,
+      "circ_mv": 60.43,
+      "score_total": 81,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.6,
+        "vol_ratio": 2.16,
+        "amount": 510324866.0,
+        "net_inflow_3d": 192385900.0
+      },
+      "technical": {
+        "hits": [
+          "KDJ健康",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 71,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 54,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688059.SH",
+      "name": "华锐精密",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 量价齐升 + MACD多头",
+      "price": 88.2,
+      "pct_chg": 4.5,
+      "pe_ttm": 36.4164,
+      "circ_mv": 115.55,
+      "score_total": 81,
+      "score_sector": 40,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.04,
+        "vol_ratio": 1.37,
+        "amount": 345108009.0,
+        "net_inflow_3d": 13687300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 83,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "三档RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688678.SH",
+      "name": "福立旺",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 24.68,
+      "pct_chg": 6.56,
+      "pe_ttm": 70.3437,
+      "circ_mv": 99.49,
+      "score_total": 81,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.71,
+        "vol_ratio": 1.67,
+        "amount": 840490644.0,
+        "net_inflow_3d": 108146900.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 82,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术7项共振6/7",
+          "突破20日新高+放量+均线多头"
+        ],
+        "factors": {
+          "momentum": 55,
+          "technical": 65,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300475.SZ",
+      "name": "香农芯创",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 174.32,
+      "pct_chg": 6.27,
+      "pe_ttm": 20.319,
+      "circ_mv": 781.82,
+      "score_total": 80,
+      "score_sector": 30,
+      "score_fundamental": 12,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 3641509573.03,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.86,
+        "vol_ratio": 1.55,
+        "amount": 5280184382.0,
+        "net_inflow_3d": 199233900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ低位金叉",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002106.SZ",
+      "name": "莱宝高科",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 12.52,
+      "pct_chg": 3.13,
+      "pe_ttm": 55.7761,
+      "circ_mv": 88.27,
+      "score_total": 79,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.25,
+        "vol_ratio": 1.59,
+        "amount": 720390764.0,
+        "net_inflow_3d": 50931400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 83,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 62,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300322.SZ",
+      "name": "硕贝德",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 18.44,
+      "pct_chg": 6.65,
+      "pe_ttm": 150.3089,
+      "circ_mv": 81.22,
+      "score_total": 79,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.11,
+        "vol_ratio": 2.52,
+        "amount": 727124034.0,
+        "net_inflow_3d": 87065200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "资金埋伏(流入+滞涨)"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300458.SZ",
+      "name": "全志科技",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 31.27,
+      "pct_chg": 4.48,
+      "pe_ttm": 52.5578,
+      "circ_mv": 254.59,
+      "score_total": 79,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.51,
+        "vol_ratio": 1.82,
+        "amount": 1388670879.0,
+        "net_inflow_3d": 144298300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -7.6,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "600363.SH",
+      "name": "联创光电",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 16.06,
+      "pct_chg": 5.52,
+      "pe_ttm": 18.8788,
+      "circ_mv": 72.41,
+      "score_total": 79,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.74,
+        "vol_ratio": 1.86,
+        "amount": 552299218.0,
+        "net_inflow_3d": 47884000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 81,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -8.6,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688545.SH",
+      "name": "兴福电子",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 81.82,
+      "pct_chg": 7.42,
+      "pe_ttm": 130.6108,
+      "circ_mv": 149.12,
+      "score_total": 79,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.39,
+        "vol_ratio": 1.89,
+        "amount": 1229548007.0,
+        "net_inflow_3d": 67200300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 76,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002080.SZ",
+      "name": "中材科技",
+      "industry": "玻璃",
+      "sectors": [
+        "玻璃"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 60.22,
+      "pct_chg": 2.61,
+      "pe_ttm": 49.86,
+      "circ_mv": 1010.57,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.71,
+        "vol_ratio": 1.73,
+        "amount": 6872577219.0,
+        "net_inflow_3d": 332424700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 85,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "连涨8日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 64,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002241.SZ",
+      "name": "歌尔股份",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + KDJ健康",
+      "price": 23.33,
+      "pct_chg": 4.71,
+      "pe_ttm": 20.8081,
+      "circ_mv": 735.25,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.16,
+        "vol_ratio": 2.68,
+        "amount": 3047095899.0,
+        "net_inflow_3d": 173020800.00000003
+      },
+      "technical": {
+        "hits": [
+          "KDJ健康",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "2个强势板块共振"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 58,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300223.SZ",
+      "name": "君正股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 142.97,
+      "pct_chg": 5.86,
+      "pe_ttm": 53.7128,
+      "circ_mv": 604.67,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 8.53,
+        "vol_ratio": 2.07,
+        "amount": 5109552060.0,
+        "net_inflow_3d": 725882100.0000001
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301308.SZ",
+      "name": "江波龙",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 346.96,
+      "pct_chg": 3.54,
+      "pe_ttm": 13.3064,
+      "circ_mv": 977.91,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.19,
+        "vol_ratio": 1.62,
+        "amount": 4065562542.0,
+        "net_inflow_3d": 277398200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ低位金叉",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 77,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -5.6,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "603092.SH",
+      "name": "德力佳",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 45.11,
+      "pct_chg": 1.78,
+      "pe_ttm": 21.3437,
+      "circ_mv": 15.6,
+      "score_total": 78,
+      "score_sector": 40,
+      "score_fundamental": 8,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 10.41,
+        "vol_ratio": 1.36,
+        "amount": 160292423.0,
+        "net_inflow_3d": 3485700.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 86,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "三档RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "603986.SH",
+      "name": "兆易创新",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 388.18,
+      "pct_chg": 4.95,
+      "pe_ttm": 34.4629,
+      "circ_mv": 2603.59,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.12,
+        "vol_ratio": 1.52,
+        "amount": 15787688481.0,
+        "net_inflow_3d": 1634084500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -8.4,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688261.SH",
+      "name": "东微半导",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 81.37,
+      "pct_chg": 15.16,
+      "pe_ttm": 79.8814,
+      "circ_mv": 99.35,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 17,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 13.26,
+        "vol_ratio": 5.16,
+        "amount": 1304106988.0,
+        "net_inflow_3d": 104128200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 70,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 52,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688766.SH",
+      "name": "普冉股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 430.0,
+      "pct_chg": 10.06,
+      "pe_ttm": 64.3587,
+      "circ_mv": 639.43,
+      "score_total": 78,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 10.31,
+        "vol_ratio": 2.16,
+        "amount": 6422846177.0,
+        "net_inflow_3d": 536713800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300623.SZ",
+      "name": "捷捷微电",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 35.3,
+      "pct_chg": 7.26,
+      "pe_ttm": 55.6749,
+      "circ_mv": 270.98,
+      "score_total": 77,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.99,
+        "vol_ratio": 2.35,
+        "amount": 1592245351.0,
+        "net_inflow_3d": 77511000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 73,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 52,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300835.SZ",
+      "name": "龙磁科技",
+      "industry": "矿物制品",
+      "sectors": [
+        "矿物制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 187.0,
+      "pct_chg": 6.22,
+      "pe_ttm": 143.7667,
+      "circ_mv": 156.29,
+      "score_total": 77,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.95,
+        "vol_ratio": 1.6,
+        "amount": 918355736.0,
+        "net_inflow_3d": 75911200.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 86,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头"
+        ],
+        "factors": {
+          "momentum": 60,
+          "technical": 63,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300938.SZ",
+      "name": "信测标准",
+      "industry": "电器仪表",
+      "sectors": [
+        "电器仪表"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 32.5,
+      "pct_chg": 4.27,
+      "pe_ttm": 52.9161,
+      "circ_mv": 96.15,
+      "score_total": 77,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.36,
+        "vol_ratio": 1.58,
+        "amount": 608093462.0,
+        "net_inflow_3d": 32373300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301678.SZ",
+      "name": "新恒汇",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 50.21,
+      "pct_chg": 2.09,
+      "pe_ttm": 169.4286,
+      "circ_mv": 69.78,
+      "score_total": 77,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.08,
+        "vol_ratio": 2.59,
+        "amount": 425593343.0,
+        "net_inflow_3d": 17599800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 72,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "605111.SH",
+      "name": "新洁能",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 62.85,
+      "pct_chg": 6.11,
+      "pe_ttm": 66.6118,
+      "circ_mv": 261.04,
+      "score_total": 77,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.59,
+        "vol_ratio": 2.09,
+        "amount": 1697328532.0,
+        "net_inflow_3d": 74851900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 72,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 52,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002724.SZ",
+      "name": "海洋王",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + RPS50强势",
+      "price": 7.13,
+      "pct_chg": 4.39,
+      "pe_ttm": 114.1598,
+      "circ_mv": 40.39,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": 28407960.52,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.34,
+        "vol_ratio": 2.69,
+        "amount": 379632690.0,
+        "net_inflow_3d": 67767700.0
+      },
+      "technical": {
+        "hits": [
+          "KDJ健康",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 65,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002980.SZ",
+      "name": "华盛昌",
+      "industry": "电器仪表",
+      "sectors": [
+        "电器仪表"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 128.03,
+      "pct_chg": 10.0,
+      "pe_ttm": 199.7442,
+      "circ_mv": 129.68,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 16.01,
+        "vol_ratio": 1.6,
+        "amount": 1982778922.0,
+        "net_inflow_3d": 306261800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 63,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300456.SZ",
+      "name": "赛微电子",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + KDJ健康",
+      "price": 36.58,
+      "pct_chg": 3.86,
+      "pe_ttm": 6.4134,
+      "circ_mv": 218.59,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.47,
+        "vol_ratio": 1.34,
+        "amount": 1401160335.0,
+        "net_inflow_3d": 141293200.0
+      },
+      "technical": {
+        "hits": [
+          "KDJ健康",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 81,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301086.SZ",
+      "name": "鸿富瀚",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 165.79,
+      "pct_chg": 6.4,
+      "pe_ttm": 137.4316,
+      "circ_mv": 115.66,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.64,
+        "vol_ratio": 1.31,
+        "amount": 1092000089.0,
+        "net_inflow_3d": 119976100.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头"
+        ],
+        "factors": {
+          "momentum": 54,
+          "technical": 63,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688699.SH",
+      "name": "明微电子",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 68.55,
+      "pct_chg": 4.39,
+      "pe_ttm": 102.119,
+      "circ_mv": 75.45,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.68,
+        "vol_ratio": 1.71,
+        "amount": 424863836.0,
+        "net_inflow_3d": 8496800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 69,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 50,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "601112.SH",
+      "name": "振石股份",
+      "industry": "玻璃",
+      "sectors": [
+        "玻璃"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 17.0,
+      "pct_chg": 3.79,
+      "pe_ttm": 37.223,
+      "circ_mv": 31.07,
+      "score_total": 76,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.85,
+        "vol_ratio": 1.54,
+        "amount": 301677027.0,
+        "net_inflow_3d": 15609000.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 88,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头"
+        ],
+        "factors": {
+          "momentum": 62,
+          "technical": 63,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300046.SZ",
+      "name": "台基股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 25.18,
+      "pct_chg": 3.88,
+      "pe_ttm": 138.6496,
+      "circ_mv": 59.56,
+      "score_total": 75,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 14,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.16,
+        "vol_ratio": 2.6,
+        "amount": 248225069.0,
+        "net_inflow_3d": 10318400.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 76,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301099.SZ",
+      "name": "雅创电子",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 53.26,
+      "pct_chg": 3.96,
+      "pe_ttm": 30.6363,
+      "circ_mv": 61.24,
+      "score_total": 75,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 12,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.31,
+        "vol_ratio": 1.45,
+        "amount": 567151912.0,
+        "net_inflow_3d": 2226900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301548.SZ",
+      "name": "崇德科技",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 量价齐升 + MACD多头",
+      "price": 54.32,
+      "pct_chg": 3.76,
+      "pe_ttm": 33.9117,
+      "circ_mv": 15.86,
+      "score_total": 75,
+      "score_sector": 40,
+      "score_fundamental": 8,
+      "score_capital": 7,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.31,
+        "vol_ratio": 1.38,
+        "amount": 83512392.0,
+        "net_inflow_3d": 2602900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 83,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -5.5,
+        "confidence": "中",
+        "logic": [
+          "三档RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 64,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002077.SZ",
+      "name": "大港股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 14.5,
+      "pct_chg": 4.92,
+      "pe_ttm": 110.8345,
+      "circ_mv": 84.15,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 12.39,
+        "vol_ratio": 1.2,
+        "amount": 1031257717.0,
+        "net_inflow_3d": 62357100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002119.SZ",
+      "name": "康强电子",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 24.82,
+      "pct_chg": 2.39,
+      "pe_ttm": 77.426,
+      "circ_mv": 93.15,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 13.4,
+        "vol_ratio": 1.29,
+        "amount": 1249566652.0,
+        "net_inflow_3d": 57203600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002138.SZ",
+      "name": "顺络电子",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 52.52,
+      "pct_chg": 5.19,
+      "pe_ttm": 43.1133,
+      "circ_mv": 402.48,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.54,
+        "vol_ratio": 1.14,
+        "amount": 1808433032.0,
+        "net_inflow_3d": 77522300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002484.SZ",
+      "name": "江海股份",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 61.48,
+      "pct_chg": 2.36,
+      "pe_ttm": 74.7628,
+      "circ_mv": 504.42,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.82,
+        "vol_ratio": 1.12,
+        "amount": 2411683686.0,
+        "net_inflow_3d": 225215099.99999997
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "资金埋伏(流入+滞涨)"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300666.SZ",
+      "name": "江丰电子",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 260.44,
+      "pct_chg": 4.43,
+      "pe_ttm": 91.3788,
+      "circ_mv": 576.73,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.28,
+        "vol_ratio": 1.19,
+        "amount": 3568505807.0,
+        "net_inflow_3d": 326258200.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301563.SZ",
+      "name": "云汉芯城",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 115.99,
+      "pct_chg": 4.32,
+      "pe_ttm": 46.5626,
+      "circ_mv": 22.2,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 16,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 9.8,
+        "vol_ratio": 1.62,
+        "amount": 216160293.0,
+        "net_inflow_3d": 11205800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -8.8,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "600516.SH",
+      "name": "方大炭素",
+      "industry": "矿物制品",
+      "sectors": [
+        "矿物制品"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 5.6,
+      "pct_chg": 1.63,
+      "pe_ttm": 107.639,
+      "circ_mv": 225.45,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.34,
+        "vol_ratio": 2.47,
+        "amount": 745326093.0,
+        "net_inflow_3d": 41223900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 83,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 62,
+          "technical": 60,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688112.SH",
+      "name": "鼎阳科技",
+      "industry": "电器仪表",
+      "sectors": [
+        "电器仪表"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 76.49,
+      "pct_chg": 6.02,
+      "pe_ttm": 77.5054,
+      "circ_mv": 122.08,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.88,
+        "vol_ratio": 1.94,
+        "amount": 458857285.0,
+        "net_inflow_3d": 49292900.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 6
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术7项共振6/7",
+          "突破20日新高+放量+均线多头"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 65,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688123.SH",
+      "name": "聚辰股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 146.0,
+      "pct_chg": 3.84,
+      "pe_ttm": 33.9442,
+      "circ_mv": 232.1,
+      "score_total": 74,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.52,
+        "vol_ratio": 1.26,
+        "amount": 1280331277.0,
+        "net_inflow_3d": 82430300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "001309.SZ",
+      "name": "德明利",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 413.09,
+      "pct_chg": 4.07,
+      "pe_ttm": 13.7331,
+      "circ_mv": 682.52,
+      "score_total": 73,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.76,
+        "vol_ratio": 1.24,
+        "amount": 5258660963.0,
+        "net_inflow_3d": 377074500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -7.8,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "001314.SZ",
+      "name": "亿道信息",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 54.38,
+      "pct_chg": 7.13,
+      "pe_ttm": 31.0584,
+      "circ_mv": 67.49,
+      "score_total": 73,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.78,
+        "vol_ratio": 2.04,
+        "amount": 250357317.0,
+        "net_inflow_3d": 3569900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300672.SZ",
+      "name": "国科微",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 185.49,
+      "pct_chg": 6.39,
+      "pe_ttm": null,
+      "circ_mv": 390.16,
+      "score_total": 73,
+      "score_sector": 30,
+      "score_fundamental": 5,
+      "score_capital": 18,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.56,
+        "vol_ratio": 1.52,
+        "amount": 1748717163.0,
+        "net_inflow_3d": 117256600.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 70,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "603893.SH",
+      "name": "瑞芯微",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 190.04,
+      "pct_chg": 4.87,
+      "pe_ttm": 58.7894,
+      "circ_mv": 804.05,
+      "score_total": 73,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.96,
+        "vol_ratio": 1.77,
+        "amount": 2356152881.0,
+        "net_inflow_3d": 237084500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688200.SH",
+      "name": "华峰测控",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 407.93,
+      "pct_chg": 14.36,
+      "pe_ttm": 108.4435,
+      "circ_mv": 820.42,
+      "score_total": 73,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.93,
+        "vol_ratio": 2.21,
+        "amount": 3079333522.0,
+        "net_inflow_3d": 518638300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 71,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 54,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "301571.SZ",
+      "name": "国科天成",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 74.72,
+      "pct_chg": 2.48,
+      "pe_ttm": 56.4735,
+      "circ_mv": 89.04,
+      "score_total": 72,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.07,
+        "vol_ratio": 1.36,
+        "amount": 361139330.0,
+        "net_inflow_3d": 22819300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 81,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 60,
+          "technical": 58,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688110.SH",
+      "name": "东芯股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 122.36,
+      "pct_chg": 5.91,
+      "pe_ttm": 94.067,
+      "circ_mv": 541.29,
+      "score_total": 72,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 4.21,
+        "vol_ratio": 1.49,
+        "amount": 2246530758.0,
+        "net_inflow_3d": 34875100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688381.SH",
+      "name": "帝奥微",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 42.19,
+      "pct_chg": 5.95,
+      "pe_ttm": 136.0098,
+      "circ_mv": 104.42,
+      "score_total": 72,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.64,
+        "vol_ratio": 1.14,
+        "amount": 586406542.0,
+        "net_inflow_3d": 31660800.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 80,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "技术多指标共振5/7",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 60,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688416.SH",
+      "name": "恒烁股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 81.13,
+      "pct_chg": 4.59,
+      "pe_ttm": 78.9021,
+      "circ_mv": 87.52,
+      "score_total": 72,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 11,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 7.29,
+        "vol_ratio": 1.26,
+        "amount": 638171567.0,
+        "net_inflow_3d": 13176400.000000002
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 79,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 64,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002273.SZ",
+      "name": "水晶光电",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 25.47,
+      "pct_chg": 3.66,
+      "pe_ttm": 29.6128,
+      "circ_mv": 347.94,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.63,
+        "vol_ratio": 1.3,
+        "amount": 906274166.0,
+        "net_inflow_3d": 87722800.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 77,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -6.6,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002384.SZ",
+      "name": "东山精密",
+      "industry": "元器件",
+      "sectors": [
+        "元器件"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 196.15,
+      "pct_chg": 1.35,
+      "pe_ttm": 100.2159,
+      "circ_mv": 2719.27,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.1,
+        "vol_ratio": 1.18,
+        "amount": 13878839012.0,
+        "net_inflow_3d": 396730199.99999994
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ健康",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 76,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "资金埋伏(流入+滞涨)"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "002849.SZ",
+      "name": "威星智能",
+      "industry": "电器仪表",
+      "sectors": [
+        "电器仪表"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 20.32,
+      "pct_chg": 10.02,
+      "pe_ttm": 90.0306,
+      "circ_mv": 44.44,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 6,
+      "score_capital": 15,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 12.43,
+        "vol_ratio": 3.7,
+        "amount": 544777184.0,
+        "net_inflow_3d": 55089300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "RPS50强势",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 82,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "个股RPS50≥90",
+          "技术多指标共振5/7"
+        ],
+        "factors": {
+          "momentum": 62,
+          "technical": 60,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300421.SZ",
+      "name": "力星股份",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 20日新高 + 量价齐升",
+      "price": 17.23,
+      "pct_chg": 2.93,
+      "pe_ttm": 95.8181,
+      "circ_mv": 40.22,
+      "score_total": 71,
+      "score_sector": 40,
+      "score_fundamental": 6,
+      "score_capital": 5,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.95,
+        "vol_ratio": 1.26,
+        "amount": 117611529.0,
+        "net_inflow_3d": 3648100.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 84,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "三档RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 58,
+          "capital": 60,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 55
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300570.SZ",
+      "name": "太辰光",
+      "industry": "通信设备",
+      "sectors": [
+        "通信设备"
+      ],
+      "sector_count": 1,
+      "tags": "通信设备热点 + 20日新高 + 量价齐升",
+      "price": 229.35,
+      "pct_chg": 6.19,
+      "pe_ttm": 172.5335,
+      "circ_mv": 440.79,
+      "score_total": 71,
+      "score_sector": 20,
+      "score_fundamental": 11,
+      "score_capital": 20,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 14.94,
+        "vol_ratio": 1.6,
+        "amount": 6665488704.0,
+        "net_inflow_3d": 279728700.0
+      },
+      "technical": {
+        "hits": [
+          "均线多头",
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 5
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 75,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "技术多指标共振5/7",
+          "突破20日新高+放量+均线多头",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 63,
+          "capital": 62,
+          "sector": 57,
+          "sentiment": 58,
+          "fundamental": 53
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "300661.SZ",
+      "name": "圣邦股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 125.13,
+      "pct_chg": 7.44,
+      "pe_ttm": 111.9236,
+      "circ_mv": 753.14,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 8,
+      "score_capital": 13,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.43,
+        "vol_ratio": 2.13,
+        "amount": 2562908977.0,
+        "net_inflow_3d": 33160000.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 73,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 56,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688401.SH",
+      "name": "路维光电",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 70.26,
+      "pct_chg": 3.34,
+      "pe_ttm": 49.738,
+      "circ_mv": 135.85,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 13,
+      "score_capital": 8,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.95,
+        "vol_ratio": 1.27,
+        "amount": 532415061.0,
+        "net_inflow_3d": 26417300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688605.SH",
+      "name": "先锋精科",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 90.06,
+      "pct_chg": 3.46,
+      "pe_ttm": 132.3244,
+      "circ_mv": 97.58,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 5.31,
+        "vol_ratio": 1.15,
+        "amount": 513047761.0,
+        "net_inflow_3d": 504500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 4
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 76,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "高",
+        "logic": [
+          "双RPS共振",
+          "创20日新高",
+          "主力资金连续流入"
+        ],
+        "factors": {
+          "momentum": 59,
+          "technical": 58,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688610.SH",
+      "name": "埃科光电",
+      "industry": "电器仪表",
+      "sectors": [
+        "电器仪表"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 170.29,
+      "pct_chg": 7.74,
+      "pe_ttm": 119.2651,
+      "circ_mv": 69.7,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.77,
+        "vol_ratio": 1.53,
+        "amount": 258239949.0,
+        "net_inflow_3d": 7981300.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 69,
+        "expected_gain": 7.0,
+        "gain_range": [
+          3.9,
+          10.2
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 54,
+          "technical": 56,
+          "capital": 60,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688720.SH",
+      "name": "艾森股份",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 20日新高 + 量价齐升",
+      "price": 67.68,
+      "pct_chg": 5.27,
+      "pe_ttm": 147.4486,
+      "circ_mv": 52.92,
+      "score_total": 71,
+      "score_sector": 30,
+      "score_fundamental": 11,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 6.82,
+        "vol_ratio": 1.48,
+        "amount": 355614177.0,
+        "net_inflow_3d": 5113900.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "20日新高",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 78,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -9.0,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "连涨5日动量延续",
+          "创20日新高"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 54
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688255.SH",
+      "name": "凯尔达",
+      "industry": "机械基件",
+      "sectors": [
+        "机械基件"
+      ],
+      "sector_count": 3,
+      "tags": "3板块共振 + 量价齐升 + KDJ健康",
+      "price": 25.87,
+      "pct_chg": 3.73,
+      "pe_ttm": 54.5738,
+      "circ_mv": 28.42,
+      "score_total": 70,
+      "score_sector": 40,
+      "score_fundamental": 6,
+      "score_capital": 4,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 2.03,
+        "vol_ratio": 1.34,
+        "amount": 57074389.0,
+        "net_inflow_3d": 601200.0
+      },
+      "technical": {
+        "hits": [
+          "KDJ健康",
+          "量价齐升",
+          "均线支撑"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 85,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -8.0,
+        "confidence": "中",
+        "logic": [
+          "三档RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 61,
+          "technical": 56,
+          "capital": 62,
+          "sector": 67,
+          "sentiment": 58,
+          "fundamental": 56
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    },
+    {
+      "ts_code": "688525.SH",
+      "name": "佰维存储",
+      "industry": "半导体",
+      "sectors": [
+        "半导体"
+      ],
+      "sector_count": 2,
+      "tags": "2板块共振 + 量价齐升 + MACD多头",
+      "price": 216.88,
+      "pct_chg": 4.13,
+      "pe_ttm": 12.5437,
+      "circ_mv": 1034.15,
+      "score_total": 70,
+      "score_sector": 30,
+      "score_fundamental": 10,
+      "score_capital": 10,
+      "score_technical": 20,
+      "fundamental": {
+        "net_profit": null,
+        "debt_to_assets": null
+      },
+      "capital": {
+        "turnover": 3.96,
+        "vol_ratio": 1.36,
+        "amount": 4076690406.0,
+        "net_inflow_3d": 122657500.0
+      },
+      "technical": {
+        "hits": [
+          "MACD多头",
+          "KDJ低位金叉",
+          "量价齐升"
+        ],
+        "hit_count": 3
+      },
+      "prediction": {
+        "horizon": 3,
+        "up_prob": 77,
+        "expected_gain": 9.0,
+        "gain_range": [
+          5.0,
+          13.0
+        ],
+        "stop_loss": -5.5,
+        "confidence": "中",
+        "logic": [
+          "双RPS共振",
+          "主力资金连续流入",
+          "量能温和放大"
+        ],
+        "factors": {
+          "momentum": 57,
+          "technical": 56,
+          "capital": 62,
+          "sector": 62,
+          "sentiment": 58,
+          "fundamental": 57
+        },
+        "basis": "基于历史动量统计: RPS≥90个股5日上行概率约60-65%, 板块前三约70%; 综合概率为量化预判, 非确定结论",
+        "regime": "震荡市"
+      }
+    }
+  ]
 }
