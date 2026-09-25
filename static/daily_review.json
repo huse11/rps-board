@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 4096.6023,
-   "ma20": 3986.5647900000004,
-   "above": true,
+   "close": 3888.374,
+   "ma20": 3926.7421999999997,
+   "above": false,
    "days": 139
   },
-  "note": "上证指数站上20日线(3987点)"
+  "note": "上证指数跌破20日线(3927点)"
  },
  "resonance": {
   "core": [
@@ -410,12 +410,7 @@
    "林业",
    "家居用品"
   ],
-  "critical": [
-   {
-    "name": "专用机械",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "影视音像",
    "机械基件",
@@ -423,11 +418,11 @@
   ]
  },
  "sentiment": {
-  "phase": "震荡期",
+  "phase": "冰点期",
   "seed_n": 2,
   "out_n": 7,
   "core_n": 6,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
