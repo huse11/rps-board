@@ -4,20 +4,20 @@
  "total_industries": 110,
  "threshold": 90,
  "market": {
-  "tone": "中性",
-  "high5": 11,
-  "high10": 11,
-  "high20": 11,
+  "tone": "弱",
+  "high5": 0,
+  "high10": 0,
+  "high20": 0,
   "diff5": 0,
-  "avg_high": 11.0,
+  "avg_high": 0,
   "index": {
    "ok": true,
-   "close": 3913.7238,
-   "ma20": 3995.517035,
+   "close": 3800.86,
+   "ma20": 3879.5114999999996,
    "above": false,
    "days": 132
   },
-  "note": "上证指数跌破20日线(3996点)"
+  "note": "上证指数跌破20日线(3880点)"
  },
  "resonance": {
   "core": [
@@ -485,16 +485,7 @@
    "种植业",
    "焦炭加工"
   ],
-  "critical": [
-   {
-    "name": "渔业",
-    "rps5": 89.1
-   },
-   {
-    "name": "水运",
-    "rps5": 88.2
-   }
-  ],
+  "critical": [],
   "diverge_watch": [
    "医疗保健",
    "塑料",
@@ -505,11 +496,11 @@
   ]
  },
  "sentiment": {
-  "phase": "震荡期",
+  "phase": "冰点期",
   "seed_n": 3,
   "out_n": 9,
   "core_n": 4,
-  "high_n": 11
+  "high_n": 0
  },
  "style": {
   "rps5": {
