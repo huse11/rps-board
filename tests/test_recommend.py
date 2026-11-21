@@ -413,6 +413,21 @@ class TestScreenFundamental(unittest.TestCase):
         self.assertEqual(set(passed["ts_code"]), {"600100.SH"})
         self.assertEqual(rejects, [])
 
+    def test_pe_neg_cap_config(self):
+        # H1 回归: CONFIG["fundamental"] 必须含 pe_neg_cap, 且为不超过满分(15)的正数
+        cap = recommend.CONFIG["fundamental"]["pe_neg_cap"]
+        self.assertIsInstance(cap, (int, float))
+        self.assertTrue(0 < cap <= 15, "pe_neg_cap 应在 (0,15] 区间: %r" % cap)
+
+    def test_pe_neg_cap_caps_score(self):
+        # H1 逻辑: PE<0 时基本面分被强制压到 pe_neg_cap 以下
+        cap = recommend.CONFIG["fundamental"]["pe_neg_cap"]
+        s = {"ts_code": "600100.SH", "name": "亏损PE", "pe_ttm": -5.0,
+             "circ_mv": 500000.0}  # 市值(4分)+负PE区间(2分)+低负债(3分)=9分, 仍被压到 cap
+        high = recommend.score_fundamental_funnel(s, {"net_profit": -1e8, "debt_to_assets": 40.0})
+        self.assertGreater(high, cap, "前提: 负PE仍可能有高于上限的原始分")
+        self.assertLessEqual(min(high, cap), cap)
+
     def test_pledge_goodwill_hard_veto(self):
         # 质押/商誉: 有数据且超标 → 一票否决; 缺失 → 不剔除
         df = stock_rows([
@@ -476,23 +491,55 @@ class TestScreenCapital(unittest.TestCase):
         self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
         self.assertIn("600000.SH", details)
         self.assertGreater(details["600000.SH"]["net_inflow_3d"], 0)
+        self.assertEqual(details["600000.SH"]["fail_gates"], [])  # 4 门全过
 
-    def test_turnover_out_of_range(self):
-        passed, _ = recommend.screen_capital(self._df(turnover=30.0), self.dm, self.latest, self.mflow_pos)
-        self.assertTrue(passed.empty)  # 换手超上限 → 否决
+    # ---- 2026-08-29 放宽: 4 门中 ≥3 门通过 (单门失败不再否决) ----
+    def test_turnover_out_of_range_single_gate_ok(self):
+        # 仅换手率超上限, 量比/成交额/主力资金 3 门达标 → 3/4 通过
+        passed, details = recommend.screen_capital(self._df(turnover=30.0), self.dm, self.latest, self.mflow_pos)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
+        self.assertTrue(any("换手率" in g for g in details["600000.SH"]["fail_gates"]))
 
-    def test_vol_ratio_too_low(self):
-        passed, _ = recommend.screen_capital(self._df(vol_ratio=1.0), self.dm, self.latest, self.mflow_pos)
-        self.assertTrue(passed.empty)  # 量比 ≤1.1 → 否决
+    def test_vol_ratio_too_low_single_gate_ok(self):
+        # 仅量比≤1.1, 其余 3 门达标 → 3/4 通过
+        passed, details = recommend.screen_capital(self._df(vol_ratio=1.0), self.dm, self.latest, self.mflow_pos)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
+        self.assertTrue(any("量比" in g for g in details["600000.SH"]["fail_gates"]))
 
-    def test_negative_inflow_reject(self):
-        passed, _ = recommend.screen_capital(self._df(), self.dm, self.latest, self.mflow_neg)
-        self.assertTrue(passed.empty)  # 主力净流入为负 → 否决
+    def test_negative_inflow_single_gate_ok(self):
+        # 仅主力资金3日净流入为负, 其余 3 门达标 → 3/4 通过 (不再一票否决)
+        passed, details = recommend.screen_capital(self._df(), self.dm, self.latest, self.mflow_neg)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
+        self.assertTrue(any("主力资金" in g for g in details["600000.SH"]["fail_gates"]))
+
+    def test_two_gates_fail_reject(self):
+        # 换手率超上限 + 量比不足 → 2/4 门 → 剔除
+        passed, _ = recommend.screen_capital(self._df(turnover=30.0, vol_ratio=1.0),
+                                             self.dm, self.latest, self.mflow_pos)
+        self.assertTrue(passed.empty)
+
+    def test_turnover_missing_single_gate_ok(self):
+        # 换手率缺失 → 计失败但其余 3 门达标 → 3/4 通过 (不再硬杀)
+        passed, details = recommend.screen_capital(self._df(turnover=None), self.dm, self.latest, self.mflow_pos)
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
+        self.assertIsNone(details["600000.SH"]["turnover"])
+        self.assertTrue(any("换手率" in g for g in details["600000.SH"]["fail_gates"]))
+
+    def test_removed_log_records_specific_gates(self):
+        # 剔除记录含具体失败门 (而非统一文案)
+        log = []
+        recommend.screen_capital(self._df(turnover=30.0, vol_ratio=1.0), self.dm, self.latest,
+                                 self.mflow_pos, removed_log=log)
+        self.assertEqual(len(log), 1)
+        self.assertIn("2/4门达标", log[0]["reason"])
+        self.assertIn("换手率", log[0]["reason"])
+        self.assertIn("量比", log[0]["reason"])
 
     def test_no_mflow_does_not_kill(self):
         passed, details = recommend.screen_capital(self._df(), self.dm, self.latest, {})
-        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})  # 资金数据缺失 → 不误杀
+        self.assertEqual(set(passed["ts_code"]), {"600000.SH"})  # 资金数据缺失 → 3/4 通过
         self.assertIsNone(details["600000.SH"]["net_inflow_3d"])
+        self.assertTrue(any("主力资金" in g for g in details["600000.SH"]["fail_gates"]))
 
     def test_vol_ratio_fallback_from_daily(self):
         # daily_basic 缺失(vol_ratio=None) → 用日线成交量兜底 (今日/5日均量=1.5 > 1.1)
@@ -523,6 +570,35 @@ class TestScreenCapital(unittest.TestCase):
         passed, details = recommend.screen_capital(self._df(), self.dm, self.latest, self.mflow_pos)
         self.assertEqual(set(passed["ts_code"]), {"600000.SH"})
         self.assertNotIn("lhb_sell", details["600000.SH"])
+
+
+class TestCalcTurnoverFallback(unittest.TestCase):
+    """换手率兜底 (2026-08-29): 官方值缺失时用 成交量/流通股本 估算, 口径与 Tushare turnover_rate 一致"""
+
+    def test_circ_mv_based(self):
+        # vol=100000手(1千万股), price=10元, 流通市值=50亿(500000万) → 流通股本5亿股 → 换手2%
+        self.assertEqual(recommend._calc_turnover_fallback(100000, 10.0, 500000, None), 2.0)
+
+    def test_total_share_based(self):
+        # vol=100000手, 总股本5亿(50000万股) → 换手2%
+        self.assertEqual(recommend._calc_turnover_fallback(100000, None, None, 50000), 2.0)
+
+    def test_circ_mv_preferred_over_total_share(self):
+        # 两口径都有 → 优先流通市值
+        self.assertEqual(recommend._calc_turnover_fallback(100000, 10.0, 500000, 25000), 2.0)
+
+    def test_returns_rounded_float(self):
+        self.assertEqual(recommend._calc_turnover_fallback(50000, 20.0, 250000, None), 4.0)
+
+    def test_missing_all_returns_none(self):
+        self.assertIsNone(recommend._calc_turnover_fallback(100000, None, None, None))
+
+    def test_zero_or_missing_vol_returns_none(self):
+        self.assertIsNone(recommend._calc_turnover_fallback(None, 10.0, 500000, None))
+        self.assertIsNone(recommend._calc_turnover_fallback(0, 10.0, 500000, None))
+
+    def test_zero_circ_mv_falls_to_total_share(self):
+        self.assertEqual(recommend._calc_turnover_fallback(100000, 10.0, 0, 50000), 2.0)
 
 
 # ============================================================

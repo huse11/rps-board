@@ -17,6 +17,9 @@
 重要免责声明: 周度推荐为中线波段参考, 不构成任何投资建议; 股市波动极大,
 严禁杠杆借贷炒股; 本工具仅个人研究使用, 严禁对外收费荐股牟利。
 """
+from logutil import get_logger
+logger = get_logger(__name__)
+
 import json
 import numpy as np
 import pandas as pd
@@ -1487,17 +1490,15 @@ def save_weekly_recommendations(rec_list, latest_date, prev_date=""):
         "stocks": rec_list,
     }
     output = rd._sanitize_json(output)  # NaN/Inf/numpy → None/原生, 保证浏览器可解析
-    with open(WEEKLY_REC_FILE, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
+    rps_calc.atomic_write_json(WEEKLY_REC_FILE, output, indent=2, allow_nan=False)
     # 周度落选原因日志 (供调参回测, 失败不阻断)
     try:
         cl = _LAST_WEEKLY_CANDIDATE_LOG or []
         if cl:
             log_file = STATIC_DIR / "weekly_candidate_log.json"
-            with open(log_file, "w", encoding="utf-8") as f:
-                json.dump({"update_date": latest_date, "count": len(cl),
-                           "candidates": rd._sanitize_json(cl)}, f,
-                          ensure_ascii=False, indent=2, allow_nan=False)
+            rps_calc.atomic_write_json(log_file, {"update_date": latest_date, "count": len(cl),
+                                                  "candidates": rd._sanitize_json(cl)},
+                                       indent=2, allow_nan=False)
             print(f"  ✅ 周度落选日志: {len(cl)} 条 (保存至 {log_file.name})")
     except Exception as e:
         print(f"  ⚠️ 周度落选日志写入失败(不影响推荐): {str(e)[:60]}")
@@ -1536,17 +1537,15 @@ def save_weekly_early_recommendations(rec_list, latest_date, prev_date=""):
         "stocks": rec_list,
     }
     output = rd._sanitize_json(output)  # NaN/Inf/numpy → None/原生, 保证浏览器可解析
-    with open(WEEKLY_EARLY_REC_FILE, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
+    rps_calc.atomic_write_json(WEEKLY_EARLY_REC_FILE, output, indent=2, allow_nan=False)
     # 周度早期落选原因日志 (独立文件, 不覆盖原版 weekly_candidate_log)
     try:
         cl = _LAST_WEEKLY_EARLY_CANDIDATE_LOG or []
         if cl:
             log_file = STATIC_DIR / "weekly_early_candidate_log.json"
-            with open(log_file, "w", encoding="utf-8") as f:
-                json.dump({"update_date": latest_date, "count": len(cl),
-                           "candidates": rd._sanitize_json(cl)}, f,
-                          ensure_ascii=False, indent=2, allow_nan=False)
+            rps_calc.atomic_write_json(log_file, {"update_date": latest_date, "count": len(cl),
+                                                  "candidates": rd._sanitize_json(cl)},
+                                       indent=2, allow_nan=False)
             print(f"  ✅ 周度早期落选日志: {len(cl)} 条 (保存至 {log_file.name})")
     except Exception as e:
         print(f"  ⚠️ 周度早期落选日志写入失败(不影响推荐): {str(e)[:60]}")
@@ -1554,6 +1553,7 @@ def save_weekly_early_recommendations(rec_list, latest_date, prev_date=""):
 
 
 if __name__ == "__main__":
+    logger.info("===== recommend_weekly 开始 =====")
     # 独立运行: 复用 rps_calc 的 daily_map / industry_df, 从 rps_data.json 读 RPS20 入选板块
     trade_days = rps_calc.get_trade_days(n=80)
     industry_df = rps_calc.get_stock_industry()

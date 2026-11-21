@@ -71,27 +71,43 @@ def _cache_set(key, val):
 
 
 def to_ts_code(code):
-    """输入 '601020' / '601020.SH' / '1.601020' → 规范 ts_code(601020.SH)"""
-    code = str(code).strip()
+    """输入 '601020' / '601020.SH' / '1.601020' → 规范 ts_code(601020.SH)
+    非法输入(空串/非6位数字/多段式/未知市场)返回 None → 调用方降级为数据获取失败
+    """
+    if code is None:
+        return None
+    code = str(code).strip().upper()
+    if not code:
+        return None
     if "." in code:
         parts = code.split(".")
-        if parts[0] in ("1", "0", "83"):
-            code = parts[1]
+        if len(parts) == 2 and parts[0] in ("1", "0", "83") and parts[1].isdigit():
+            code = parts[1]  # 东财 secid 格式 "1.601020"
+        elif len(parts) == 2 and parts[0].isdigit() and parts[1] in ("SH", "SZ", "BJ"):
+            return parts[0] + "." + parts[1]
         else:
-            return code
+            return None
+    if not code.isdigit() or len(code) != 6:
+        return None
     if code.startswith(("6", "9", "5")):
         return code + ".SH"
     return code + ".SZ"
 
 
 def em_secid(ts_code):
-    """ts_code → 东财 secid (1.=沪 0.=深/北)"""
-    symbol, mkt = ts_code.split(".")
+    """ts_code → 东财 secid (1.=沪 0.=深/北); 非法输入返回 None"""
+    parts = str(ts_code or "").split(".")
+    if len(parts) != 2 or not parts[0].isdigit() or parts[1] not in ("SH", "SZ", "BJ"):
+        return None
+    symbol, mkt = parts
     return ("1." if mkt == "SH" else "0.") + symbol
 
 
 def tx_prefix(ts_code):
-    symbol, mkt = ts_code.split(".")
+    parts = str(ts_code or "").split(".")
+    if len(parts) != 2 or not parts[0].isdigit() or parts[1] not in ("SH", "SZ", "BJ"):
+        return None
+    symbol, mkt = parts
     return "sh" if mkt == "SH" else ("bj" if mkt == "BJ" else "sz")
 
 
@@ -183,6 +199,8 @@ def fetch_realtime(code, force=False):
           preClose/volume/marketStatus
     """
     ts = to_ts_code(code)
+    if not ts:
+        return None
     key = "rt:" + ts
     if not force:
         hit = _cache_get(key, ttl=30)
@@ -247,8 +265,10 @@ PERIOD_LMT = {"time": 240, "multi": 60, "day": 250, "week": 120, "month": 120}
 # ------------------------------------------------------------
 
 def _tx_prefix(ts_code):
-    symbol, mkt = ts_code.split(".")
-    return {"SH": "sh", "SZ": "sz", "BJ": "bj"}.get(mkt, "sh")
+    parts = str(ts_code or "").split(".")
+    if len(parts) != 2 or not parts[0].isdigit():
+        return None
+    return {"SH": "sh", "SZ": "sz", "BJ": "bj"}.get(parts[1], "sh")
 
 
 def _tx_fetch_kline(ts, period, lmt, fqt="qfq"):
@@ -367,6 +387,8 @@ def fetch_kline(code, period="day", fqt="qfq", force=False, days=5):
     day/week/month → {period, fqt, bars:[{time,open,high,low,close,volume,amount}], last_close}
     """
     ts = to_ts_code(code)
+    if not ts:
+        return None
     if period not in PERIOD_KLT:
         period = "day"
     if fqt not in ("qfq", "hfq", "none"):
@@ -434,6 +456,8 @@ def fetch_multiday_trends(code, days=5, force=False):
     超出上限的天数退化为最近 5 日, 不产生乱序/重复脏数据); 失败/无数据返回 []
     """
     ts = to_ts_code(code)
+    if not ts:
+        return []
     days = max(1, min(int(days or 5), 20))
     key = "mt:%s:%d" % (ts, days)
     if not force:
@@ -475,6 +499,8 @@ def fetch_multiday_trends(code, days=5, force=False):
 def fetch_trends(code, force=False):
     """分时数据(当天每分钟) → {time, price, avg, volume} 列表"""
     ts = to_ts_code(code)
+    if not ts:
+        return None
     key = "tr:" + ts
     if not force:
         hit = _cache_get(key, ttl=120)
@@ -510,6 +536,8 @@ def fetch_trends(code, force=False):
 def fetch_fund_flow(code, n_days=60, force=False):
     """个股历史资金流 → [{date, main, super, big, mid, small}] (元, 正流入/负流出)"""
     ts = to_ts_code(code)
+    if not ts:
+        return []
     key = "ff:%s" % ts
     if not force:
         hit = _cache_get(key, ttl=600)
@@ -1093,6 +1121,8 @@ def fetch_value(code, realtime=None, kline=None):
 def fetch_news(code, n=20):
     """个股资讯(东财公告) → [{date, title, type}] 失败返回 []"""
     ts = to_ts_code(code)
+    if not ts:
+        return []
     key = "nw:" + ts
     hit = _cache_get(key, ttl=300)
     if hit is not None:
@@ -1117,6 +1147,8 @@ def fetch_news(code, n=20):
 def fetch_f10(code, realtime=None, kline=None):
     """F10 简况: 股本/行业/上市日期等(基于静态数据) → dict"""
     ts = to_ts_code(code)
+    if not ts:
+        return None
     rt = realtime or {}
     name = rt.get("name") or ts
     return {
@@ -1130,12 +1162,665 @@ def fetch_f10(code, realtime=None, kline=None):
 
 
 # ============================================================
+# AI 综合分析: 合并综评 Tab 全部零散卡片为单页个股总分析
+# 维度: 速览徽章 / 基本面 / 核心亮点 / 风险提示 / 技术面 /
+#       资金面 / 买卖建议 / 关键价位 / 板块热度
+# ============================================================
+
+def _val_level_pe(pe):
+    """PE 估值档位 → 标签 + 分数"""
+    if pe is None or pe <= 0:
+        return "亏损/未披露", 0
+    if pe < 15: return "严重低估", 5
+    if pe < 30: return "低估", 4
+    if pe < 50: return "合理", 3
+    if pe < 80: return "偏高", 2
+    if pe < 150: return "高估", 1
+    return "泡沫区", 0
+
+
+def _val_level_pb(pb):
+    """PB 估值档位 → 标签"""
+    if pb is None or pb <= 0: return "--"
+    if pb < 1: return "破净"
+    if pb < 2: return "偏低"
+    if pb < 4: return "合理"
+    if pb < 8: return "偏高"
+    return "高溢价"
+
+
+def _sector_membership(ts_code):
+    """个股所属 RPS 强势板块列表 → [(板块名, 档位集合)]"""
+    rps = _load_json("static/rps_data.json") or {}
+    result = []
+    for tier_key, tier_name in [("rps5", "RPS5"), ("rps10", "RPS10"), ("rps20", "RPS20")]:
+        tier = rps.get(tier_key) or {}
+        for which in ["in_list", "out_list"]:
+            for sec in (tier.get(which) or []):
+                for s in (sec.get("stocks") or []):
+                    if s.get("ts_code") == ts_code:
+                        entry = {"name": sec.get("name", "--"), "tier": tier_name,
+                                 "status": "在榜" if which == "in_list" else "调出"}
+                        if entry not in result:
+                            result.append(entry)
+    return result
+
+
+def _pe_history_percentile(pe_est, pe_hist):
+    """当前 PE 在历史区间中的百分位 (0%=最低估, 100%=最高估)"""
+    if not pe_hist or pe_est is None:
+        return None
+    vals = [float(h["value"]) for h in pe_hist if h.get("value") is not None]
+    if not vals:
+        return None
+    below = sum(1 for v in vals if v <= pe_est)
+    return round(below / len(vals) * 100, 1)
+
+
+def fetch_ai_analysis(code):
+    """
+    个股 AI 综合总分析 → 单页结构化报告
+    替代 综评 Tab 中 5 个零散卡片(评分/风险/回测/印象/价值)
+    返回 dict:
+      overview, fundamentals, highlights, risks, technical, capital,
+      action, key_levels, sector_heat, generated_at
+    """
+    ts = to_ts_code(code)
+    if not ts:
+        return None
+    realtime = fetch_realtime(ts) or {}
+    kline = fetch_kline(ts, "day") or {"bars": []}
+    fflow = fetch_fund_flow(ts) or []
+    bars = kline.get("bars") or []
+    closes = [b["close"] for b in bars if b.get("close") is not None]
+    highs = [b["high"] for b in bars if b.get("high") is not None]
+    lows = [b["low"] for b in bars if b.get("low") is not None]
+    vols = [b.get("volume") or 0 for b in bars]
+
+    # ---------- 0. 中间计算: 技术指标 ----------
+    n = len(closes)
+    ma5 = calc_ma(closes, 5)[-1] if n >= 5 else None
+    ma10 = calc_ma(closes, 10)[-1] if n >= 10 else None
+    ma20 = calc_ma(closes, 20)[-1] if n >= 20 else None
+    ma60 = calc_ma(closes, 60)[-1] if n >= 60 else None
+    last_c = closes[-1] if closes else None
+
+    boll20 = calc_boll(closes, 20)
+    boll_last = boll20[-1] if (n >= 20 and boll20) else None
+    macd_arr = calc_macd(closes) if n >= 35 else []
+    macd_last = macd_arr[-1] if macd_arr else None
+    kdj_arr = calc_kdj(highs, lows, closes) if n >= 9 else []
+    kdj_last = kdj_arr[-1] if kdj_arr else None
+    rsi_arr = calc_rsi(closes, 6) if n >= 7 else []
+    rsi_last = rsi_arr[-1] if rsi_arr and rsi_arr[-1] is not None else None
+
+    # 均线多头/空头
+    if ma5 and ma10 and ma20:
+        ma_align = "多头排列" if (ma5 > ma10 > ma20) else ("空头排列" if (ma5 < ma10 < ma20) else "交织")
+    else:
+        ma_align = "数据不足"
+
+    # MACD 信号
+    if macd_last:
+        if macd_last["dif"] > macd_last["dea"] and macd_last["hist"] > 0:
+            macd_sig = "红柱放大(多头)" if n > 1 and macd_arr[-2]["hist"] <= macd_last["hist"] else "红柱缩小"
+        elif macd_last["dif"] < macd_last["dea"] and macd_last["hist"] < 0:
+            macd_sig = "绿柱放大(空头)" if n > 1 and abs(macd_arr[-2]["hist"]) <= abs(macd_last["hist"]) else "绿柱缩小"
+        else:
+            macd_sig = "拐头区域"
+        macd_zero = "零轴上" if macd_last["dif"] > 0 else "零轴下"
+    else:
+        macd_sig, macd_zero = "--", "--"
+
+    # KDJ 信号
+    if kdj_last:
+        if kdj_last["j"] > 90:
+            kdj_sig = "超买(J>90)"
+        elif kdj_last["j"] < 10:
+            kdj_sig = "超卖(J<10)"
+        elif kdj_last["k"] > kdj_last["d"] and n > 1 and kdj_arr[-2]["k"] <= kdj_arr[-2]["d"]:
+            kdj_sig = "金叉形成"
+        elif kdj_last["k"] < kdj_last["d"] and n > 1 and kdj_arr[-2]["k"] >= kdj_arr[-2]["d"]:
+            kdj_sig = "死叉形成"
+        elif kdj_last["k"] > kdj_last["d"]:
+            kdj_sig = "偏多运行"
+        else:
+            kdj_sig = "偏空运行"
+    else:
+        kdj_sig = "--"
+
+    # RSI 信号
+    if rsi_last is not None:
+        if rsi_last > 80:
+            rsi_sig = "严重超买"
+        elif rsi_last > 70:
+            rsi_sig = "超买区间"
+        elif rsi_last < 20:
+            rsi_sig = "严重超卖"
+        elif rsi_last < 30:
+            rsi_sig = "超卖区间"
+        else:
+            rsi_sig = "中性区域"
+    else:
+        rsi_sig = "--"
+
+    # BOLL 位置
+    if boll_last and last_c and boll_last["upper"]:
+        if last_c >= boll_last["upper"]:
+            boll_sig = "突破上轨(强势/警惕回调)"
+        elif last_c <= boll_last["lower"]:
+            boll_sig = "跌破下轨(弱势/或有反弹)"
+        elif last_c >= boll_last["mid"]:
+            boll_sig = "中轨上方(偏强)"
+        else:
+            boll_sig = "中轨下方(偏弱)"
+    else:
+        boll_sig = "--"
+
+    # ---------- 0b. 中间计算: 资金面 ----------
+    main_today = fflow[-1]["main"] if fflow else None
+    main_3d = sum((r["main"] or 0) for r in fflow[-3:]) if len(fflow) >= 3 else None
+    main_5d = sum((r["main"] or 0) for r in fflow[-5:]) if len(fflow) >= 5 else None
+    # 主力连续流入天数
+    main_streak = 0
+    for r in reversed(fflow):
+        if (r.get("main") or 0) > 0:
+            main_streak += 1
+        else:
+            break
+    # 小单(散户)反向指标: 连续散户流入=跟风, 连续流出=洗盘
+    small_5d = sum((r["small"] or 0) for r in fflow[-5:]) if len(fflow) >= 5 else None
+
+    # 量比 + 换手健康度
+    vr = realtime.get("volumeRatio")
+    tr = realtime.get("turnover")
+    if vr is not None and tr is not None:
+        if 1.0 <= vr <= 2.5 and 2.0 <= tr <= 10:
+            vol_health = "量价健康"
+        elif vr > 3.0 and tr > 12:
+            vol_health = "异常放量(警惕分歧)"
+        elif vr < 0.7 and tr < 1.0:
+            vol_health = "极度缩量(无人问津)"
+        else:
+            vol_health = "量能一般"
+    else:
+        vol_health = "--"
+
+    # ---------- 0c. 中间计算: 回测 + 阶段涨幅 ----------
+    bt = fetch_backtest(ts, kline)
+    rise_rate = None
+    avg_inc = None
+    if bt and bt.get("riseRate") != "--":
+        try:
+            rise_rate = float(str(bt["riseRate"]).replace("%", ""))
+        except (TypeError, ValueError):
+            pass
+    if bt and bt.get("avgIncrease") != "--":
+        try:
+            avg_inc = float(str(bt["avgIncrease"]).replace("%", ""))
+        except (TypeError, ValueError):
+            pass
+
+    pct5 = _pct_chg(closes[-1], closes[-1 - 5]) if n > 5 else None
+    pct20 = _pct_chg(closes[-1], closes[-1 - 20]) if n > 20 else None
+    pct60 = _pct_chg(closes[-1], closes[-1 - 60]) if n > 60 else None
+
+    # ---------- 0d. 中间计算: 板块热度 + 估值历史 ----------
+    sectors = _sector_membership(ts)
+    strong_sectors = [s for s in sectors if s["status"] == "在榜"]
+    sector_tiers = set(s["tier"] for s in strong_sectors)
+    if len(sector_tiers) >= 3:
+        sector_heat = "🔥 三档共振(极强势板块)"
+    elif len(sector_tiers) == 2:
+        sector_heat = "⭐ 双档共振(强势板块)"
+    elif len(sector_tiers) == 1:
+        sector_heat = "✅ 单档入选(关注)"
+    elif sectors:
+        sector_heat = "📉 已从强势板块调出"
+    else:
+        sector_heat = "— 非强势板块个股"
+
+    value = fetch_value(ts, realtime, kline) or {}
+    pe = realtime.get("pe_ttm")
+    pb = realtime.get("pb")
+    pe_pct = _pe_history_percentile(pe, value.get("peHistory") or [])
+    pe_label, pe_score = _val_level_pe(pe)
+    pb_label = _val_level_pb(pb)
+
+    # ---------- 1. overview 速览徽章 ----------
+    name = realtime.get("name") or ts
+    price = realtime.get("price")
+    chg_pct = realtime.get("changePercent")
+    score = fetch_score(ts, realtime, kline, fflow) or {}
+    total_score = score.get("totalScore", 0) or 0
+
+    # 买卖建议分级 (综合评分 + 技术 + 资金 三维度, 非直接投资建议)
+    rec_level = "观望"
+    rec_color = "warn"
+    rec_reasons = []
+    tech_bull = 0
+    if ma_align == "多头排列": tech_bull += 2
+    if ma_align == "交织": tech_bull += 1
+    if macd_sig in ("红柱放大(多头)",): tech_bull += 1
+    if kdj_sig in ("金叉形成", "偏多运行"): tech_bull += 1
+    if boll_sig in ("中轨上方(偏强)", "突破上轨(强势/警惕回调)"): tech_bull += 1
+    if rsi_sig in ("超卖区间", "严重超卖"): tech_bull += 1
+    if rsi_sig in ("超买区间", "严重超买"): tech_bull -= 1
+
+    cap_bull = 0
+    if main_today and main_today > 0: cap_bull += 1
+    if main_3d and main_3d > 0: cap_bull += 1
+    if main_5d and main_5d > 0: cap_bull += 1
+    if main_streak >= 3: cap_bull += 1
+    if vol_health == "量价健康": cap_bull += 1
+    if vol_health == "异常放量(警惕分歧)": cap_bull -= 1
+
+    fund_bull = pe_score  # 0~5
+
+    bull_sum = total_score * 0.30 + tech_bull * 6 + cap_bull * 5 + fund_bull * 4
+    bear_sum = 0
+    if chg_pct is not None and chg_pct <= -5: bear_sum += 10
+    if ma_align == "空头排列": bear_sum += 10
+    if kdj_sig == "死叉形成": bear_sum += 6
+    if macd_sig == "绿柱放大(空头)": bear_sum += 6
+    if main_streak == 0 and main_today and main_today < 0: bear_sum += 5
+    if pe_score == 0 and pe is not None and pe > 0: bear_sum += 6
+
+    net_score = bull_sum - bear_sum
+    if net_score >= 30:
+        rec_level = "买入"
+        rec_color = "good"
+    elif net_score >= 12:
+        rec_level = "谨慎买入"
+        rec_color = "good"
+    elif net_score >= -8:
+        rec_level = "观望"
+        rec_color = "warn"
+    elif net_score >= -22:
+        rec_level = "谨慎减仓"
+        rec_color = "bad"
+    else:
+        rec_level = "卖出"
+        rec_color = "bad"
+
+    overview = {
+        "name": name,
+        "code": ts,
+        "price": price,
+        "changePercent": chg_pct,
+        "totalScore": round(total_score, 1),
+        "beatStock": score.get("beatStock", "--"),
+        "recommend": {"level": rec_level, "color": rec_color, "netScore": round(net_score, 1)},
+        "marketStatus": realtime.get("marketStatus"),
+        "todaySummary": _build_ai_text(realtime, fflow, score.get("factors", []), closes, bars),
+    }
+
+    # ---------- 2. fundamentals 基本面速览 ----------
+    total_mv = realtime.get("totalMarket")
+    circ_mv = realtime.get("circ_mv")
+    if total_mv:
+        if total_mv >= 1e12: mv_label = "超大盘(>万亿)"
+        elif total_mv >= 1e11: mv_label = "大盘(千亿~万亿)"
+        elif total_mv >= 2e10: mv_label = "中盘(200亿~千亿)"
+        elif total_mv >= 5e9: mv_label = "小盘(50亿~200亿)"
+        else: mv_label = "微盘(<50亿)"
+    else:
+        mv_label = "--"
+
+    circ_ratio = None
+    if total_mv and circ_mv and total_mv > 0:
+        circ_ratio = round(circ_mv / total_mv * 100, 1)
+
+    fundamentals = {
+        "marketCap": {"value": total_mv, "txt": _fmt_wan(total_mv), "label": mv_label},
+        "circCap": {"value": circ_mv, "txt": _fmt_wan(circ_mv),
+                    "ratio": circ_ratio,
+                    "ratioTxt": ("全流通" if circ_ratio and circ_ratio >= 95 else
+                                 ("限售较多" if circ_ratio and circ_ratio < 60 else "正常"))
+                    if circ_ratio else "--"},
+        "pe": {"value": pe, "txt": _fmt_pct(pe, 2).replace("%", "") if pe is not None else "--",
+               "label": pe_label, "score": pe_score,
+               "percentile": pe_pct,
+               "percentileTxt": ("历史 %s%% 分位" % pe_pct) if pe_pct is not None else "--"},
+        "pb": {"value": pb, "txt": ("%.2f" % pb) if pb else "--", "label": pb_label},
+        "turnover": {"value": tr, "txt": _fmt_pct(tr, 2),
+                     "label": "活跃" if (tr and tr >= 5) else ("温和" if tr and tr >= 1.5 else "冷清")
+                     if tr else "--"},
+        "volumeRatio": {"value": vr, "txt": ("%.2f" % vr) if vr else "--",
+                        "label": vol_health},
+    }
+
+    # ---------- 3. highlights 核心亮点 (最多 6 条) ----------
+    highlights = []
+    if strong_sectors:
+        tier_str = "、".join(sorted(sector_tiers)) if sector_tiers else "强势"
+        sec_names = list(dict.fromkeys(s["name"] for s in strong_sectors))[:2]
+        highlights.append({
+            "icon": "🔥", "title": "板块热度加持",
+            "body": "所属板块「%s」处于 %s 强势榜(%s)，板块行情联动上涨概率更高。" %
+                    ("、".join(sec_names), tier_str, sector_heat),
+        })
+    if ma_align == "多头排列":
+        highlights.append({
+            "icon": "📈", "title": "均线多头排列",
+            "body": "MA5>MA10>MA20 三条均线多头向上，短期趋势强势，均线系统提供天然支撑。",
+        })
+    if macd_sig == "红柱放大(多头)":
+        highlights.append({
+            "icon": "💹", "title": "MACD 动能强劲",
+            "body": "MACD 在%s，DIF 与 DEA 开口扩大、红柱持续放大，上行动能充足。" % macd_zero,
+        })
+    if main_streak >= 3:
+        highlights.append({
+            "icon": "💰", "title": "主力连续吸筹",
+            "body": "主力资金已连续 %d 日净流入(近5日合计 %s)，机构持续看好，资金面形成正反馈。" %
+                    (main_streak, _fmt_wan(main_5d)),
+        })
+    elif main_today and main_today > 0 and (main_3d or 0) > 0:
+        highlights.append({
+            "icon": "💵", "title": "主力资金回流",
+            "body": "今日主力净流入 %s，近3日合计 %s，资金面边际转好。" %
+                    (_fmt_wan(main_today), _fmt_wan(main_3d)),
+        })
+    if pe_score >= 4:
+        highlights.append({
+            "icon": "🏷️", "title": "估值安全边际充足",
+            "body": "当前 PE(TTM) %s 倍，处于「%s」区间%s，估值具有吸引力。" %
+                    (fundamentals["pe"]["txt"], pe_label,
+                     ("(历史 %s%% 分位)" % pe_pct) if pe_pct is not None else ""),
+        })
+    if vol_health == "量价健康":
+        highlights.append({
+            "icon": "📊", "title": "量价配合良好",
+            "body": "量比 %.2f、换手率 %s%%，成交处于健康区间，量能与走势匹配度高。" %
+                    (vr or 0, tr or 0),
+        })
+    if rise_rate is not None and rise_rate >= 55:
+        highlights.append({
+            "icon": "🎯", "title": "历史胜率优异",
+            "body": "近 %d 个交易日单日上涨概率 %s%%、平均涨幅 %s%%，买入后次日正收益历史占比较高。" %
+                    ((bt.get("days") or 0), rise_rate, avg_inc if avg_inc else 0),
+        })
+    if pct60 is not None and pct60 > 0 and n >= 60:
+        # 趋势强度(与斜率)
+        slope_good = pct20 is not None and pct5 is not None and pct20 > 0 and pct5 >= 0
+        if slope_good:
+            highlights.append({
+                "icon": "🚀", "title": "中期趋势向上",
+                "body": "60日涨 %+.2f%%、20日 %+.2f%%、5日 %+.2f%%，阶梯式上行，斜率健康无加速赶顶迹象。" %
+                        (pct60, pct20, pct5),
+            })
+    if boll_sig == "中轨上方(偏强)":
+        highlights.append({
+            "icon": "🎢", "title": "布林通道运行良好",
+            "body": "股价在 BOLL 中轨与上轨之间运行，通道结构完好，中期强势格局延续。",
+        })
+    if rsi_sig in ("超卖区间", "严重超卖"):
+        highlights.append({
+            "icon": "⚡", "title": "短期超卖或反弹",
+            "body": "RSI(6) 处于 %s，短期抛压释放较为充分，技术性反弹概率提升。" % rsi_sig,
+        })
+    # 去重限长
+    _dedup_items(highlights, 6)
+
+    # ---------- 4. risks 风险提示 (最多 6 条) ----------
+    risks = []
+    if ma_align == "空头排列":
+        risks.append({
+            "icon": "🔻", "title": "均线空头压制",
+            "body": "MA5<MA10<MA20 空头排列，股价被短期均线层层压制，每一次反弹均容易遇均线回落。",
+        })
+    if macd_sig == "绿柱放大(空头)":
+        risks.append({
+            "icon": "📉", "title": "MACD 空头动能释放",
+            "body": "MACD 在%s绿柱持续放大，中期下行趋势尚未出现明确止跌信号。" % macd_zero,
+        })
+    if kdj_sig == "死叉形成":
+        risks.append({
+            "icon": "⚠️", "title": "KDJ 死叉",
+            "body": "KDJ 指标刚刚形成死叉，短期调整压力加大，需警惕进一步下探。",
+        })
+    if main_today is not None and main_today < 0 and main_streak == 0:
+        out_txt = ""
+        if main_5d is not None and main_5d < 0:
+            out_txt = "近5日累计流出 %s，" % _fmt_wan(abs(main_5d))
+        risks.append({
+            "icon": "💸", "title": "主力资金出逃",
+            "body": "今日主力净流出 %s，%s资金面偏空，机构筹码在派发。" %
+                    (_fmt_wan(abs(main_today)), out_txt),
+        })
+    if small_5d is not None and small_5d > 0 and (main_5d or 0) < 0:
+        risks.append({
+            "icon": "🐑", "title": "散户接盘迹象",
+            "body": "近5日小单(散户)净流入 %s，而主力净流出 %s，或为主力出货散户承接的典型形态。" %
+                    (_fmt_wan(small_5d), _fmt_wan(abs(main_5d))),
+        })
+    if pe_score == 0 and pe is not None and pe > 150:
+        risks.append({
+            "icon": "💎", "title": "估值严重泡沫化",
+            "body": "PE(TTM) 高达 %.0f 倍，处于泡沫区。一旦业绩增速不及预期，估值回归的杀跌幅度极大。" % pe,
+        })
+    elif pe_score <= 1 and pe is not None and pe > 0:
+        risks.append({
+            "icon": "📏", "title": "估值偏高",
+            "body": "PE(TTM) %.0f 倍处于「%s」区间，对业绩增速的容错空间较小。" % (pe, pe_label),
+        })
+    if vol_health == "异常放量(警惕分歧)":
+        risks.append({
+            "icon": "📣", "title": "量能异常放大",
+            "body": "当日量比 %.2f、换手 %s%% 远超常态，多空分歧剧烈，高位追涨风险极大。" % (vr or 0, tr or 0),
+        })
+    if boll_sig == "跌破下轨(弱势/或有反弹)":
+        risks.append({
+            "icon": "🌪️", "title": "跌破布林下轨",
+            "body": "股价跌破 BOLL 下轨，短期进入极端弱势区，虽可能反弹但不宜盲目抄底。",
+        })
+    if rsi_sig in ("超买区间", "严重超买"):
+        risks.append({
+            "icon": "🔥", "title": "短期严重超买",
+            "body": "RSI(6) 处于 %s 区域，多头拥挤度高，获利盘随时可能集中兑现引发回调。" % rsi_sig,
+        })
+    if sectors and all(s["status"] == "调出" for s in sectors):
+        risks.append({
+            "icon": "📤", "title": "板块热度退潮",
+            "body": "所属板块已全部从 RPS 强势榜调出，板块热度明显退潮，个股联动上涨难度加大。",
+        })
+    if chg_pct is not None and chg_pct <= -5:
+        risks.append({
+            "icon": "⛔", "title": "当日大幅下挫",
+            "body": "今日下跌 %.2f%%，跌幅较大且若伴随放量，则短期情绪恶化，惯性下探概率提升。" % abs(chg_pct),
+        })
+    _dedup_items(risks, 6)
+    if not risks:
+        risks.append({"icon": "✅", "title": "暂无显性风险",
+                      "body": "从当前技术面、资金面、估值维度未发现重大警报信号，但仍需结合大盘整体环境综合判断。"})
+
+    # ---------- 5. technical 技术面分析摘要 ----------
+    technical = {
+        "maAlign": ma_align,
+        "ma": {"MA5": round(ma5, 2) if ma5 else None,
+               "MA10": round(ma10, 2) if ma10 else None,
+               "MA20": round(ma20, 2) if ma20 else None,
+               "MA60": round(ma60, 2) if ma60 else None},
+        "macd": {"signal": macd_sig, "zone": macd_zero,
+                 "dif": round(macd_last["dif"], 3) if macd_last else None,
+                 "dea": round(macd_last["dea"], 3) if macd_last else None,
+                 "hist": round(macd_last["hist"], 3) if macd_last else None},
+        "kdj": {"signal": kdj_sig,
+                "k": round(kdj_last["k"], 1) if kdj_last else None,
+                "d": round(kdj_last["d"], 1) if kdj_last else None,
+                "j": round(kdj_last["j"], 1) if kdj_last else None},
+        "rsi": {"signal": rsi_sig, "value": round(rsi_last, 1) if rsi_last is not None else None},
+        "boll": {"signal": boll_sig,
+                 "upper": round(boll_last["upper"], 2) if boll_last and boll_last["upper"] else None,
+                 "mid": round(boll_last["mid"], 2) if boll_last and boll_last["mid"] else None,
+                 "lower": round(boll_last["lower"], 2) if boll_last and boll_last["lower"] else None},
+        "stageRise": {"5D": round(pct5, 2) if pct5 is not None else None,
+                      "20D": round(pct20, 2) if pct20 is not None else None,
+                      "60D": round(pct60, 2) if pct60 is not None else None},
+    }
+
+    # ---------- 6. capital 资金面解读 ----------
+    capital = {
+        "mainToday": {"value": main_today, "txt": _fmt_wan(main_today)},
+        "main3d": {"value": main_3d, "txt": _fmt_wan(main_3d)},
+        "main5d": {"value": main_5d, "txt": _fmt_wan(main_5d)},
+        "streak": main_streak,
+        "volHealth": vol_health,
+        "interpret": _capital_interpret(main_today, main_3d, main_5d, main_streak, vol_health, small_5d),
+    }
+
+    # ---------- 7. action 买卖操作建议 ----------
+    # 关键价位
+    sup_20 = boll_last["lower"] if boll_last and boll_last["lower"] else (ma20 * 0.97 if ma20 else None)
+    res_20 = boll_last["upper"] if boll_last and boll_last["upper"] else (ma20 * 1.03 if ma20 else None)
+    ma5_p = round(ma5, 2) if ma5 else None
+    ma10_p = round(ma10, 2) if ma10 else None
+    ma20_p = round(ma20, 2) if ma20 else None
+    ma60_p = round(ma60, 2) if ma60 else None
+
+    # 触发价/止损价 (基于关键位, 非投资建议)
+    if last_c:
+        if rec_level in ("买入", "谨慎买入"):
+            # 建议买入区间: MA5 附近 ~ 盘中回踩 MA10
+            if ma5_p and ma10_p:
+                buy_zone = "%.2f ~ %.2f" % (min(ma5_p, ma10_p), max(ma5_p, ma10_p) * 1.005)
+            else:
+                buy_zone = "现价附近(%.2f)" % last_c
+            stop_loss = "%.2f" % (last_c * 0.95)  # 固定 5% 止损
+            hold_period = "5~15 个交易日" if rec_level == "谨慎买入" else "2~8 周"
+        elif rec_level in ("谨慎减仓", "卖出"):
+            if ma5_p and ma10_p:
+                sell_zone = "%.2f ~ %.2f" % (min(ma5_p, ma10_p), max(ma5_p, ma10_p))
+            else:
+                sell_zone = "反弹至现价(%.2f)附近" % last_c
+            buy_zone = "卖出/减仓信号, 暂不买入"  # 修复 2026-08-29: 此前未赋值导致 UnboundLocalError
+            stop_loss = None
+            hold_period = "立即处理"
+        else:
+            buy_zone = "等待信号明朗"
+            stop_loss = "持仓者以 MA20(%.2f) 为界" % ma20_p if ma20_p else "--"
+            hold_period = "边走边看"
+    else:
+        buy_zone, stop_loss, hold_period = "--", "--", "--"
+
+    # 综合建议理由
+    reason_parts = []
+    if strong_sectors:
+        reason_parts.append("板块热度" + ("共振" if len(sector_tiers) >= 2 else "加持"))
+    if tech_bull >= 3:
+        reason_parts.append("技术面 %d 项偏多" % tech_bull)
+    elif tech_bull <= 0:
+        reason_parts.append("技术面偏空")
+    if cap_bull >= 2:
+        reason_parts.append("资金面连续流入")
+    elif cap_bull < 0:
+        reason_parts.append("资金面流出明显")
+    if pe_score >= 4:
+        reason_parts.append("估值较低")
+    elif pe_score <= 1:
+        reason_parts.append("估值偏高")
+    if not reason_parts:
+        reason_parts.append("多空信号交织")
+
+    action = {
+        "recommend": rec_level,
+        "color": rec_color,
+        "reason": "、".join(reason_parts),
+        "buyZone": buy_zone,
+        "stopLoss": stop_loss,
+        "holdPeriod": hold_period,
+        "disclaimer": "以上建议由量化指标自动生成，仅供编程学习参考，不构成任何投资建议。",
+    }
+
+    # ---------- 8. key_levels 关键价位 ----------
+    key_levels = {
+        "current": round(last_c, 2) if last_c else None,
+        "resistance": [
+            {"name": "MA5", "value": ma5_p},
+            {"name": "MA10", "value": ma10_p},
+            {"name": "BOLL上轨", "value": round(boll_last["upper"], 2) if boll_last and boll_last["upper"] else None},
+            {"name": "前高(5日)", "value": round(max(highs[-5:]), 2) if len(highs) >= 5 else None},
+        ],
+        "support": [
+            {"name": "MA10", "value": ma10_p},
+            {"name": "MA20", "value": ma20_p},
+            {"name": "MA60", "value": ma60_p},
+            {"name": "BOLL下轨", "value": round(boll_last["lower"], 2) if boll_last and boll_last["lower"] else None},
+            {"name": "前低(5日)", "value": round(min(lows[-5:]), 2) if len(lows) >= 5 else None},
+        ],
+    }
+
+    # ---------- 9. sector_heat 板块热度联动 ----------
+    sec_dedup = {}
+    for s in sectors:
+        k = (s["name"], s["status"])
+        if k not in sec_dedup:
+            sec_dedup[k] = []
+        sec_dedup[k].append(s["tier"])
+    sector_list = []
+    for (nm, st), tiers in sec_dedup.items():
+        sector_list.append({"name": nm, "status": st, "tiers": "、".join(sorted(tiers))})
+
+    sector_heat_out = {
+        "level": sector_heat,
+        "tierCount": len(sector_tiers),
+        "membership": sector_list,
+    }
+
+    return {
+        "overview": overview,
+        "fundamentals": fundamentals,
+        "highlights": highlights,
+        "risks": risks,
+        "technical": technical,
+        "capital": capital,
+        "action": action,
+        "keyLevels": key_levels,
+        "sectorHeat": sector_heat_out,
+        "generatedAt": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+    }
+
+
+def _dedup_items(items, max_count):
+    """按标题去重 + 截断"""
+    seen = set()
+    out = []
+    for it in items:
+        if it.get("title") in seen:
+            continue
+        seen.add(it["title"])
+        out.append(it)
+        if len(out) >= max_count:
+            break
+    items[:] = out
+
+
+def _capital_interpret(main_today, main_3d, main_5d, streak, vol_health, small_5d):
+    """资金面一句话解读"""
+    if streak >= 3 and (main_5d or 0) > 0:
+        return "主力持续吸筹(%d 日连入，近 5 日合计 %s)，叠加%s，资金面强力看多。" % (
+            streak, _fmt_wan(main_5d), vol_health)
+    if main_today and main_today > 0 and (main_3d or 0) > 0:
+        return "主力近 3 日连续回流(合计 %s)，短期资金面转暖，关注能否形成中期趋势。" % _fmt_wan(main_3d)
+    if (main_5d or 0) < 0 and (small_5d or 0) > 0:
+        return "主力 5 日净流出 %s，而散户净买入 %s，筹码从机构向散户转移，需谨慎。" % (
+            _fmt_wan(abs(main_5d)), _fmt_wan(small_5d))
+    if main_today is not None and main_today < 0:
+        return "今日主力净流出 %s，资金面偏空。%s" % (_fmt_wan(abs(main_today)),
+                                                     ("量能特征: %s" % vol_health) if vol_health != "--" else "")
+    return "资金面整体中性，%s。" % vol_health
+
+
+# ============================================================
 # 汇总入口: 组装详情弹窗一次可用的全部数据
 # ============================================================
 
 def build_detail_payload(code):
     """聚合个股详情数据 (前端弹窗一次请求; 各子模块失败均降级为空, 不阻断)"""
     ts = to_ts_code(code)
+    if not ts:
+        return None
     realtime = fetch_realtime(ts)
     kline = fetch_kline(ts, "day")
     fflow = fetch_fund_flow(ts)

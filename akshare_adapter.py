@@ -71,10 +71,37 @@ def _safe_float(val, default=0.0):
         return default
 
 
+def _norm_col(name):
+    """列名归一化: 全角括号→半角, 去空格, 去单位差异 (同花顺接口随报告期全角/半角切换)"""
+    if name is None:
+        return ""
+    s = str(name).replace("（", "(").replace("）", ")").replace(" ", "")
+    return s
+
+
 def _pick_col(df, candidates):
     for c in candidates:
         if c in df.columns:
             return c
+    # 兜底: 全角/半角括号差异归一化匹配 (同花顺等接口列名随调用参数变化)
+    norm = {_norm_col(c): c for c in df.columns}
+    for c in candidates:
+        if _norm_col(c) in norm:
+            return norm[_norm_col(c)]
+    return None
+
+
+def _pick_idx(series, candidates):
+    """同花顺指标行(Series) 按候选列名取真实列 (兼容 df/row 两种调用)
+    含括号归一化匹配(全角→半角), 兼容接口列名随报告期变化
+    """
+    for c in candidates:
+        if c in series.index:
+            return c
+    norm = {_norm_col(c): c for c in series.index}
+    for c in candidates:
+        if _norm_col(c) in norm:
+            return norm[_norm_col(c)]
     return None
 
 
@@ -506,6 +533,165 @@ def fetch_dzjy_ak(latest_date):
         if v["count"]:
             v["avg_discount"] = round(v["avg_discount"] / v["count"], 4)
     return result
+
+
+# ============================================================
+# 10. 市场广度 (每日复盘 V2.0: 涨跌家数/涨跌停/两市成交额/最高连板, 2026-08-29)
+# ============================================================
+def fetch_market_breadth_ak():
+    """全市场广度数据 → {up_count, down_count, limit_up, limit_down,
+                         total_amount, max_board}
+    up/down/limit/total_amount: 腾讯全市场实时行情 (服务器验证可达, 复用 spot 缓存)
+      - zdf 涨跌幅(%)  → up(>0) / down(<0) / limit_up(≥9.8) / limit_down(≤-9.8)
+        (与 recommend.py 涨停近似口径一致; 20cm/30cm 板涨幅≥9.8 即计为涨停)
+      - turnover 成交额(万元) 求和 → 两市成交额(亿元), 单位自适应
+    max_board(最高连板): 东财涨停池 stock_zt_pool_em, 失败 → None (独立降级, 不阻断)
+    失败返回 {} (调用方降级)
+    """
+    if not _AK_OK:
+        return {}
+    out = {"up_count": None, "down_count": None, "limit_up": None,
+           "limit_down": None, "total_amount": None, "max_board": None}
+    # 1) 全市场涨跌家数 / 涨跌停 / 两市成交额 (腾讯源, 复用 _SPOT_TX_CACHE)
+    try:
+        df = _fetch_spot_tx()
+        if df is not None and len(df) > 0:
+            pct_col = _pick_col(df, ["zdf", "涨跌幅", "pct"])
+            amt_col = _pick_col(df, ["turnover", "成交额", "amount"])
+            up = down = lu = ld = 0
+            amt_raw = 0.0
+            for _, r in df.iterrows():
+                p = _safe_float(r[pct_col]) if pct_col else 0.0
+                if p > 0:
+                    up += 1
+                elif p < 0:
+                    down += 1
+                if p >= 9.8:
+                    lu += 1
+                elif p <= -9.8:
+                    ld += 1
+                if amt_col:
+                    amt_raw += _safe_float(r[amt_col])
+            out.update({"up_count": up, "down_count": down,
+                        "limit_up": lu, "limit_down": ld})
+            if amt_col:
+                # 单位自适应: 腾讯 turnover=万元(两市合计~1e8万); 其他源可能为 元/亿元
+                if amt_raw >= 1e10:       # 元口径(两市~1e12) → 亿元
+                    out["total_amount"] = round(amt_raw / 1e8, 1)
+                elif amt_raw >= 1e6:      # 万元口径(两市~1e8) → 亿元
+                    out["total_amount"] = round(amt_raw / 1e4, 1)
+                else:                     # 亿元口径
+                    out["total_amount"] = round(amt_raw, 1)
+    except Exception as e:
+        logger.warning("市场广度-全市场统计失败: %s", e)
+    # 2) 最高连板: 东财涨停池 (独立降级, 失败仅该字段缺失)
+    try:
+        today = datetime.now().strftime("%Y%m%d")
+        zt = ak.stock_zt_pool_em(date=today)
+        if zt is not None and len(zt) > 0:
+            lb_col = _pick_col(zt, ["连板数", "连板"])
+            if lb_col:
+                vals = pd.to_numeric(zt[lb_col], errors="coerce").dropna()
+                if len(vals):
+                    out["max_board"] = int(vals.max())
+    except Exception as e:
+        logger.warning("市场广度-涨停池失败(最高连板缺失): %s", e)
+    return out
+
+
+# ============================================================
+# 12. 个股财务指标准确版 (同花顺, 2026-08-30 新增接入)
+# ============================================================
+_THS_FINA_CACHE = {}
+_THS_FINA_CACHE_TS = 0
+_THS_FINA_TTL = 3600  # 1小时内复用(财务数据低频变化)
+
+
+def fetch_fina_ths_ak(symbol):
+    """同花顺财务分析指标 (替代 fina_indicator, 服务器实测 0.4s/只 稳定可达)
+    返回 {ts_code: {end_date, net_profit, netprofit_yoy, dt_netprofit_yoy,
+                    n_income_attr_parent, debt_to_assets, total_revenue, revenue_yoy,
+                    gross_margin, net_margin, roe, roic, ocf_ps, bps}}
+    字段映射 (同花顺列名 → 兼容 fetch_fina_f10_em 结构):
+      ?: 返回 dict; 失败返回 {}
+    """
+    if not _AK_OK:
+        return {}
+    sym = str(symbol).split(".")[0].zfill(6)
+    now = time.time()
+    hit = _THS_FINA_CACHE.get(sym)
+    if hit is not None and now - _THS_FINA_CACHE_TS < _THS_FINA_TTL:
+        ts_code = _code_to_ts_code(sym)
+        return {ts_code: hit}
+    try:
+        # 起始年用去年: 同花顺接口 start_year=当前年 只返回当年少量列(资产负债率等全 None);
+        # 用去年 → 返回该年至今全部报告期完整列, 最新披露期仍在首行 (2026-08-30 服务器实测)
+        df = ak.stock_financial_analysis_indicator(symbol=sym, start_year=str(datetime.now().year - 1))
+    except Exception as e:
+        logger.warning("同花顺财务指标拉取失败(%s): %s", sym, str(e)[:60])
+        return {}
+    if df is None or len(df) == 0:
+        return {}
+    # 同花顺接口按报告期升序排列(首行=最早, 末行=最新, 2026-08-30 实测)
+    # 因此最新披露期在末行 iloc[-1]; 此接口销售毛利率列恒 NaN(无该数据, 由 F10 提供)
+    row = df.iloc[-1]  # 最新一期(末行)
+    def _f(v):
+        try:
+            f = float(v)
+            if f != f or f in (float("inf"), float("-inf")):
+                return None
+            return round(f, 2)
+        except (TypeError, ValueError):
+            return None
+    # 取值 helper: _pick_idx 返回的是"列名", 必须先 row[列名] 取值再转 float
+    # (2026-08-30 修复: 原先 _f(_pick_idx(...)) 把列名字符串当数值→恒 None)
+    def _cell(series, candidates):
+        col = _pick_idx(series, candidates)
+        if col is None:
+            return None
+        try:
+            return _f(series[col])
+        except Exception:
+            return None
+    # 资产负债率/净利率/毛利率/ROE/每股现金流/每股净资产(调整后)
+    debt   = _cell(row, ["资产负债率(%)"])
+    net_m  = _cell(row, ["销售净利率(%)"])
+    gross  = _cell(row, ["销售毛利率(%)"])
+    roe    = _cell(row, ["加权净资产收益率(%)", "净资产收益率(%)"])
+    ocf    = _cell(row, ["每股经营性现金流(元)"])
+    bps    = _cell(row, ["每股净资产_调整后(元)"])
+    np_yoy = _cell(row, ["净利润增长率(%)"])
+    rev_yoy = _cell(row, ["主营业务收入增长率(%)"])
+    deduct = _cell(row, ["扣除非经常性损益后的净利润(元)"])
+    main_profit = _cell(row, ["主营业务利润(元)"])
+    out = {
+        "end_date": "",  # 同花顺返回日期列在 [0], 单独取
+        "net_profit": deduct,        # 无总净利绝对数, 用扣非净利(真实值, 标注)
+        "netprofit_yoy": np_yoy,
+        "dt_netprofit_yoy": None,
+        "n_income_attr_parent": deduct,
+        "debt_to_assets": debt,
+        "total_revenue": None,
+        "revenue_yoy": rev_yoy,
+        "gross_margin": gross,
+        "net_margin": net_m,
+        "roe": roe,
+        "roic": None,                # 同花顺此接口无 ROIC
+        "ocf_ps": ocf,
+        "bps": bps,
+    }
+    try:
+        d_col = _pick_col(df, ["日期"])
+        if d_col is not None:
+            out["end_date"] = str(row[d_col]).replace("-", "")[:8]
+    except Exception:
+        pass
+    ts_code = _code_to_ts_code(sym)
+    _THS_FINA_CACHE[sym] = dict(out)
+    _THS_FINA_CACHE_TS = now
+    if len(_THS_FINA_CACHE) > 2000:
+        _THS_FINA_CACHE.clear()
+    return {ts_code: out}
 
 
 # ============================================================

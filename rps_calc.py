@@ -2,8 +2,11 @@
 板块 RPS 计算引擎 v3.0
 - 多Token轮询突破限频
 - 全量历史 RPS 回溯（60天逐日计算）
-- 排名变化、连续天数、60日RPS≥90统计
+- 排名变化、连续天数、60日RPS≥95统计
 """
+from logutil import get_logger
+logger = get_logger(__name__)
+
 import tushare as ts
 import pandas as pd
 import numpy as np
@@ -22,14 +25,36 @@ TUSHARE_TOKENS = [
     "ce54958918a51905315e6ab2b009dedca3ae849af3aa7732125b0642",
     "abc7ea5f14850f390d678129eadcac60b1ab8aabeb56abf8cfa3ac4c",
 ]
-RPS_THRESHOLD = 90
-SCHEMA_VERSION = 6  # v6=板块记录新增 parent(一级板块归类) (幂等判断用, 改公式/格式/板块池需+1强制重算)
+RPS_THRESHOLD = 95      # 核心入选阈值: RPS≥95 → 核心主线池 (重胜率, 个股筛选放宽)
+RESERVE_THRESHOLD = 90  # 弹性备选池下沿: RPS∈[90,95) → 弹性备选池 (重弹性, 个股筛选收紧)
+SCHEMA_VERSION = 8  # v8=双阈值双层池(核心≥95 + 弹性备选90-95, 2026-08-31, 新增 reserve20 需强制重算)
 STATIC_DIR = Path(__file__).parent / "static"
 DATA_FILE = STATIC_DIR / "rps_data.json"
 LAST_RESULT_FILE = STATIC_DIR / "last_result.json"
 RPS_HISTORY_FILE = STATIC_DIR / "rps_history.json"
 RUN_STATUS_FILE = STATIC_DIR / "rps_run_status.json"
 # ==========================================================
+
+
+def atomic_write_json(path, data, **kwargs):
+    """原子写 JSON: 先写 *.tmp 再 os.replace, 避免中途崩溃留下半写文件(下游读取/前端 502 根因)
+    path: Path/str; data: 可 json 序列化对象; kwargs 透传 json.dump(如 indent/default/allow_nan)
+    """
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + ".tmp")
+    try:
+        with open(tmp, "w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, **kwargs)
+        os.replace(tmp, path)
+        return True
+    except Exception:
+        try:
+            if tmp.exists():
+                tmp.unlink()
+        except Exception:
+            pass
+        raise
 
 
 def write_run_status(success, date, mode="calc", message=""):
@@ -47,8 +72,7 @@ def write_run_status(success, date, mode="calc", message=""):
             "message": message or "",
             "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         }
-        with open(RUN_STATUS_FILE, "w", encoding="utf-8") as f:
-            json.dump(status, f, ensure_ascii=False, indent=2)
+        atomic_write_json(RUN_STATUS_FILE, status, indent=2)
         if not success:
             print(f"  ⚠️ 运行状态已标记失败: {RUN_STATUS_FILE.name}")
         return True
@@ -189,8 +213,7 @@ def get_trade_days(n=80):
         df, _ = pool.call("trade_cal", exchange="SSE", start_date=start, end_date=end)
         trade_days = df[df["is_open"] == 1]["cal_date"].tolist()
         trade_days.sort()
-        with open(cache_file, "w") as f:
-            json.dump(trade_days, f)
+        atomic_write_json(cache_file, trade_days)
         return trade_days[-n:]
     except Exception:
         print("  ⚠️ trade_cal全Token受限，降级日期推算")
@@ -458,7 +481,7 @@ def calc_full_rps_history(daily_map, industry_df, trade_days):
         con10 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS10", today, hist_dates)
         con20 = calc_consecutive(daily_rps_history, trade_days, ind, "RPS20", today, hist_dates)
 
-        # 60日RPS≥90统计：过去60个交易日中，RPS ≥ 阈值的次数
+        # 60日RPS≥95统计：过去60个交易日中，RPS ≥ 阈值的次数
         cnt5 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS5", today, 60, hist_dates)
         cnt10 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS10", today, 60, hist_dates)
         cnt20 = count_above_threshold(daily_rps_history, trade_days, ind, "RPS20", today, 60, hist_dates)
@@ -745,6 +768,46 @@ def split_in_out(df_rps, threshold, rps_col, rank_col, rank_chg_col, consec_col,
     }
 
 
+def split_reserve20(df_rps, stock_rps50, industry_rps50_count, board_parent=None):
+    """弹性备选池: RPS20 ∈ [RESERVE_THRESHOLD, RPS_THRESHOLD) 的板块记录
+    双阈值分层核心 — 解决"阈值95太严没标的 / 阈值90太宽噪音多"的矛盾:
+      核心主线池(RPS20≥95) → 个股筛选放宽(板块强已有贝塔保障)
+      弹性备选池(90≤RPS20<95) → 个股筛选收紧(板块强度不足, 必须用个股阿尔法弥补)
+    返回 {in_list: [板块记录], current_names: [板块名]}
+    记录结构完全复用 split_in_out 的 in_list 格式(name/parent/status/RPS/chg/rank/连续/达标率)
+    status 字段标记为 "弹性备选", 前端与推荐模块据此与核心池区分。
+    """
+    df_res = df_rps[df_rps["RPS20"].notna() &
+                    (df_rps["RPS20"] >= RESERVE_THRESHOLD) &
+                    (df_rps["RPS20"] < RPS_THRESHOLD)].copy()
+    df_res = df_res.sort_values("RPS20", ascending=False).reset_index(drop=True)
+    bp = board_parent or {}
+    records = []
+    for _, row in df_res.iterrows():
+        ind = row["industry"]
+        sr = (stock_rps50 or {}).get(ind, {})
+        records.append({
+            "name": ind,
+            "parent": bp.get(ind, "") or "",   # 一级板块归类
+            "status": "弹性备选",              # 与核心池 "在榜/调入" 区分
+            "RPS20": round(row["RPS20"], 1) if pd.notna(row.get("RPS20")) else None,
+            "chg5": round(row["chg5"], 2) if pd.notna(row.get("chg5")) else None,
+            "chg10": round(row["chg10"], 2) if pd.notna(row.get("chg10")) else None,
+            "chg20": round(row["chg20"], 2) if pd.notna(row.get("chg20")) else None,
+            "rank": int(row["rank20"]) if pd.notna(row.get("rank20")) else None,
+            "rank_change": int(row["rank_chg20"]) if pd.notna(row.get("rank_chg20")) else 0,
+            "continuous": int(row["consecutive20"]) if pd.notna(row.get("consecutive20")) else 0,
+            "days_60": int(industry_rps50_count.get(ind, 0)) if industry_rps50_count else 0,
+            "stock_count": int(sr.get("stock_count", 0)),
+            "rps50_above_90": int(sr.get("rps50_above_90", 0)),
+            "stocks": [],   # 由 main() 调用 build_sector_stocks 填充成分股
+        })
+    return {
+        "in_list": records,
+        "current_names": [r["name"] for r in records],
+    }
+
+
 def calc_expected_trade_date(trade_days):
     """
     期望数据交易日 = 最近一个已收盘的交易日（北京时区15:00后视为已收盘）
@@ -958,7 +1021,7 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries, 
     df_latest = daily_map[latest_date]
     latest_idx = {r["ts_code"]: r for _, r in df_latest.iterrows()}
 
-    # 换手率/量比（daily_basic，全市场一次调用）
+    # 换手率/量比（daily_basic，全市场一次调用; 服务器多受限, 失败降级 AKShare/东财)
     basic_idx = {}
     try:
         df_basic = pool.call_any("daily_basic", trade_date=latest_date)
@@ -967,6 +1030,17 @@ def build_sector_stocks(industry_df, daily_map, latest_date, target_industries, 
         print(f"  ✅ daily_basic: {len(basic_idx)}条")
     except Exception as e:
         print(f"  ⚠️ daily_basic失败(换手率/量比将为空): {str(e)[:60]}")
+    if not basic_idx:
+        try:
+            import akshare_adapter as _ak
+            _ak_basic = _ak.fetch_daily_basic_ak(latest_date)
+            if _ak_basic:
+                basic_idx = {k: {"turnover_rate": v.get("turnover_rate"),
+                                 "volume_ratio": v.get("volume_ratio")}
+                             for k, v in _ak_basic.items()}
+                print(f"  ✅ daily_basic(AKShare降级): {len(basic_idx)}条")
+        except Exception as e2:
+            print(f"  ⚠️ daily_basic AKShare降级失败(换手率/量比仍空): {str(e2)[:60]}")
 
     # 连涨天数：最近21个有效交易日逐股统计
     avail = sorted(daily_map.keys())
@@ -1043,7 +1117,7 @@ def _current_iso_week(dt=None):
 
 def build_potential_stats(rps_history, stock_rps50=None, lo=88.0, hi=None):
     """临界潜力板块(RPS5∈[lo, hi))成分股统计 → 供 daily_review.potential_sectors 确认达标率
-    边界板块(RPS 接近阈值但未入选, 如 RPS5∈[88,90)) 不在 rps_data.json 的
+    边界板块(RPS 接近阈值但未入选, 如 RPS5∈[88,95)) 不在 rps_data.json 的
     in_list/out_list 中(无成分股 stocks), 其内部达标率无法在 daily_review 自行计算
     → 由 rps_calc 在 main() 中根据 daily_map 聚合个股 RPS50 后传入
     返回 [{name, stock_count, rps50_above_90, rank5, rank_change, continuous}]
@@ -1149,13 +1223,15 @@ def _maybe_run_review(potential_stats=None):
 
 
 def _maybe_run_weekly_review():
-    """每周复盘(周度量化复盘): 只在周日自然日运行 1 次, 失败不阻断主流程
+    """每周复盘(周度量化复盘): 周五收盘后生成, 周日兜底(幂等跳过)
     weekly_review.main() 自带幂等: 本周 week_id 已生成则跳过
-    周日 A 股休市, rps_calc 走幂等跳过路径, 复用周五最新数据生成周度复盘;
-    服务器 cron 需包含周日(如 30 18 * * 0)以触发本逻辑
+    周五(weekday=4)为当周最后交易日, 收盘后 rps_calc 处理完当日数据即生成周度复盘(统计窗口=当周5个交易日);
+    周日(weekday=6)兜底重试, 若周五已生成则自动跳过(符合 V2.0 需求文档: 每周五收盘后自动更新);
+    服务器 cron 需包含周五与周日(如 30 18 * * 0,4,5)以触发本逻辑
     """
-    if datetime.now().weekday() != 6:  # 6 = 周日
-        print("  ⏭️ 今日非周日, 跳过每周复盘(每周日仅运行1次)")
+    wd = datetime.now().weekday()
+    if wd not in (4, 6):  # 4=周五, 6=周日
+        print(f"  ⏭️ 今日非周五/周日, 跳过每周复盘(周五收盘生成, 周日兜底)")
         return
     try:
         import weekly_review
@@ -1270,6 +1346,37 @@ def main():
             # 周度推荐(中线波段): 每周运行1次, 已生成当周结果则跳过
             _maybe_run_weekly(ind_df, dm, ld, pd_, _data.get("rps20", {}).get("in_list", []),
                               out_list_names=_out_list, review_data=_review)
+            # ===== 补: 超跌反转潜力精选 (幂等跳过分支也要生成, 独立JSON, 不破坏RPS/调出对比) =====
+            try:
+                import rebound as _reb
+                if _reb.CONFIG_REBOUND["run_mode"].get("REBOUND_ENABLED", True):
+                    try:
+                        from recommend import fetch_index_daily, check_market_env as _cme
+                        td_keys_ = sorted([d_ for d_ in dm.keys() if d_ <= ld])
+                        idx_codes_ = recommend.CONFIG["market"]["index_codes"]
+                        idx_map_ = fetch_index_daily(idx_codes_, td_keys_)
+                        strong_count_ = sum(1 for r in in_list_records if float(r.get("rps") or 0) >= 95)
+                        _m_ok_, _m_stat_ = _cme(idx_map_, dm, ld, strong_sector_count=strong_count_)
+                        _m_stat_rb_ = dict(_m_stat_ or {})
+                    except Exception:
+                        _m_ok_, _m_stat_rb_ = None, {}
+                    try:
+                        _ok_rb_, _adj_rb_ = _reb._rebound_market_adjust(
+                            (locals().get("idx_map_") if "idx_map_" in dir() else None),
+                            dm, ld, _m_stat_rb_)
+                    except Exception:
+                        _ok_rb_, _adj_rb_ = bool(_m_ok_ and _m_stat_rb_.get("is_safe") is not False), _m_stat_rb_
+                    if _ok_rb_:
+                        _rlog_rb_ = []
+                        rec_rb_ = _reb.pick_rebound_stocks(ind_df, dm, ld,
+                                                           market_status=_adj_rb_, candidate_log=_rlog_rb_,
+                                                           in_list_records=in_list_records)
+                        _reb._LAST_CANDIDATE_LOG = _rlog_rb_
+                        _reb.save_rebound_recommendations(rec_rb_, ld, pd_, market_status=_adj_rb_)
+                    else:
+                        _reb.save_rebound_recommendations([], ld, pd_, market_status=_adj_rb_)
+            except Exception as _rb_e:
+                print(f"  ⚠️ (幂等分支)超跌反转推荐生成失败(不阻断): {str(_rb_e)[:100]}")
             # 每周复盘: 只在周日运行1次(周日 A 股休市走此幂等路径, 复用周五数据)
             _maybe_run_weekly_review()
         except Exception as e:
@@ -1330,20 +1437,32 @@ def main():
     latest_date = available_days[-1]
     prev_date = available_days[-2] if len(available_days) >= 2 else ""
 
+    # ===== 弹性备选池(RPS20∈[90,95)): 双阈值分层第二层 ====
+    # 解决"阈值95太严没标的 / 阈值90太宽噪音多"的矛盾:
+    #   核心主线池(RPS20≥95) → 个股筛选放宽(板块强已有贝塔保障)
+    #   弹性备选池(90≤RPS20<95) → 个股筛选收紧(板块强度不足, 必须用个股阿尔法弥补)
+    print("\n  [5a-2] 构建弹性备选池(RPS20∈[90,95))...")
+    reserve20 = split_reserve20(df_rps, stock_rps50, industry_rps50_60day, board_parent_map)
+    print(f"    弹性备选板块: {len(reserve20['in_list'])} 个 (RPS20 90-95 区间)")
+
     # ===== 板块成分股（点击弹窗展示）=====
     print("\n  [5b] 构建板块成分股...")
     all_ind_names = set()
     for res in (res5, res10, res20):
         for rec in res["in_list"] + res["out_list"]:
             all_ind_names.add(rec["name"])
+    # 弹性备选板块也构建成分股(供推荐模块备选池/前端备选 Tab 展示)
+    for rec in reserve20["in_list"]:
+        all_ind_names.add(rec["name"])
     stocks_by_ind = build_sector_stocks(industry_df, daily_map, latest_date, all_ind_names, stock_rps50_map)
     for res in (res5, res10, res20):
         for rec in res["in_list"] + res["out_list"]:
             rec["stocks"] = stocks_by_ind.get(rec["name"], [])
+    for rec in reserve20["in_list"]:
+        rec["stocks"] = stocks_by_ind.get(rec["name"], [])
 
     # 保存历史快照
-    with open(RPS_HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(rps_history, f, ensure_ascii=False, default=str)
+    atomic_write_json(RPS_HISTORY_FILE, rps_history, default=str)
 
     output = {
         "schema_version": SCHEMA_VERSION,
@@ -1352,12 +1471,13 @@ def main():
         "expected_trade_date": calc_expected_trade_date(trade_days),
         "total_industries": len(df_rps),
         "threshold": RPS_THRESHOLD,
+        "reserve_threshold": RESERVE_THRESHOLD,   # v8: 弹性备选池下沿(90)
         "rps5": res5,
         "rps10": res10,
         "rps20": res20,
+        "reserve20": reserve20,                    # v8: 弹性备选池 RPS20∈[90,95) 板块记录
     }
-    with open(DATA_FILE, "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2, default=str)
+    atomic_write_json(DATA_FILE, output, indent=2, default=str)
     # 计算成功并完整落盘 → 标记运行成功 (下游 recommend/daily_review/weekly 前置校验)
     write_run_status(True, latest_date, mode="calc", message="RPS 全量计算成功")
 
@@ -1374,8 +1494,7 @@ def main():
         "rps10_names": list(res10["current_names"]),
         "rps20_names": list(res20["current_names"]),
     }
-    with open(LAST_RESULT_FILE, "w", encoding="utf-8") as f:
-        json.dump(save_last, f, ensure_ascii=False, indent=2)
+    atomic_write_json(LAST_RESULT_FILE, save_last, indent=2)
 
     # ===== 每日复盘先行(动量视角量化复盘) → daily_review.json 含 potential_sectors
     # (早期启动推荐的候选池依赖该字段; 幂等: 当日已生成则跳过) =====
@@ -1395,14 +1514,46 @@ def main():
         # 完整入选板块记录(含 name + stocks 成分股), 跨 RPS5/10/20 汇总, 供板块共振计数
         in_list_records = [rec for res in (res5, res10, res20) for rec in res["in_list"]]
         run_mode = recommend.CONFIG["run_mode"]
+        # 为"超跌反转"策略做大盘基础校验 (复用 check_market_env 三态)
+        try:
+            from recommend import fetch_index_daily, check_market_env
+            td_keys = sorted([d for d in daily_map.keys() if d <= latest_date])
+            idx_codes = recommend.CONFIG["market"]["index_codes"]
+            idx_map = fetch_index_daily(idx_codes, td_keys)
+            strong_count = sum(1 for r in in_list_records if float(r.get("rps") or 0) >= 95)
+            _m_ok, _m_stat = check_market_env(idx_map, daily_map, latest_date, strong_sector_count=strong_count)
+            _m_stat_rebound = dict(_m_stat or {})
+        except Exception:
+            _m_ok, _m_stat_rebound = None, {}
         if run_mode.get("ORIGINAL_MOMENTUM", True):
             rec_list = recommend.recommend_stocks(industry_df, daily_map, latest_date, in_list_records,
-                                                  out_list_names=_out_list, review_data=_review)
+                                                  out_list_names=_out_list, review_data=_review,
+                                                  reserve_records=reserve20["in_list"])
             recommend.save_recommendations(rec_list, latest_date, prev_date)
         if run_mode.get("EARLY_STAGE_START", True):
             rec_early = recommend.recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
                                                          out_list_names=_out_list, review_data=_review)
             recommend.save_early_recommendations(rec_early, latest_date, prev_date)
+        # ===== 新增: 超跌反转潜力精选 (独立策略, 与动量互补, 失败不阻断) =====
+        try:
+            import rebound as _reb
+            if _reb.CONFIG_REBOUND["run_mode"].get("REBOUND_ENABLED", True):
+                try:
+                    _ok2, _adj2 = _reb._rebound_market_adjust(idx_map if 'idx_map' in dir() else None, daily_map, latest_date, _m_stat_rebound)
+                except Exception:
+                    _ok2, _adj2 = bool(_m_ok and _m_stat_rebound.get("is_safe") is not False), _m_stat_rebound
+                if _ok2:
+                    # 独立 candidate_log 避免污染动量策略日志
+                    _rlog = []
+                    rec_rebound = _reb.pick_rebound_stocks(industry_df, daily_map, latest_date,
+                                                            market_status=_adj2, candidate_log=_rlog,
+                                                            in_list_records=in_list_records)
+                    _reb._LAST_CANDIDATE_LOG = _rlog
+                    _reb.save_rebound_recommendations(rec_rebound, latest_date, prev_date, market_status=_adj2)
+                else:
+                    _reb.save_rebound_recommendations([], latest_date, prev_date, market_status=_adj2)
+        except Exception as _re:
+            print(f"  ⚠️ 超跌反转推荐生成失败(不阻断主流程): {str(_re)[:100]}")
     except Exception as e:
         print(f"  ⚠️ 推荐股票生成失败(不阻断主流程): {str(e)[:80]}")
 
@@ -1431,4 +1582,22 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    import sys, traceback
+    logger.info("===== rps_calc 开始 =====")
+    try:
+        main()
+    except SystemExit:
+        raise
+    except Exception as e:
+        # 任何未捕获异常都标记运行失败, 让 cron_rps.sh 能感知并跳过重启
+        tb = traceback.format_exc()
+        logger.error(f"rps_calc 崩溃: {e}\n{tb}")
+        print(f"\n❌ rps_calc 崩溃: {e}\n{tb}", file=sys.stderr)
+        try:
+            write_run_status(False, "error", mode="exception",
+                             message=f"未捕获异常: {type(e).__name__}: {str(e)[:80]}")
+        except Exception:
+            pass
+        sys.exit(1)
+    finally:
+        logger.info("===== rps_calc 结束 =====")

@@ -21,9 +21,14 @@
     产出 prediction_review.json (分维度胜率复盘, 供因子权重迭代)
   - 熔断: 大盘不合格时主流程已终止选股; 赚钱效应偏弱时降低置信度并提示仓位
 """
+from logutil import get_logger
+logger = get_logger(__name__)
+
 import json
 import os
 from pathlib import Path
+
+import rps_calc  # 复用 atomic_write_json 原子落盘
 
 STATIC_DIR = Path(__file__).parent / "static"
 LOG_FILE = STATIC_DIR / "predictions_log.json"
@@ -73,8 +78,26 @@ DELTA = {
     "regime_weak": -4,       # 市场偏弱 (上涨占比低)
 }
 
-# 预期次日涨幅空间映射 (按综合上涨概率分档, 中值 %; PRED_HORIZON=1 由3日量级调小)
-EXPECTED_GAIN = ((75, 3.0), (68, 2.5), (60, 2.0), (0, 1.5))
+# 预期次日涨幅中值映射 (按综合上涨概率分档, 单位 %)
+# 设计: 概率越高 → 预期涨幅越大; 低概率档承认下跌风险
+# 数值整体上移: A股强势板块成分股(已通过五层漏斗)次日具备惯性上冲空间,
+#   60%+ 概率应反映 2%+ 预期; 分档密(2-3pp一档)确保股票间拉开差距
+EXPECTED_GAIN = (
+    (78, 6.0),   # 极高: +6.0% (多维强共振 + 高置信)
+    (72, 5.0),   # 高:   +5.0%
+    (68, 4.0),   # 中高: +4.0%
+    (65, 3.0),   # 中:   +3.0%
+    (62, 2.0),   # 中低: +2.0%
+    (58, 1.0),   # 低:   +1.0%
+    (0, -1.0),   # 极低: -1.0% (概率<58% 倾向震荡, 不粉饰)
+)
+
+# 置信度加成: 高+1.0% / 中+0% / 低-0.5%
+# (RPS95 下 sector_count 天然为 1, 不再依赖共振加成)
+GAIN_CONF_BOOST = {"高": 1.0, "中": 0.0, "低": -0.5}
+# 板块共振加成保留(少数情况仍有价值), 但上限收紧
+GAIN_SECTOR_STEP = 0.3
+GAIN_SECTOR_CAP = 0.9
 
 
 def _clamp(v, lo=PROB_MIN, hi=PROB_MAX):
@@ -272,12 +295,36 @@ def _fundamental_prob(f):
 # 综合预测值
 # ============================================================
 
-def _expected_gain(up_prob):
-    """预期 3 日涨幅中值 (按概率分档)"""
+def _expected_gain(up_prob, confidence="中", sector_count=1):
+    """预期次日涨幅 = 概率分档中值 + 置信度加成 + 板块共振加成
+    例: 概率68% + 高置信 + sector_count=2 → 2.5 + 1.5 + 0.5 = 4.5%
+    """
+    base = 0.0
     for th, gain in EXPECTED_GAIN:
         if up_prob >= th:
-            return gain
-    return EXPECTED_GAIN[-1][1]
+            base = gain
+            break
+    conf_adj = GAIN_CONF_BOOST.get(confidence, 0.0)
+    sec_adj = max(0, min(GAIN_SECTOR_CAP, (sector_count - 1) * GAIN_SECTOR_STEP))
+    return round(base + conf_adj + sec_adj, 1)
+
+
+def _gain_range(gain):
+    """预期涨幅区间: 按中值成比例缩放, 高预期给更宽区间反映上冲空间
+    gain=5.0 → [2.0, 8.5]  (区间宽6.5)
+    gain=3.5 → [1.5, 7.0]  (区间宽5.5)
+    gain=2.0 → [0.0, 5.5]  (区间宽5.5)
+    gain=0.5 → [0.0, 4.0]  (区间宽4.0)
+    gain=-1.5 → [-3.5, 0.5] (负预期偏下)
+    """
+    if gain >= 3.0:
+        return [round(gain - 3.0, 1), round(gain + 3.5, 1)]
+    elif gain >= 1.5:
+        return [round(max(0.0, gain - 2.0), 1), round(gain + 3.5, 1)]
+    elif gain > 0:
+        return [round(0.0, 1), round(gain + 3.5, 1)]
+    else:
+        return [round(gain - 2.0, 1), round(gain + 1.5, 1)]
 
 
 def _stop_loss_pct(f, confidence):
@@ -327,20 +374,28 @@ def _load_calib():
 
 
 def calibrate_prob(up_prob):
-    """概率校准: 用实测命中率压缩虚高概率。
-    若系统近期平均输出概率(avg_prob)显著高于实测命中率(hit), 说明过度乐观,
-    将输出向 55% 基准收缩: p = 55 + (p-55)*k, k = 1 - 虚高量/100, 下限 0.3。
-    误差 ≤3pp 或样本不足 → 不做校准 (避免过度修正)。
+    """概率校准: 用实测命中率温和压缩虚高概率, 保留个股差异化。
+    问题: 原校准把所有概率压到 58-62%, EXPECTED_GAIN 分档全部失灵 →
+    改为更温和方案 (仅压 20-30% 虚高, 保留 70-80% 原始差异):
+      anchor = max(45, min(65, hit_pct + 10)) (真实命中率 + 风险溢价, 弱市加10pp)
+      k      = max(0.7, 1 - gap/80) (至少保留 70% 原始差异)
+      p      = anchor + (raw - anchor) * k
+    gap ≤3pp 或样本不足 → 不校准。
     """
     cal = _load_calib()
     if not cal:
         return up_prob
-    gap = cal["avg_prob"] - cal["hit"]  # 虚高量 (如 82-50=32)
+    # hit 可能是小数 (0.4) 或百分比 (40), 自动归一化
+    hit_raw = cal["hit"]
+    hit_pct = hit_raw * 100 if hit_raw <= 1.0 else hit_raw
+    gap = cal["avg_prob"] - hit_pct  # 统一为百分点差
     if gap <= 3:
         return up_prob
-    k = max(0.3, 1 - gap / 100.0)
-    p = 55 + (up_prob - 55) * k
-    return _clamp(int(round(p)), lo=PROB_MIN + 5)
+    # 更温和: 真实命中率 + 风险溢价(弱市保底), 至少保留 70% 原始差异
+    anchor = max(45, min(65, hit_pct + 10))
+    k = max(0.7, 1 - gap / 80.0)
+    p = anchor + (up_prob - anchor) * k
+    return _clamp(int(round(p)))
 
 
 def _pick_logic(notes, n=3):
@@ -370,12 +425,16 @@ def build_prediction(f, market_status=None):
     # 综合 = 基准 + 各维度增量之和 + 市场环境修正
     deltas = (p_mom + p_tech + p_cap + p_sec + p_sent + p_fund) - 6 * PROB_BASE
     raw_prob = _clamp(PROB_BASE + deltas + int(regime["prob_adjust"]))
+    # 多维度共振加成: 统计高于基准(PROB_BASE)的维度数, ≥3维开始加, 每超1维+2%, 上限+6%
+    above_base = sum(1 for p in (p_mom, p_tech, p_cap, p_sec, p_sent, p_fund) if p > PROB_BASE)
+    resonance_bonus = min(6, max(0, above_base - 2) * 2)  # ≥3维: +2, ≥4维: +4, ≥5维: +6
+    raw_prob = _clamp(raw_prob + resonance_bonus)
     # 概率校准: 用 prediction_review 实测命中率压缩虚高概率 (防过度乐观)
     up_prob = calibrate_prob(raw_prob)
     confidence = _confidence(up_prob, f)
     if regime["regime"] == "偏弱" and confidence == "高":
         confidence = "中"  # 市场偏弱整体降一档
-    gain = _expected_gain(up_prob)
+    gain = _expected_gain(up_prob, confidence=confidence, sector_count=int(f.get("sector_count") or 1))
     notes = n_mom + n_tech + n_cap + n_sec + n_fund
     factors = {
         "momentum": p_mom, "technical": p_tech, "capital": p_cap,
@@ -385,7 +444,7 @@ def build_prediction(f, market_status=None):
         "horizon": PRED_HORIZON,
         "up_prob": up_prob,
         "expected_gain": gain,
-        "gain_range": [round(gain * 0.55, 1), round(gain * 1.45, 1)],
+        "gain_range": _gain_range(gain),
         "stop_loss": _stop_loss_pct(f, confidence),
         "confidence": confidence,
         "logic": _pick_logic(notes, 3),
@@ -399,8 +458,10 @@ def build_prediction(f, market_status=None):
 # 每日预测校准 (预测效果复盘)
 # ============================================================
 
-def record_predictions(rec_list, latest_date, log_file=None):
-    """将当日推荐预测写入 predictions_log.json (保留近 30 个交易日)"""
+def record_predictions(rec_list, latest_date, log_file=None, tag=None):
+    """将当日推荐预测写入 predictions_log.json (保留近 30 个交易日)
+    tag: 策略标识 (如 "REBOUND"/"MOMENTUM"), 写入每条记录便于按策略分维度复盘
+    """
     path = Path(log_file) if log_file else LOG_FILE
     log = _load_json(path)
     preds = []
@@ -415,6 +476,7 @@ def record_predictions(rec_list, latest_date, log_file=None):
             "confidence": p.get("confidence"),
             "sector_count": r.get("sector_count"), "hit_count": (r.get("technical") or {}).get("hit_count"),
             "net_inflow_3d": (r.get("capital") or {}).get("net_inflow_3d"),
+            "tag": tag,
         })
     log[str(latest_date)] = preds
     dates = sorted(log.keys())[-30:]
@@ -452,6 +514,8 @@ def _lookup_close(daily_map, date, code, close_cache=None):
 def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=None):
     """每日收盘后自动复盘: 核对历史预测实际涨跌, 输出分维度胜率 (prediction_review.json)
     daily_map: 当前运行窗口的日线 (含过去 80 日, 可覆盖上次预测后的 3 日验证)
+    V2.0 (需求 3.9): 每条已验证预测追加 gain3/gain5 (持有3日/5日收益, 数据不足置 None),
+                     summary 汇总 avg_gain3/avg_gain5
     """
     log_file = Path(log_file) if log_file else LOG_FILE
     review_file = Path(review_file) if review_file else REVIEW_FILE
@@ -479,6 +543,9 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
                 "pred_date": date, "code": p.get("code"), "name": p.get("name"),
                 "up_prob": p.get("up_prob"), "confidence": p.get("confidence"),
                 "sector_count": p.get("sector_count"), "gain": round(gain, 2),
+                # V2.0 (需求 3.9): 持有3日/5日周期收益, 数据不足置 None
+                "gain3": _horizon_gain(daily_map, trade_days, idx, 3, p, close_cache),
+                "gain5": _horizon_gain(daily_map, trade_days, idx, 5, p, close_cache),
                 # 命中=严格上涨: 昨日推荐 → 今日收盘价 > 推荐时价格 (平盘/下跌均不计命中)
                 "hit": close_t > p["price"],
             })
@@ -499,7 +566,19 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
         return {k: {"samples": len(v), "hit_rate": _rate(v),
                     "avg_gain": round(sum(y["gain"] for y in v) / len(v), 2)} for k, v in out.items()}
 
-    avg_prob = sum(x["up_prob"] or 0 for x in verified) / len(verified)
+    def _avg_horizon(key):
+        """某周期收益的均值 (可验证样本才计入; 全无 → None)"""
+        vals = [x[key] for x in verified if x.get(key) is not None]
+        if not vals:
+            return None
+        return round(sum(vals) / len(vals), 2)
+
+    def _horizon_n(key):
+        return sum(1 for x in verified if x.get(key) is not None)
+
+    # 平均上涨概率: 仅统计有概率值的样本(缺失不按0计入, 避免拉低均值)
+    _prob_vals = [x["up_prob"] for x in verified if x.get("up_prob") is not None]
+    avg_prob = sum(_prob_vals) / len(_prob_vals) if _prob_vals else 0
     _sorted = sorted(verified, key=lambda x: (x["pred_date"], x["code"]))
     review = {
         "update_date": latest_date,
@@ -508,6 +587,10 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
             "samples": len(verified),
             "hit_rate": _rate(verified),
             "avg_gain": round(sum(x["gain"] for x in verified) / len(verified), 2),
+            "avg_gain3": _avg_horizon("gain3"),
+            "avg_gain5": _avg_horizon("gain5"),
+            "horizon3_n": _horizon_n("gain3"),
+            "horizon5_n": _horizon_n("gain5"),
             "avg_up_prob": round(avg_prob, 1),
             "prev_dates": sorted({x["pred_date"] for x in verified}),
         },
@@ -516,17 +599,28 @@ def calc_prediction_accuracy(daily_map, latest_date, log_file=None, review_file=
         # 完整已验证列表(供周度复盘筛选本周样本, 避免 recent 仅15条截断)
         "all": _sorted,
         "recent": _sorted[-15:],
-        "note": "每日校准: 命中=预测后%s个交易日收盘价>预测日现价(严格上涨); 分维度胜率用于动态调整因子权重" % PRED_HORIZON,
+        "note": "每日校准: 命中=预测后%s个交易日收盘价>预测日现价(严格上涨); 分维度胜率用于动态调整因子权重; " \
+                "持有3日/5日平均涨幅仅统计可验证样本" % PRED_HORIZON,
     }
-    with open(review_file, "w", encoding="utf-8") as f:
-        json.dump(review, f, ensure_ascii=False, indent=2, allow_nan=False)
+    rps_calc.atomic_write_json(review_file, review, indent=2, allow_nan=False)
     return review
+
+
+def _horizon_gain(daily_map, trade_days, idx, h, p, close_cache):
+    """持有 h 个交易日收益(%) → 数据不足返回 None (V2.0 需求 3.9)"""
+    if idx + h >= len(trade_days):
+        return None
+    c = _lookup_close(daily_map, trade_days[idx + h], p.get("code"), close_cache)
+    if c is None or not p.get("price"):
+        return None
+    return round((c / p["price"] - 1) * 100, 2)
 
 
 # ============================================================
 # 独立运行(调试): 基于已有 recommendations.json 重放预测
 # ============================================================
 if __name__ == "__main__":
+    logger.info("===== predict 开始 =====")
     rec = _load_json(STATIC_DIR / "recommendations.json")
     print("推荐数:", len(rec.get("stocks") or []))
     for s in (rec.get("stocks") or [])[:5]:

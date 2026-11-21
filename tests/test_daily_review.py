@@ -198,6 +198,24 @@ class TestMarketTone(unittest.TestCase):
         self.assertIn("high_score_count_pct", t)
         self.assertIn("avg_gain", t)
 
+    def test_pct30_fields_and_level(self):
+        # V2.0 需求 3.2: 近30日分位 + 水位形容词; 今日高分=窗口最高 → 偏高水位(29/30)
+        hist = self._hist([("202608%02d" % i, i) for i in range(1, 30)] + [("20260830", 30)])
+        with patch_index(above=True):
+            t = dr.market_tone(self._rps(), hist)
+        self.assertAlmostEqual(t["pct30"], 96.7)
+        self.assertEqual(t["pct_level"], "偏高水位")
+        self.assertIn("近30日", t["note"])
+
+    def test_pct_level_watermark(self):
+        # 0%=极低; 100%=极高; 50%=中等
+        self.assertEqual(dr.percentile_level(0), "极低水位")
+        self.assertEqual(dr.percentile_level(20), "偏低水位")
+        self.assertEqual(dr.percentile_level(50), "中等水位")
+        self.assertEqual(dr.percentile_level(90), "偏高水位")
+        self.assertEqual(dr.percentile_level(100), "极高水位")
+        self.assertEqual(dr.percentile_level(None), "")
+
 
 # ========================== 方向2: 主线识别(硬核/韧性) ==========================
 
@@ -311,6 +329,43 @@ class TestRotation(unittest.TestCase):
         rep = dr._repeat_rotation(hist)
         self.assertEqual(rep, ["轮动A"])
 
+    def test_repeat_detail_flips(self):
+        # V2.0 需求 3.4: 反复轮动带次数标注 (翻转9次)
+        hist = {}
+        vals = [95, 60, 95, 60, 95, 60, 95, 60, 95, 60]
+        for i, v in enumerate(vals):
+            hist["202608%02d" % (i + 1)] = {"轮动A": {"RPS5": v}}
+        rep = dr._repeat_rotation(hist, detail=True)
+        self.assertEqual(rep[0]["name"], "轮动A")
+        self.assertEqual(rep[0]["flips"], 9)
+
+    def test_mainline_branch_out_split(self):
+        # V2.0 需求 3.4: 调出板块昨日属主线分歧(R10/R20在榜,R5不在) → 主线调出(高危);
+        # 仅脉冲板块调出 → 支线调出(正常)
+        r5 = make_level([make_sector("稳A", rank=1)],
+                        out_list=[make_sector("半导体A", status="调出"),
+                                  make_sector("脉冲B", status="调出")])
+        r10 = make_level([make_sector("稳A", rank=1), make_sector("半导体A", rank=2)])
+        r20 = make_level([make_sector("稳A", rank=1), make_sector("半导体A", rank=2)])
+        rot = dr.rotation_analysis(r5, r10, r20)
+        self.assertEqual([e["name"] for e in rot["main_out"]], ["半导体A"])
+        self.assertEqual([e["name"] for e in rot["branch_out"]], ["脉冲B"])
+        self.assertEqual(rot["main_out_count"], 1)
+        self.assertEqual(rot["branch_out_count"], 1)
+        self.assertIn("流入", rot["summary"])
+
+    def test_rotation_summary_switch(self):
+        # 流入科技(半导体) / 流出周期(黄金) → 风格切换
+        new_in = [make_sector("半导体", rank=5, continuous=1)]
+        out_all = ["黄金"]
+        s = dr._rotation_summary(new_in, out_all)
+        self.assertIn("流入", s)
+        self.assertIn("流出", s)
+        self.assertIn("切换", s)
+
+    def test_rotation_summary_quiet(self):
+        self.assertEqual(dr._rotation_summary([], []), "轮动平稳, 无显著资金流向")
+
 
 # ========================== 方向4: 健康度(规模自适应) ==========================
 
@@ -335,6 +390,99 @@ class TestHealth(unittest.TestCase):
         in_list2 = [make_sector("老主线B", rank=5, continuous=5, stock_count=20, rps50_above_90=8)]
         h2 = dr.health_analysis(in_list2)
         self.assertEqual(h2["mature_fatigue"], [])
+
+
+class TestHealthV2(unittest.TestCase):
+    """V2.0 扩散/种子达标率 (需求 3.5): 合并重复板块 + 判定规则 + 达标率环比"""
+
+    def test_unified_merges_duplicate_sector(self):
+        # 同一板块同时满足 扩散健康 + 高质量种子 → 只出现一次, 带完整标签
+        in_list = [make_sector("种子", rank=9, continuous=1, stock_count=10, rps50_above_90=5)]  # 50%≥40%
+        h = dr.health_analysis(in_list)
+        self.assertEqual(len(h["unified"]), 1)
+        self.assertEqual(h["unified"][0]["name"], "种子")
+        self.assertIn("高质量种子", h["unified"][0]["tags"])
+        self.assertIn("扩散健康", h["unified"][0]["tags"])
+
+    def test_unified_sorts_by_category_priority(self):
+        # 高质量种子(优先0) 排在 脉冲种子(优先4) 前
+        in_list = [make_sector("脉冲", rank=8, continuous=1, stock_count=10, rps50_above_90=2),
+                   make_sector("优种", rank=9, continuous=1, stock_count=10, rps50_above_90=5)]
+        h = dr.health_analysis(in_list)
+        self.assertEqual([x["name"] for x in h["unified"]], ["优种", "脉冲"])
+
+    def test_ratio_chg_with_prev(self):
+        in_list = [make_sector("种子", rank=9, continuous=1, stock_count=10, rps50_above_90=5)]  # 50%
+        h = dr.health_analysis(in_list, prev_ratios={"种子": 40.0})
+        self.assertEqual(h["unified"][0]["ratio_chg"], 10.0)
+
+    def test_ratio_chg_missing_prev_is_none(self):
+        in_list = [make_sector("种子", rank=9, continuous=1, stock_count=10, rps50_above_90=5)]
+        h = dr.health_analysis(in_list)
+        self.assertIsNone(h["unified"][0]["ratio_chg"])
+
+    def test_load_prev_health_ratios(self):
+        prev = {"update_date": "20260827",
+                "health": {"expand": [{"name": "黄金", "ratio": 71.4}],
+                           "seed_pulse": [{"name": "种子", "ratio": 22.2}],
+                           "mature": ["钟表珠宝"]}}
+        with mock.patch.object(dr, "_load_json", return_value=prev):
+            ratios = dr._load_prev_health_ratios("20260828")
+        self.assertEqual(ratios, {"黄金": 71.4, "种子": 22.2})  # mature 无 ratio 不采信
+
+    def test_load_prev_health_ratios_same_day_skipped(self):
+        prev = {"update_date": "20260828",
+                "health": {"expand": [{"name": "黄金", "ratio": 71.4}]}}
+        with mock.patch.object(dr, "_load_json", return_value=prev):
+            ratios = dr._load_prev_health_ratios("20260828")
+        self.assertEqual(ratios, {})
+
+    def test_load_prev_health_ratios_archive_priority(self):
+        """2026-08-30 修复: 优先读 health_ratios_history.json 上一交易日, 解决单文件覆盖导致环比恒空"""
+        hist_file = str(dr.STATIC_DIR / dr.HEALTH_RATIOS_NAME)
+        archive = {"20260827": {"黄金": 71.4}, "20260828": {"黄金": 75.0}}
+
+        def fake_load(path):
+            if str(path) == hist_file:
+                return archive
+            return {"update_date": "20260828", "health": {}}  # 当前文件与今日同日 → 归档优先
+        with mock.patch.object(dr, "_load_json", side_effect=fake_load):
+            ratios = dr._load_prev_health_ratios("20260829")
+        self.assertEqual(ratios, {"黄金": 75.0})
+
+    def test_archive_health_ratios(self):
+        """归档当日 unified 达标率 → health_ratios_history.json (供次日环比)"""
+        with tempfile.TemporaryDirectory() as td, \
+             mock.patch.object(dr, "STATIC_DIR", Path(td)):
+            stats = {"update_date": "20260828",
+                     "health": {"unified": [{"name": "黄金", "ratio": 75.0},
+                                            {"name": "种子", "ratio": 44.4}]}}
+            dr._archive_health_ratios(stats)
+            p = Path(td) / dr.HEALTH_RATIOS_NAME
+            self.assertEqual(json.loads(p.read_text(encoding="utf-8")),
+                             {"20260828": {"黄金": 75.0, "种子": 44.4}})
+
+    def test_build_stats_includes_unified_and_render(self):
+        r5 = make_level([make_sector("种子", rank=9, continuous=1, stock_count=10, rps50_above_90=5),
+                         make_sector("黄金", rank=1, continuous=4, stock_count=10, rps50_above_90=8)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        with patch_index(above=True), \
+             mock.patch.object(dr, "fetch_market_breadth",
+                               return_value={"up_count": 3000, "down_count": 1500,
+                                             "limit_up": 40, "limit_down": 5,
+                                             "max_board": 4, "total_amount": 9000.0}), \
+             mock.patch.object(dr, "load_recommendations", return_value={}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}), \
+             mock.patch.object(dr, "_load_prev_health_ratios",
+                               return_value={"种子": 40.0}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        unified = stats["health"]["unified"]
+        self.assertTrue(any(x["name"] == "种子" and x["ratio_chg"] == 10.0 for x in unified))
+        md = dr.render_markdown(stats)
+        self.assertIn("判定规则", md)
+        self.assertIn("高质量种子", md)
 
 
 # ========================== 方向5: 风险预警(分级) ==========================
@@ -408,6 +556,100 @@ class TestRisk(unittest.TestCase):
         risk = dr.risk_analysis(r5, make_level([]), make_level([]), self._hist2())
         self.assertEqual(risk["warnings"], [])
         self.assertEqual(risk["level"], "safe")
+
+
+class TestRiskV2(unittest.TestCase):
+    """V2.0 四级风险等级 (需求 3.6): 低/中/高/极高 + 赛道归类 + 操作建议"""
+    def _hist2(self):
+        return {"20260807": {"A": {"RPS5": 95}}, "20260810": {"A": {"RPS5": 95}}}
+
+    def _out_level(self, n):
+        outs = [make_sector("半导体%d" % i, status="调出") for i in range(n)]
+        return make_level([make_sector("黄金", rank=1)], out_list=outs)
+
+    def test_low_risk_normal_rotation(self):
+        r5 = make_level([make_sector("黄金", rank=1)])
+        risk = dr.risk_analysis(r5, make_level([]), make_level([]), self._hist2())
+        self.assertEqual(risk["level_v2"], "low")
+        self.assertEqual(risk["level_v2_text"], "低风险")
+        self.assertEqual(risk["level_color"], "green")
+        self.assertEqual(risk["out_total"], 0)
+        self.assertEqual(risk["main_out_total"], 0)
+        self.assertTrue(any("正常轮动" in a for a in risk["advice"]))
+
+    def test_mid_risk_batch_out(self):
+        # 今日调出5个(≥5) 且集中在单一赛道 → 中风险
+        risk = dr.risk_analysis(self._out_level(5), make_level([]), make_level([]),
+                                self._hist2())
+        self.assertEqual(risk["level_v2"], "mid")
+        self.assertEqual(risk["level_v2_text"], "中风险")
+        self.assertEqual(risk["level_color"], "yellow")
+        self.assertEqual(risk["out_total"], 5)
+
+    def test_high_risk_out_ge8(self):
+        # 今日调出8个(≥8) → 高风险
+        risk = dr.risk_analysis(self._out_level(8), make_level([]), make_level([]),
+                                self._hist2())
+        self.assertEqual(risk["level_v2"], "high")
+        self.assertEqual(risk["level_color"], "orange")
+
+    def test_high_risk_mainline_batch_out(self):
+        # 主线批量调出≥3: 昨日主线(RPS10/20仍在榜) 今日从RPS5掉榜
+        outs = [make_sector("半导体A", status="调出"), make_sector("半导体B", status="调出"),
+                make_sector("半导体C", status="调出")]
+        r5 = make_level([make_sector("黄金", rank=1)], out_list=outs)
+        r10 = make_level([make_sector("黄金", rank=1), make_sector("半导体A", rank=2),
+                          make_sector("半导体B", rank=3), make_sector("半导体C", rank=4)])
+        r20 = make_level([make_sector("黄金", rank=1), make_sector("半导体A", rank=2),
+                          make_sector("半导体B", rank=3), make_sector("半导体C", rank=4)])
+        risk = dr.risk_analysis(r5, r10, r20, self._hist2())
+        self.assertEqual(risk["main_out_total"], 3)
+        self.assertEqual(risk["level_v2"], "high")
+        self.assertTrue(any("主线批量调出" in a for a in risk["advice"]))
+
+    def test_critical_high_score_3day_drop(self):
+        # 高分板块连续3天减少 → 极高风险
+        hist = {"20260805": {str(i): {"RPS5": 95} for i in range(20)},
+                "20260806": {str(i): {"RPS5": 95} for i in range(15)},
+                "20260807": {str(i): {"RPS5": 95} for i in range(10)},
+                "20260810": {str(i): {"RPS5": 95} for i in range(5)}}
+        risk = dr.risk_analysis(make_level([]), make_level([]), make_level([]), hist)
+        self.assertTrue(risk["drop3"])
+        self.assertEqual(risk["level_v2"], "critical")
+        self.assertEqual(risk["level_color"], "red")
+        self.assertTrue(any("连续3天减少" in a for a in risk["advice"]))
+
+    def test_critical_market_plunge(self):
+        # 上涨家数 < 下跌家数×40% → 全市场普跌 → 极高风险
+        r5 = make_level([make_sector("黄金", rank=1)])
+        breadth = {"up_count": 100, "down_count": 400}
+        risk = dr.risk_analysis(r5, make_level([]), make_level([]), self._hist2(),
+                                breadth=breadth)
+        self.assertEqual(risk["level_v2"], "critical")
+        self.assertTrue(any("全市场普跌" in a for a in risk["advice"]))
+
+    def test_track_groups_structure(self):
+        # 批量调出按赛道归类: [{track, count}]
+        risk = dr.risk_analysis(self._out_level(3), make_level([]), make_level([]),
+                                self._hist2())
+        self.assertEqual(risk["track_groups"], [{"track": "科技", "count": 3}])
+
+    def test_build_stats_includes_risk_v2(self):
+        # build_review_stats 接入链路: 复用 fetch_market_breadth 结果
+        r5 = make_level([make_sector("黄金", rank=1, stock_count=10, rps50_above_90=9)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        mb = {"up_count": 3000, "down_count": 1500, "limit_up": 40, "limit_down": 5,
+              "max_board": 4, "total_amount": 9000.0, "source": "akshare"}
+        with patch_index(above=True), \
+             mock.patch.object(dr, "fetch_market_breadth", return_value=mb), \
+             mock.patch.object(dr, "load_recommendations", return_value={}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        self.assertIn("level_v2", stats["risk"])
+        self.assertEqual(stats["risk"]["level_v2"], "low")
+        self.assertEqual(stats["market_breadth"]["up_count"], 3000)
 
 
 # ========================== 方向6: 次日清单(分池+掉榜天数) ==========================
@@ -487,6 +729,106 @@ class TestSentiment(unittest.TestCase):
         sent = dr.sentiment_phase(self._rps5(10, continuous=1), make_level([]),
                                   make_level([]), hist, seed_high_n=4)
         self.assertEqual(sent["main"], "启动期")
+
+
+class TestSentimentV2Quant(unittest.TestCase):
+    """V2.0 情绪阶段量化字段 (需求 3.1: 数据可量化/逻辑可追溯)"""
+
+    def _rps5(self, n=12, continuous=1):
+        sectors = [make_sector("板块%d" % i, rank=i + 1, continuous=continuous)
+                   for i in range(n)]
+        return make_level(sectors)
+
+    def test_quant_fields_present(self):
+        hist = {"20260810": {str(i): {"RPS5": 95} for i in range(10)},
+                "20260811": {str(i): {"RPS5": 95} for i in range(12)}}
+        sent = dr.sentiment_phase(self._rps5(12), make_level([]), make_level([]), hist)
+        for k in ("prev_high_n", "trend", "trend_days", "rising", "basis", "phase_rules"):
+            self.assertIn(k, sent)
+        self.assertEqual(sent["prev_high_n"], 10)
+        self.assertEqual(sent["trend"], 2)
+        self.assertTrue(sent["rising"])
+        self.assertIn("高分板块", sent["basis"])
+
+    def test_phase_rules_five_stages(self):
+        hist = {"20260810": {str(i): {"RPS5": 95} for i in range(10)}}
+        sent = dr.sentiment_phase(self._rps5(10), make_level([]), make_level([]), hist)
+        rules = {r["phase"]: r["rule"] for r in sent["phase_rules"]}
+        for p in ("冰点期", "启动期", "发酵期", "高潮期", "退潮期"):
+            self.assertIn(p, rules)
+        self.assertIn("连续3天减少", rules["冰点期"])
+
+    def test_trend_days_negative(self):
+        # 高分板块数 12→9→6: 连续2天减少
+        hist = {"20260808": {str(i): {"RPS5": 95} for i in range(12)},
+                "20260809": {str(i): {"RPS5": 95} for i in range(9)},
+                "20260810": {str(i): {"RPS5": 95} for i in range(6)}}
+        sent = dr.sentiment_phase(self._rps5(6), make_level([]), make_level([]), hist)
+        self.assertEqual(sent["trend_days"], -2)
+        self.assertLess(sent["trend"], 0)
+        self.assertFalse(sent["rising"])
+
+
+class TestSentimentMilestones(unittest.TestCase):
+    """V2.0 情绪关键拐点标注 (需求 3.1: 主线确认日/首次退潮日/情绪冰点日)"""
+
+    def test_empty_history(self):
+        ms = dr.sentiment_milestones({})
+        self.assertIsNone(ms["mainline_confirm_date"])
+        self.assertIsNone(ms["first_tideout_date"])
+        self.assertIsNone(ms["emotion_ice_date"])
+        self.assertIn("缺失", ms["note"])
+
+    def test_mainline_confirm_date(self):
+        # 板块A 连续5天 RPS5≥95 → 第5天为主线确认日
+        hist = {}
+        for i in range(1, 7):
+            d = "2026080%d" % i
+            hist[d] = {"板块A": {"RPS5": 95}}
+            if i >= 3:
+                hist[d]["板块B"] = {"RPS5": 60}
+        ms = dr.sentiment_milestones(hist)
+        self.assertEqual(ms["mainline_confirm_date"], "20260805")
+
+    def test_first_tideout_date(self):
+        # 高分 12→9→6: 连续2天减少, 首个满足日 = 第二次减少日
+        hist = {"20260808": {str(i): {"RPS5": 95} for i in range(12)},
+                "20260809": {str(i): {"RPS5": 95} for i in range(9)},
+                "20260810": {str(i): {"RPS5": 95} for i in range(6)}}
+        ms = dr.sentiment_milestones(hist)
+        self.assertEqual(ms["first_tideout_date"], "20260810")
+
+    def test_emotion_ice_date(self):
+        # 高分 10→7→4→2: 连续3天减少且≤5 → 冰点日 = 最后一天
+        hist = {"20260807": {str(i): {"RPS5": 95} for i in range(10)},
+                "20260808": {str(i): {"RPS5": 95} for i in range(7)},
+                "20260809": {str(i): {"RPS5": 95} for i in range(4)},
+                "20260810": {str(i): {"RPS5": 95} for i in range(2)}}
+        ms = dr.sentiment_milestones(hist)
+        self.assertEqual(ms["emotion_ice_date"], "20260810")
+
+    def test_emotion_ice_fallback_min(self):
+        # 无连续3天减少 → 取高分数量最小值日期
+        hist = {"20260809": {str(i): {"RPS5": 95} for i in range(4)},
+                "20260810": {str(i): {"RPS5": 95} for i in range(8)}}
+        ms = dr.sentiment_milestones(hist)
+        self.assertEqual(ms["emotion_ice_date"], "20260809")
+
+    def test_build_stats_includes_milestones(self):
+        with patch_index(above=True), \
+             mock.patch.object(dr, "load_recommendations", return_value={}):
+            stats = dr.build_review_stats(
+                make_rps_data(rps5=make_level([make_sector("黄金", rank=1)]),
+                              rps10=make_level([make_sector("黄金", rank=1)]),
+                              rps20=make_level([make_sector("黄金", rank=1)])),
+                {"20260806": {"黄金": {"RPS5": 90}},
+                 "20260807": {"黄金": {"RPS5": 95}},
+                 "20260810": {"黄金": {"RPS5": 100}}})
+        ms = stats["milestones"]
+        for k in ("mainline_confirm_date", "first_tideout_date", "emotion_ice_date"):
+            self.assertIn(k, ms)
+        # 黄金仅连续2天上榜(<5天) → 主线确认日尚未触发; 拐点字段结构完整
+        self.assertIsNone(ms["mainline_confirm_date"])
 
 
 class TestStyleAnalysis(unittest.TestCase):
@@ -645,6 +987,19 @@ class TestSentimentHistory(unittest.TestCase):
             with mock.patch.object(dr, "STATIC_DIR", Path(tmp.name)):
                 dr._append_sentiment_history(self._stats(""))
                 self.assertIsNone(self._read(tmp))
+        finally:
+            tmp.cleanup()
+
+    def test_append_trend_field(self):
+        # V2.0: 高分板块数较前日变化写入历史(供前端双轴图/拐点标注), 首条为 None
+        tmp = tempfile.TemporaryDirectory()
+        try:
+            with mock.patch.object(dr, "STATIC_DIR", Path(tmp.name)):
+                dr._append_sentiment_history(self._stats("20260809"))
+                dr._append_sentiment_history(self._stats("20260810"))
+                data = self._read(tmp)
+                self.assertIsNone(data[0].get("trend"))
+                self.assertEqual(data[1]["trend"], 0)  # 两日 high_n 相同 → 持平
         finally:
             tmp.cleanup()
 
@@ -846,11 +1201,135 @@ class TestNewsReview(unittest.TestCase):
             stats = dr.build_review_stats(
                 rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
                       "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
-        stats["news"] = dr.news_review(recs, None)
+        # news_review 的 early 参数传 None 会回退读真实文件, 需显式 mock 为空
+        stats["news"] = dr.news_review(recs, {})
         md = dr.render_markdown(stats)
         self.assertIn("消息面复盘", md)
         self.assertIn("偏暖", md)
         self.assertIn("兴业银锡", md)
+
+
+class TestNewsReviewV2(unittest.TestCase):
+    """消息面复盘 V2.0 (需求 3.8): 板块标注 + 评分基准 + 资金面 (2026-08-29)"""
+
+    @staticmethod
+    def _stock(name="测试", news=None, tags="", score_news=0, industry="有色金属"):
+        return {"name": name, "ts_code": "000001", "news": news,
+                "tags": tags, "score_news": score_news, "industry": industry}
+
+    def _call(self, recs=None, early=None, breadth=None, fund_flow=None, north=None):
+        with mock.patch.object(dr, "load_recommendations", return_value={}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            return dr.news_review(recs, early, breadth=breadth,
+                                  fund_flow=fund_flow, north=north)
+
+    def test_sector_tag_on_official_lists(self):
+        # 每条权威利好/利空消息标注对应板块 (需求 3.8: [PCB板块])
+        recs = {"stocks": [self._stock("沪电股份", TestNewsReview._news(op=1, title="业绩预增"),
+                                        tags="利好消息", score_news=2, industry="电子"),
+                           self._stock("某医药股", TestNewsReview._news(on=1, title="集采利空"),
+                                        tags="利空消息", score_news=-3, industry="医药")]}
+        out = self._call(recs, None)
+        self.assertEqual(out["official_pos_list"][0]["sector"], "电子")
+        self.assertEqual(out["official_neg_list"][0]["sector"], "医药")
+        self.assertEqual(dr._sector_tag(out["official_pos_list"][0]), " [电子板块]")
+        self.assertEqual(dr._sector_tag(out["official_neg_list"][0]), " [医药板块]")
+
+    def test_sector_tag_rumor(self):
+        recs = {"stocks": [self._stock("传闻股", TestNewsReview._news(rp=1), industry="汽车")]}
+        out = self._call(recs, None)
+        self.assertEqual(out["rumor_list"][0]["sector"], "汽车")
+        self.assertEqual(dr._sector_tag(out["rumor_list"][0]), " [汽车板块]")
+
+    def test_sector_tag_empty(self):
+        self.assertEqual(dr._sector_tag({"sector": ""}), "")
+        self.assertEqual(dr._sector_tag({}), "")
+
+    def test_score_basis_present(self):
+        # 评分基准说明, 让用户理解净影响分含义 (需求 3.8)
+        recs = {"stocks": [self._stock("A", TestNewsReview._news(op=1), score_news=2)]}
+        out = self._call(recs, None)
+        self.assertIn("+2分", out["score_basis"])
+        self.assertIn("-3分", out["score_basis"])
+        self.assertIn("正分=偏暖", out["score_basis"])
+
+    def test_fund_aggregation(self):
+        # 资金面: 两市成交额(亿) / 主力净额(亿) / 北向成分股上涨占比% (需求 3.8)
+        breadth = {"total_amount": 12345.6}           # 亿元
+        fund_flow = {"main_net": 12.3e8, "main_pct": 2.5}  # 元 → 亿
+        north = {"north_ratio": 0.58}                 # 小数 → %
+        recs = {"stocks": [self._stock("A", TestNewsReview._news(op=1), score_news=2)]}
+        out = self._call(recs, None, breadth=breadth, fund_flow=fund_flow, north=north)
+        fund = out["fund"]
+        self.assertAlmostEqual(fund["total_amount"], 12345.6)
+        self.assertAlmostEqual(fund["main_net"], 12.3)
+        self.assertAlmostEqual(fund["main_pct"], 2.5)
+        self.assertAlmostEqual(fund["north_ratio"], 58.0)
+        self.assertIn("north_note", fund)
+
+    def test_fund_partial_missing(self):
+        # 部分数据缺失时 fund 只含可用字段, 不阻断
+        recs = {"stocks": [self._stock("A", TestNewsReview._news(op=1), score_news=2)]}
+        out = self._call(recs, None, breadth={"total_amount": 9000.0})
+        self.assertEqual(list(out["fund"].keys()), ["total_amount"])
+        # main_net=0 (无主力数据) → 不写入
+        out2 = self._call(recs, None, fund_flow={"main_net": 0, "main_pct": 0})
+        self.assertNotIn("main_net", out2["fund"])
+
+    def test_build_stats_news_fund_link(self):
+        # build_review_stats 接入链路: 资金面随消息面一并输出 (需求 3.8)
+        r5 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        recs = {"stocks": [self._stock("兴业银锡", TestNewsReview._news(op=1, title="业绩预增"),
+                                        tags="利好消息", score_news=2, industry="有色金属")],
+                "market_status": {}}
+        mb = {"up_count": 3000, "down_count": 1500, "limit_up": 60, "limit_down": 8,
+              "max_board": 5, "total_amount": 9876.5}
+        with patch_index(above=True), \
+             mock.patch.object(dr, "fetch_market_breadth", return_value=mb), \
+             mock.patch.object(dr, "_fetch_market_fund_flow",
+                               return_value={"main_net": 5.0e8, "main_pct": 1.2}), \
+             mock.patch.object(dr, "_fetch_north_breadth",
+                               return_value={"north_ratio": 0.62}), \
+             mock.patch.object(dr, "load_recommendations", return_value=recs), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        nws = stats["news"]
+        self.assertIsNotNone(nws)
+        self.assertAlmostEqual(nws["fund"]["total_amount"], 9876.5)
+        self.assertAlmostEqual(nws["fund"]["main_net"], 5.0)
+        self.assertAlmostEqual(nws["fund"]["north_ratio"], 62.0)
+        self.assertEqual(nws["official_pos_list"][0]["sector"], "有色金属")
+
+    def test_render_markdown_news_v2(self):
+        # md 渲染: 评分基准 + 资金面 + 板块标注
+        recs = {"stocks": [self._stock("沪电股份", TestNewsReview._news(op=1, title="业绩预增"),
+                                        tags="利好消息", score_news=2, industry="电子")],
+                "market_status": {}}
+        r5 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        with patch_index(above=True), \
+             mock.patch.object(dr, "fetch_market_breadth",
+                               return_value={"total_amount": 12000.0}), \
+             mock.patch.object(dr, "_fetch_market_fund_flow",
+                               return_value={"main_net": -30.0e8, "main_pct": -1.5}), \
+             mock.patch.object(dr, "_fetch_north_breadth",
+                               return_value={"north_ratio": 0.55}), \
+             mock.patch.object(dr, "load_recommendations", return_value=recs), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        self.assertIsNotNone(stats["news"])
+        md = dr.render_markdown(stats)
+        self.assertIn("评分基准", md)
+        self.assertIn("资金面", md)
+        self.assertIn("两市成交额12000亿", md)
+        self.assertIn("主力资金净流出30亿", md)
+        self.assertIn("北向成分股上涨占比55.0%", md)
+        self.assertIn("[电子板块]", md)
 
 
 class TestRecAccuracy(unittest.TestCase):
@@ -936,6 +1415,491 @@ class TestRecAccuracy(unittest.TestCase):
         md = dr.render_markdown(stats)
         self.assertIn("推荐准确率复盘", md)
         self.assertIn("21%", md)  # 0.205 → 21%
+
+    def test_horizon_fields_passthrough(self):
+        # V2.0 (需求 3.9): 3/5日周期收益透传 + 策略名称标识
+        rev = self._review_data()
+        rev["summary"].update({"avg_gain3": 1.85, "avg_gain5": 2.4,
+                               "horizon3_n": 40, "horizon5_n": 30})
+        recs = self._recs_data(1)
+        with mock.patch.object(dr, "_load_json", side_effect=[rev, recs]):
+            out = dr.rec_accuracy()
+        self.assertTrue(out["has_data"])
+        self.assertEqual(out["strategy"], "日度动量策略")
+        self.assertAlmostEqual(out["avg_gain3"], 1.85)
+        self.assertAlmostEqual(out["avg_gain5"], 2.4)
+        self.assertEqual(out["horizon3_n"], 40)
+        self.assertEqual(out["horizon5_n"], 30)
+        # 旧版 review 无 horizon 字段 → 缺省 None, 不崩溃
+        rev2 = self._review_data()
+        with mock.patch.object(dr, "_load_json", side_effect=[rev2, recs]):
+            out2 = dr.rec_accuracy()
+        self.assertIsNone(out2["avg_gain3"])
+        self.assertIsNone(out2["avg_gain5"])
+
+    def test_markdown_horizon_render(self):
+        # V2.0 (需求 3.9): md 标题含策略名 + 三个持有周期收益行
+        r5 = make_level([make_sector("黄金", rank=1, rank_change=4, continuous=4,
+                                     stock_count=10, rps50_above_90=8)])
+        r10 = make_level([make_sector("黄金", rank=1)])
+        r20 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r10, rps20=r20)
+        rev = self._review_data()
+        rev["summary"].update({"avg_gain3": -1.2, "avg_gain5": 3.4,
+                               "horizon3_n": 40, "horizon5_n": 30})
+        recs = self._recs_data(1)
+        with mock.patch.object(dr, "load_recommendations", return_value=recs), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}), \
+             mock.patch.object(dr, "_load_json", return_value=rev), \
+             mock.patch.object(dr, "index_ma20_status",
+                               return_value={"ok": True, "close": 100, "ma20": 99,
+                                              "above": True, "days": 30}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        md = dr.render_markdown(stats)
+        self.assertIn("日度动量策略 · 推荐准确率复盘", md)
+        self.assertIn("周期收益", md)
+        self.assertIn("次日平均", md)
+        self.assertIn("持有3日平均-1.2%(40样本)", md)
+        self.assertIn("持有5日平均+3.4%(30样本)", md)
+
+
+# ========================== 市场广度 fetch_market_breadth (V2.0) ==========================
+
+class TestMarketBreadth(unittest.TestCase):
+    def test_from_akshare(self):
+        ak_data = {"up_count": 3123, "down_count": 1789, "limit_up": 52,
+                   "limit_down": 8, "max_board": 5, "total_amount": 9876.5}
+        with mock.patch.object(dr, "_fetch_market_breadth_from_ak",
+                               return_value=ak_data):
+            out = dr.fetch_market_breadth()
+        self.assertEqual(out["source"], "akshare")
+        self.assertEqual(out["up_count"], 3123)
+        self.assertEqual(out["max_board"], 5)
+        self.assertEqual(out["total_amount"], 9876.5)
+
+    def test_fallback_to_recommendations(self):
+        recs = {"market_status": {"limit_up_count": 30, "limit_down_count": 15,
+                                  "advance_ratio": 0.6}}
+        with mock.patch.object(dr, "_fetch_market_breadth_from_ak", return_value=None), \
+             mock.patch.object(dr, "load_recommendations", return_value=recs):
+            out = dr.fetch_market_breadth()
+        self.assertEqual(out["source"], "recommendations")
+        self.assertEqual(out["limit_up"], 30)
+        self.assertEqual(out["limit_down"], 15)
+        self.assertIsNone(out["up_count"])      # 绝对涨跌家数降级缺失
+        self.assertIsNone(out["total_amount"])
+
+    def test_partial_ak_then_fallback(self):
+        # ak 返回不含涨跌停 → 用 recommendations 补齐
+        ak_data = {"up_count": 100, "down_count": 50, "limit_up": None,
+                   "limit_down": None, "max_board": None, "total_amount": 5000.0}
+        recs = {"market_status": {"limit_up_count": 20, "limit_down_count": 5}}
+        with mock.patch.object(dr, "_fetch_market_breadth_from_ak",
+                               return_value=ak_data), \
+             mock.patch.object(dr, "load_recommendations", return_value=recs):
+            out = dr.fetch_market_breadth()
+        self.assertEqual(out["source"], "akshare")
+        self.assertEqual(out["limit_up"], 20)
+        self.assertEqual(out["limit_down"], 5)
+        self.assertEqual(out["total_amount"], 5000.0)
+
+    def test_both_missing(self):
+        with mock.patch.object(dr, "_fetch_market_breadth_from_ak", return_value=None), \
+             mock.patch.object(dr, "load_recommendations", return_value={}):
+            out = dr.fetch_market_breadth()
+        self.assertIsNone(out["source"])
+        self.assertIsNone(out["up_count"])
+        self.assertIn("缺失", out["note"])
+
+    def test_wired_into_build_stats(self):
+        r5 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        ak_data = {"up_count": 3123, "down_count": 1789, "limit_up": 52,
+                   "limit_down": 8, "max_board": 5, "total_amount": 9876.5}
+        with patch_index(above=True), \
+             mock.patch.object(dr, "_fetch_market_breadth_from_ak",
+                               return_value=ak_data), \
+             mock.patch.object(dr, "load_recommendations",
+                               return_value={"market_status": {}}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}):
+            stats = dr.build_review_stats(
+                rps, {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                      "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}})
+        self.assertEqual(stats["market_breadth"]["up_count"], 3123)
+        self.assertEqual(stats["market_breadth"]["source"], "akshare")
+
+
+# ========================== V2.0 新增模块 (需求 4.1-4.5) ==========================
+
+class TestV2NewModules(unittest.TestCase):
+    """V2.0 新增模块: 核心结论/仓位指引/昨日验证/标的映射/异常信号 (2026-08-29)"""
+
+    # ---- position_guide (需求 4.2) ----
+
+    def test_position_guide_phases(self):
+        self.assertEqual(dr.position_guide({"phase": "高潮期"})["total"], 8)
+        self.assertEqual(dr.position_guide({"phase": "发酵期"})["total"], 6)
+        self.assertEqual(dr.position_guide({"phase": "启动期"})["total"], 5)
+        self.assertEqual(dr.position_guide({"phase": "冰点期"})["total"], 2)
+        pg = dr.position_guide({"phase": "震荡期"})
+        self.assertEqual(pg["total"], 4)
+        self.assertEqual(pg["direction"], "观望, 轻仓试错")
+        self.assertIn("总仓位建议4成", pg["reason"])
+
+    def test_position_guide_retreat_signal(self):
+        pg = dr.position_guide({"phase": "高潮期", "signals": ["退潮信号"]})
+        self.assertEqual(pg["phase_txt"], "高潮期(退潮)")
+        self.assertEqual(pg["total"], 3)
+        self.assertEqual(pg["direction"], "减仓防守")
+
+    def test_position_guide_default(self):
+        pg = dr.position_guide({})
+        self.assertEqual(pg["phase"], "震荡期")
+        self.assertEqual(pg["total"], 4)
+
+    # ---- core_conclusion (需求 4.1) ----
+
+    def _core_concl_inputs(self, sentiment=None, rotation=None, watch=None):
+        return (sentiment or {"phase": "发酵期", "core_n": 3, "trend": 1},
+                {}, {"mainline_count": 3}, {},
+                rotation or {"repeat_detail": []},
+                watch or {"seed_high": [{"name": "黄金"}, {"name": "证券"}]})
+
+    def test_core_conclusion_fields(self):
+        cc = dr.core_conclusion(*self._core_concl_inputs())
+        self.assertIn("发酵期", cc["text"])
+        self.assertIn("主线确认(3个核心)", cc["text"])
+        self.assertIn("建议仓位6成", cc["text"])
+        self.assertIn("黄金", cc["text"])
+        self.assertEqual(cc["phase"], "发酵期(数量回升)")
+        self.assertEqual(cc["mainline"], "主线确认(3个核心)")
+        self.assertEqual(cc["position"], 6)
+        self.assertEqual(cc["focus"], "黄金、证券")
+
+    def test_core_conclusion_fast_rotation(self):
+        rot = {"repeat_detail": [{"name": "A", "flips": 2}, {"name": "B", "flips": 3}]}
+        cc = dr.core_conclusion(*self._core_concl_inputs(rotation=rot))
+        self.assertIn("板块轮动快", cc["text"])
+        self.assertEqual(cc["rotation"], "板块轮动快")
+
+    def test_core_conclusion_no_focus(self):
+        # 无 core_n 且 resonance 无 mainline_count → 主线缺失; 无种子 → 暂无明确方向
+        cc = dr.core_conclusion({"phase": "发酵期", "trend": 1}, {},
+                                {"mainline_count": 0}, {}, {"repeat_detail": []},
+                                {"seed_high": []})
+        self.assertIn("暂无明确方向", cc["text"])
+        self.assertIn("主线缺失", cc["text"])
+
+    # ---- yesterday_check (需求 4.3) ----
+
+    def _prev_review(self, phase="震荡期", seeds=("黄金", "证券")):
+        return {"update_date": "20260807",
+                "sentiment": {"phase": phase},
+                "watch": {"seed_high": [{"name": s, "ratio": 30.0} for s in seeds]}}
+
+    def _today_rps5(self, in_names=("黄金",), out_names=("证券",)):
+        return make_level([make_sector(n) for n in in_names],
+                          out_list=[make_sector(n) for n in out_names])
+
+    def test_yesterday_check_no_prev(self):
+        with mock.patch.object(dr, "_load_json", return_value=None):
+            out = dr.yesterday_check(self._today_rps5(), {"phase": "高潮期"})
+        self.assertFalse(out["has_data"])
+        self.assertIn("缺失", out["note"])
+
+    def test_yesterday_check_same_day_skip(self):
+        with mock.patch.object(dr, "_load_json",
+                               return_value={"update_date": "20260810"}):
+            out = dr.yesterday_check(self._today_rps5(), {"phase": "高潮期"}, "20260810")
+        self.assertFalse(out["has_data"])
+        self.assertIn("同日", out["note"])
+
+    def test_yesterday_check_phase_upgrade_and_verdict(self):
+        # 昨日震荡 → 今日高潮 = 转好; 黄金晋级, 证券调出 → 准确率50%
+        with mock.patch.object(dr, "_load_json", return_value=self._prev_review("震荡期")):
+            out = dr.yesterday_check(self._today_rps5(), {"phase": "高潮期"})
+        self.assertTrue(out["has_data"])
+        self.assertEqual(out["yesterday_date"], "20260807")
+        self.assertEqual(out["phase_check"], "转好(震荡期→高潮期)")
+        self.assertEqual(out["track_checked"][0]["verdict"], "晋级")
+        self.assertEqual(out["track_checked"][1]["verdict"], "调出")
+        self.assertEqual(out["hit_rate"], 50.0)
+        self.assertIn("50.0%", out["summary"])
+
+    def test_yesterday_check_phase_downgrade(self):
+        with mock.patch.object(dr, "_load_json",
+                               return_value=self._prev_review("发酵期")):
+            out = dr.yesterday_check(self._today_rps5(), {"phase": "震荡期"})
+        self.assertEqual(out["phase_check"], "转差(发酵期→震荡期)")
+
+    def test_yesterday_check_phase_same(self):
+        with mock.patch.object(dr, "_load_json",
+                               return_value=self._prev_review("震荡期")):
+            out = dr.yesterday_check(self._today_rps5(), {"phase": "震荡期"})
+        self.assertEqual(out["phase_check"], "符合(震荡期持续)")
+
+    # ---- core_targets (需求 4.4) ----
+
+    def test_core_targets_match(self):
+        resonance = {"core": [{"name": "黄金"}, {"name": "证券"}]}
+        recs = {"stocks": [
+            {"name": "山东黄金", "ts_code": "600547.SH", "sector": "黄金"},
+            {"name": "中金黄金", "ts_code": "600489.SH", "sector": "黄金"},
+            {"name": "某银行", "ts_code": "600000.SH", "sector": "银行"},
+        ]}
+        out = dr.core_targets(resonance, recs)
+        self.assertEqual(len(out["targets"]), 1)
+        self.assertEqual(out["targets"][0]["sector"], "黄金")
+        self.assertEqual(len(out["targets"][0]["stocks"]), 2)  # max_per=2
+        self.assertEqual(out["targets"][0]["stocks"][0]["code"], "600547.SH")
+        self.assertEqual(out["note"], "")
+
+    def test_core_targets_fuzzy_match(self):
+        # 主线板块名与推荐 sector 宽容匹配: "黄金" in "黄金概念"
+        resonance = {"core": [{"name": "黄金"}]}
+        recs = {"stocks": [{"name": "A", "ts_code": "1", "sector": "黄金概念"}]}
+        out = dr.core_targets(resonance, recs)
+        self.assertEqual(out["targets"][0]["stocks"][0]["name"], "A")
+
+    def test_core_targets_no_match(self):
+        resonance = {"core": [{"name": "半导体"}]}
+        recs = {"stocks": [{"name": "A", "ts_code": "1", "sector": "银行"}]}
+        out = dr.core_targets(resonance, recs)
+        self.assertEqual(out["targets"], [])
+        self.assertIn("未覆盖", out["note"])
+
+    def test_core_targets_empty_resonance(self):
+        out = dr.core_targets({"core": []}, {"stocks": []})
+        self.assertEqual(out["targets"], [])
+        self.assertIn("未覆盖", out["note"])
+
+    # ---- abnormal_signals (需求 4.5) ----
+
+    @staticmethod
+    def _idx(above=True):
+        return {"ok": True, "close": 100, "ma20": 99, "above": above, "days": 30}
+
+    def _noise_market(self, avg_gain=2.0):
+        return {"avg_gain": avg_gain}
+
+    def test_abnormal_index_distortion(self):
+        mb = {"up_count": 40, "down_count": 80, "total_amount": 8000.0}
+        out = dr.abnormal_signals(mb, self._noise_market(), {}, {}, {}, {}, self._idx(True))
+        types = [s["type"] for s in out["signals"]]
+        self.assertIn("index_distortion", types)
+        s = next(x for x in out["signals"] if x["type"] == "index_distortion")
+        self.assertEqual(s["level"], "high")
+        self.assertEqual(s["level_text"], "高风险")
+        self.assertIn("67%", s["desc"])
+
+    def test_abnormal_divergence(self):
+        health = {"unified": [{"name": "黄金", "ratio": 30.0, "ratio_chg": -5.0}]}
+        history = {"20260806": {"黄金": {"RPS5": 90}},
+                   "20260807": {"黄金": {"RPS5": 92}},
+                   "20260810": {"黄金": {"RPS5": 95}}}  # 95 为近5日新高
+        out = dr.abnormal_signals({}, self._noise_market(), {}, health, history, {}, self._idx())
+        types = [s["type"] for s in out["signals"]]
+        self.assertIn("divergence", types)
+        s = next(x for x in out["signals"] if x["type"] == "divergence")
+        self.assertIn("黄金", s["desc"])
+
+    def test_abnormal_divergence_no_new_high(self):
+        # RPS 未创新高(前日更高) → 顶背离不触发
+        health = {"unified": [{"name": "黄金", "ratio": 30.0, "ratio_chg": -5.0}]}
+        history = {"20260806": {"黄金": {"RPS5": 96}},
+                   "20260807": {"黄金": {"RPS5": 95}},
+                   "20260810": {"黄金": {"RPS5": 95}}}
+        out = dr.abnormal_signals({}, self._noise_market(), {}, health, history, {}, self._idx())
+        self.assertNotIn("divergence", [s["type"] for s in out["signals"]])
+
+    def test_abnormal_volume_stagnation(self):
+        mb = {"up_count": 60, "down_count": 70, "total_amount": 13000.0}  # 跌多涨少 + 放量
+        out = dr.abnormal_signals(mb, self._noise_market(avg_gain=0.5), {}, {}, {}, {}, self._idx())
+        types = [s["type"] for s in out["signals"]]
+        self.assertIn("volume_stagnation", types)
+        s = next(x for x in out["signals"] if x["type"] == "volume_stagnation")
+        self.assertEqual(s["level"], "mid")
+        self.assertEqual(s["level_text"], "中风险")
+
+    def test_abnormal_capital_exit(self):
+        risk = {"main_out_total": 3}
+        out = dr.abnormal_signals({}, self._noise_market(), risk, {}, {}, {}, self._idx(True))
+        types = [s["type"] for s in out["signals"]]
+        self.assertIn("capital_exit", types)
+        s = next(x for x in out["signals"] if x["type"] == "capital_exit")
+        self.assertEqual(s["level"], "critical")
+        self.assertEqual(s["level_text"], "极高风险")
+        self.assertIn("3个", s["desc"])
+        # 指数站上20日线为触发前提; 跌破则不触发
+        out2 = dr.abnormal_signals({}, self._noise_market(), risk, {}, {}, {}, self._idx(False))
+        self.assertNotIn("capital_exit", [s["type"] for s in out2["signals"]])
+
+    def test_abnormal_none_when_insufficient(self):
+        out = dr.abnormal_signals({}, {}, {}, {}, {}, {}, None)
+        self.assertEqual(out["signals"], [])
+        self.assertIn("数据不足", out["note"])
+
+    # ---- build_review_stats 接入链路 (需求 4.1-4.5) ----
+
+    def test_build_stats_v2_modules(self):
+        r5 = make_level([make_sector("黄金", rank=1)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        recs = {"stocks": [{"name": "山东黄金", "ts_code": "600547.SH", "sector": "黄金"}],
+                "market_status": {}}
+        mb = {"up_count": 40, "down_count": 80, "total_amount": 8000.0}
+        history = {"20260807": {"黄金": {"RPS5": 90, "rank5": 5}},
+                   "20260810": {"黄金": {"RPS5": 95, "rank5": 1}}}
+        with patch_index(above=True), \
+             mock.patch.object(dr, "fetch_market_breadth", return_value=mb), \
+             mock.patch.object(dr, "_fetch_market_fund_flow",
+                               return_value={"main_net": 5.0e8, "main_pct": 1.2}), \
+             mock.patch.object(dr, "_fetch_north_breadth",
+                               return_value={"north_ratio": 0.62}), \
+             mock.patch.object(dr, "load_recommendations", return_value=recs), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}), \
+             mock.patch.object(dr, "_load_json", return_value=None):
+            stats = dr.build_review_stats(rps, history)
+        self.assertIn("core_conclusion", stats)
+        self.assertIn("position_guide", stats)
+        self.assertIn("yesterday_check", stats)
+        self.assertIn("core_targets", stats)
+        self.assertIn("abnormal_signals", stats)
+        self.assertTrue(stats["core_conclusion"]["text"])
+        # 仓位指引与 build 实际情绪阶段一致 (小样本数据 → 冰点期, 总仓位2成)
+        self.assertEqual(stats["position_guide"]["total"],
+                         dr.position_guide(stats["sentiment"])["total"])
+        self.assertEqual(stats["position_guide"]["phase"],
+                         stats["sentiment"].get("phase") or stats["sentiment"].get("main"))
+        self.assertFalse(stats["yesterday_check"]["has_data"])
+        md = dr.render_markdown(stats)
+        # 置顶核心结论 + 仓位指引 + 核心标的 + 昨日验证 + 异常信号 各渲染段
+        self.assertIn("> **今日情绪处于", md)
+        self.assertIn("仓位指引", md)
+        self.assertIn("核心标的", md)
+        self.assertIn("【昨日复盘验证】", md)
+        self.assertIn("【异常信号高亮】", md)
+        self.assertIn("指数失真", md)
+
+
+# ========================== V2.0 进阶观察 (需求 3.10) ==========================
+
+class TestStyleOutlook(unittest.TestCase):
+    """进阶观察: 风格标签完善 + 风格切换判断 + 明日核心策略要点"""
+
+    # ---- 风格关键词扩充 (未归类 ≤20%) ----
+
+    def test_style_keywords_new_coverage(self):
+        # 之前未归类的常见板块名 → 现在全部命中
+        self.assertEqual(dr._style_of("焦煤"), {"周期"})
+        self.assertEqual(dr._style_of("动力煤"), {"周期"})
+        self.assertEqual(dr._style_of("铜"), {"周期"})
+        self.assertEqual(dr._style_of("无机盐"), {"周期"})
+        self.assertEqual(dr._style_of("其他塑料制品"), {"周期"})
+        self.assertEqual(dr._style_of("非金属材料Ⅲ"), {"周期"})
+        self.assertEqual(dr._style_of("种子"), {"消费"})
+        self.assertEqual(dr._style_of("钟表珠宝"), {"消费"})
+        self.assertEqual(dr._style_of("照明设备"), {"科技"})
+        self.assertIn("制造", dr._style_of("制冷空调设备"))
+        self.assertIn("金融", dr._style_of("金融控股"))
+        # V2.0 服务器实盘数据覆盖 (2026-08-29 rps5 在榜): 复合肥/其他农产品加工/其他化学原料
+        self.assertEqual(dr._style_of("复合肥"), {"周期"})
+        self.assertEqual(dr._style_of("其他农产品加工"), {"消费"})
+        self.assertEqual(dr._style_of("其他化学原料"), {"周期"})
+
+    def test_real_data_unclassified_below_20(self):
+        # 用当前实际 rps5 板块名验证 未归类 ≤20% (需求 3.10 达标)
+        import json
+        with open(os.path.join(os.path.dirname(__file__), "..", "static", "rps_data.json"),
+                  encoding="utf-8") as f:
+            d = json.load(f)
+        names = [s["name"] for s in (d.get("rps5") or {}).get("in_list", []) if s.get("name")]
+        unc = [n for n in names if dr._style_of(n) == {"未归类"}]
+        pct = len(unc) / len(names) * 100 if names else 0
+        self.assertLessEqual(pct, 20.0)
+
+    # ---- style_outlook ----
+
+    def _style(self, r5_top="科技", r10_top="科技"):
+        def _mk(items):
+            return {k: {"count": c, "pct": c} for k, c in items.items()}
+        return {"rps5": _mk({r5_top: 3, "周期": 1}),
+                "rps10": _mk({r10_top: 3}),
+                "rps20": _mk({r10_top: 2})}
+
+    def test_outlook_unclassified_all_covered(self):
+        r5 = make_level([make_sector("半导体"), make_sector("黄金"), make_sector("煤炭")])
+        out = dr.style_outlook(r5, make_level([]), make_level([]), {"phase": "震荡期"},
+                               {}, {"mainline_count": 0})
+        self.assertEqual(out["unclassified"]["pct"], 0.0)
+        self.assertTrue(out["ratio_ok"])
+
+    def test_outlook_unclassified_over_limit(self):
+        r5 = make_level([make_sector("神秘A"), make_sector("神秘B"),
+                         make_sector("半导体"), make_sector("黄金")])
+        out = dr.style_outlook(r5, make_level([]), make_level([]), {}, {}, {})
+        self.assertEqual(out["unclassified"]["count"], 2)
+        self.assertEqual(out["unclassified"]["pct"], 50.0)
+        self.assertFalse(out["ratio_ok"])
+        self.assertIn("扩充关键词", out["note"])
+
+    def test_outlook_switch_true(self):
+        out = dr.style_outlook(make_level([]), make_level([]), make_level([]),
+                               {}, {}, {}, style=self._style("科技", "周期"))
+        self.assertTrue(out["switch"])
+        self.assertIn("切换", out["switch_desc"])
+        self.assertIn("科技", out["switch_desc"])
+        self.assertIn("周期", out["switch_desc"])
+
+    def test_outlook_switch_false(self):
+        out = dr.style_outlook(make_level([]), make_level([]), make_level([]),
+                               {}, {}, {}, style=self._style("科技", "科技"))
+        self.assertFalse(out["switch"])
+        self.assertIn("延续", out["switch_desc"])
+
+    def test_outlook_tomorrow_points(self):
+        r5 = make_level([make_sector("半导体"), make_sector("黄金")])
+        sent = {"phase": "高潮期", "signals": ["退潮信号"]}
+        risk = {"main_out_total": 3}
+        res = {"mainline_count": 2}
+        out = dr.style_outlook(r5, make_level([]), make_level([]), sent, risk, res)
+        txt = "；".join(out["tomorrow_points"])
+        self.assertIn("退潮信号", txt)
+        self.assertIn("3个", txt)
+        self.assertIn("2个", txt)
+
+    def test_outlook_fallback_point(self):
+        out = dr.style_outlook(make_level([]), make_level([]), make_level([]), {}, {}, {})
+        self.assertIn("轻仓观望", out["tomorrow_points"][0])
+
+    def test_build_stats_style_outlook_render(self):
+        r5 = make_level([make_sector("半导体", rank=1), make_sector("黄金", rank=2),
+                         make_sector("煤炭", rank=3)])
+        rps = make_rps_data(rps5=r5, rps10=r5, rps20=r5)
+        history = {"20260807": {"半导体": {"RPS5": 90, "rank5": 5},
+                                "黄金": {"RPS5": 90, "rank5": 6}},
+                   "20260810": {"半导体": {"RPS5": 95, "rank5": 1},
+                                "黄金": {"RPS5": 95, "rank5": 2},
+                                "煤炭": {"RPS5": 95, "rank5": 3}}}
+        with patch_index(above=True), \
+             mock.patch.object(dr, "fetch_market_breadth",
+                               return_value={"up_count": 100, "down_count": 50,
+                                             "total_amount": 8000.0}), \
+             mock.patch.object(dr, "_fetch_market_fund_flow", return_value=None), \
+             mock.patch.object(dr, "_fetch_north_breadth", return_value={}), \
+             mock.patch.object(dr, "load_recommendations",
+                               return_value={"stocks": [], "market_status": {}}), \
+             mock.patch.object(dr, "load_early_recommendations", return_value={}), \
+             mock.patch.object(dr, "_load_json", return_value=None):
+            stats = dr.build_review_stats(rps, history)
+        self.assertIn("style_outlook", stats)
+        self.assertTrue(stats["style_outlook"]["ratio_ok"])
+        md = dr.render_markdown(stats)
+        self.assertIn("【进阶观察】", md)
+        self.assertIn("风格标签完善", md)
+        self.assertIn("风格切换判断", md)
+        self.assertIn("明日核心策略要点", md)
 
 
 if __name__ == "__main__":

@@ -24,6 +24,9 @@
 股市波动极大,中短线亏损概率高,严禁杠杆借贷炒股;
 本工具仅做个人研究使用,严禁对外收费荐股牟利。
 """
+from logutil import get_logger
+logger = get_logger(__name__)
+
 import json
 import math
 import os
@@ -36,6 +39,14 @@ from pathlib import Path
 import rps_calc
 from rps_calc import pool, STATIC_DIR
 import predict  # 预测化模块: 6 维度概率 + 置信度 + 止损位 + 每日校准
+
+# BaoStock 备份源 (免费免token, 备份接口: 日线/财务/交易日历, 未装时 _BAO_OK=False 自动跳过)
+try:
+    import bao_adapter as _bao
+    _BAO_OK = getattr(_bao, "_BAO_OK", False)
+except Exception:
+    _bao = None
+    _BAO_OK = False
 
 # AKShare 免费数据源 (腾讯/东财, 替代 Tushare premium + 手动东财 push2)
 # 未安装时 _AK_OK=False, 各 fetch_*_ak 返回 None/{}, 自动降级到下方东财手动接口
@@ -129,6 +140,7 @@ CONFIG = {
         "max_goodwill_ratio": 30,  # 商誉占净资产上限 % (有数据则强制校验)
         "max_report_age_days": 180,  # 财报距今 > 该天数 → 基本面得分×0.6 + 标签【财报陈旧】
         "stale_factor": 0.6,       # 财报陈旧基本面得分系数
+        "pe_neg_cap": 6,           # PE-TTM<0 时基本面评分强制上限 (不否决但大幅压低; 满分15)
     },
     # 第四层: 资金面达标校验 (全部核心项必达)
     "capital": {
@@ -216,6 +228,16 @@ CONFIG = {
         "max_per_sector": 3,       # 输出层同板块控制: 同一细分板块最多输出 N 只
         "fatigue_deduct": 7,       # 复盘联动: 成熟疲劳板块内个股总分扣 7 (6~8 取中)
         "danger_deduct": 10,       # 复盘联动: danger 风险板块内个股总分扣 10
+        # 双阈值分层 v8 (2026-08-31, 用户方案: 核心池≥95 重胜率 + 弹性备选池90-95 重弹性):
+        #   弹性备选池板块(RPS20∈[90,95)) 板块强度不足 → 备选股必须过"个股阿尔法":
+        #     ① 个股 RPS20 ≥ rps20_min  ② 量比 ≥ vol_ratio_min  ③ 创半年新高(突破平台)
+        #   任一不满足直接剔除(解决"90太宽噪音多"); 通过后板块分再按 sector_deduct_ratio 降权
+        #   (板块贝塔弱, 以个股阿尔法为主, 避免备选股借板块分虚高排到核心股前面)
+        "reserve_alpha": {
+            "rps20_min": 95,           # 备选池个股 RPS20 下限 (比板块自身更强, 个股阿尔法)
+            "vol_ratio_min": 1.3,      # 备选池个股量比下限 (量能放大≥30%, 资金真实进场)
+            "sector_deduct_ratio": 0.5,  # 备选股板块热度分降权系数 (板块贝塔弱, 分减半)
+        },
         # 精准度增强(2026-08-18): 趋势/位置形态 + 高估值降权
         # 目标: 区分"反弹 vs 反转"、压制高估值情绪股、避免追高涨停板
         "trend": {
@@ -761,7 +783,17 @@ def fetch_fina_f10_em(latest_date, codes=None):
             try:
                 d = _em_get_json(url, timeout=20)
             except Exception:
-                break
+                # 单页超时/限流 → 重试 2 次再放弃该页 (防止中途 break 导致覆盖不全)
+                ok = False
+                for _try in range(2):
+                    try:
+                        d = _em_get_json(url, timeout=25)
+                        ok = True
+                        break
+                    except Exception:
+                        continue
+                if not ok:
+                    break
             data = ((d or {}).get("result") or {}).get("data") or []
             if not data:
                 break
@@ -905,7 +937,10 @@ def fetch_index_daily(index_codes, trade_days):
             df = pool.call_any("index_daily", ts_code=code, start_date=start, end_date=end)
             if df is not None and len(df) > 0:
                 df = _sort_index_df(df)
-                df.to_json(cache_path, orient="records", force_ascii=False)
+                # 原子写: 先写 *.tmp 再 os.replace, 避免中断留下半写缓存
+                _tmp = Path(str(cache_path) + ".tmp")
+                df.to_json(_tmp, orient="records", force_ascii=False)
+                os.replace(_tmp, cache_path)
                 result[code] = df
                 print(f"  ✅ index_daily {code}: {len(df)} 条")
                 continue
@@ -1028,6 +1063,41 @@ def fetch_fina_indicator_batch(latest_date, codes=None):
                 print(f"  ✅ fina_indicator (东财F10逐期): {len(cache)} 条, 含资产负债率真实值")
         except Exception as e:
             print(f"  ⚠️ fina_indicator 东财F10失败: {str(e)[:50]}")
+    # BaoStock 第二备份补缺: F10 未覆盖的候选股 → 先用 BaoStock 补齐 (2026-08-30 实测优先)
+    # 优势: 0.26s/只 快于同花顺, 且含同花顺没有的 销售毛利率+归母净利绝对数; 免费免token
+    if _bao is not None and getattr(_bao, "_BAO_OK", False):
+        missing_codes2 = None
+        if codes_set and cache:
+            missing_codes2 = list(codes_set - set(cache.keys()))
+        if (not cache and codes_set is not None) or missing_codes2:
+            fill2 = dict(cache or {})
+            for c in (missing_codes2 if missing_codes2 is not None else list(codes_set)):
+                try:
+                    bao_r = _bao.fetch_fina_bao(c)
+                    if bao_r and c in bao_r:
+                        fill2[c] = bao_r[c]
+                except Exception:
+                    continue
+            if len(fill2) > len(cache or {}):
+                cache = fill2
+                print(f"  ✅ fina_indicator (BaoStock补缺): {len(cache)} 条 (含毛利率/归母净利真实值)")
+    # 同花顺第三备份兜底: F10/BaoStock 均未覆盖的候选股 → 同花顺兜底 (0.5s/只, 无毛利字段)
+    if _ak is not None and getattr(_ak, "_AK_OK", False):
+        missing_codes = None
+        if codes_set and cache:
+            missing_codes = list(codes_set - set(cache.keys()))
+        if (not cache and codes_set is not None) or missing_codes:
+            fill = dict(cache or {})
+            for c in (missing_codes if missing_codes is not None else list(codes_set)):
+                try:
+                    ths = _ak.fetch_fina_ths_ak(c)
+                    if ths and c in ths:
+                        fill[c] = ths[c]
+                except Exception:
+                    continue
+            if len(fill) > len(cache or {}):
+                cache = fill
+                print(f"  ✅ fina_indicator (同花顺兜底): {len(cache)} 条 (含资产负债率/净利率真实值)")
     if not cache:
         try:
             em_cache = fetch_fina_em(latest_date, codes=codes)
@@ -1796,6 +1866,25 @@ def _calc_vol_ratio_fallback(daily_map, code, latest_date):
     return None
 
 
+def _calc_turnover_fallback(vol, price, circ_mv_wan, total_share_wan):
+    """换手率兜底: daily_basic 缺失时用 当日成交量/流通股本 估算, 口径与 Tushare turnover_rate 一致
+    (2026-08-29 补数据: 官方换手率缺失不再留 None, 从日线 vol + 股本结构反推)
+    vol: 日线成交量(手, 1手=100股); price: 收盘价(元)
+    circ_mv_wan: 流通市值(万元); total_share_wan: 总股本(万股)
+    优先 流通市值口径: 换手率% = (vol*100 股) / (circ_mv*10000/price 股) * 100 = vol*price/circ_mv
+    其次 总股本口径:     换手率% = (vol*100 股) / (total_share*10000 股) * 100 = vol/total_share
+    两者均缺失 → None (调用方按缺失处理)
+    """
+    if vol is None or pd.isna(vol) or float(vol) <= 0:
+        return None
+    if price is not None and pd.notna(price) and circ_mv_wan is not None \
+            and pd.notna(circ_mv_wan) and float(circ_mv_wan) > 0:
+        return round(float(vol) * float(price) / float(circ_mv_wan), 2)
+    if total_share_wan is not None and pd.notna(total_share_wan) and float(total_share_wan) > 0:
+        return round(float(vol) / float(total_share_wan), 2)
+    return None
+
+
 def _turnover_range(mv_wan, cfg=None):
     """换手率区间按流通市值(万元)自适应 (大盘股天然换手低, 小盘股活跃):
       <50亿:    [3%, 25%]
@@ -1819,15 +1908,19 @@ def _turnover_range(mv_wan, cfg=None):
     return cap["turnover_min"], cap["turnover_max"]
 
 
-def screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=None, lhb_map=None):
-    """第四层: 资金面达标校验 (全部核心项必达, 任一不满足即淘汰)
+def screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=None, lhb_map=None, removed_log=None):
+    """第四层: 资金面达标校验 (4 道核心门, ≥3 门通过; 2026-08-29 放宽, 缓解推荐数量过少)
     规则(可配置 CONFIG["capital"]):
-      - 换手率 ∈ 市值自适应区间 (turnover_bands; 流通市值缺失用 turnover_min/max 兜底)
-      - 量比 > vol_ratio_min (量能较前期放大; 当日涨停豁免量比校验, 打【涨停无量】标签)
-      - 单日成交额 > amount_min (daily_map 最新日 amount, 千元→元)
-      - 主力资金: 当日净额>0 或 近3日累计净流入>0 (mflow_map; 缺失跳过, 不误杀)
-      - 龙虎榜: lhb_map 仅标注不否决 (净买额<0 → lhb_sell=True, 评分阶段扣分+【龙虎榜出货】标签)
-    返回 (passed_df, cap_details): cap_details={code:{turnover, vol_ratio, amount, net_inflow_3d, limit_up, lhb_net, lhb_reason, lhb_sell}}
+      - G1 换手率 ∈ 市值自适应区间 (turnover_bands; 流通市值缺失用 turnover_min/max 兜底)
+      - G2 量比 > vol_ratio_min (量能较前期放大; 当日涨停豁免量比校验, 打【涨停无量】标签)
+      - G3 单日成交额 > amount_min (daily_map 最新日 amount, 千元→元)
+      - G4 主力资金: 近3日累计净流入>0 (mflow_map; 缺失计失败, 与 G1 缺失同口径)
+    通过条件: 4 门中 ≥3 门达标 (任一缺失计失败; 换手率缺失不再硬杀)
+      容错后单门失败仍可进入评分, 资金分按实际数据自然降档 (缺失换手/量比 → 对应分项 0 分)
+    返回 (passed_df, cap_details):
+      cap_details={code:{turnover, vol_ratio, amount, net_inflow_3d, limit_up,
+                         fail_gates:[失败门描述], lhb_net, lhb_reason, lhb_sell}}
+      removed_log 传入列表时, 每条剔除记录追加 {ts_code,name,reason} (含具体失败门)
     """
     cfg = (cfg or CONFIG)["capital"]
     df = stocks_df.copy()
@@ -1843,41 +1936,61 @@ def screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=None, lhb_m
     limit_up_pct = cfg.get("limit_up_pct", 9.8)
     for _, s in df.iterrows():
         code = s["ts_code"]
-        # 换手率区间 (按流通市值自适应)
+        passes, fails = 0, []
+        # G1 换手率区间 (按流通市值自适应; 缺失计失败)
         tr = s.get("turnover_rate")
+        tr_f = None
         if tr is None or pd.isna(tr):
-            continue
-        tr_f = float(tr)
-        lo, hi = _turnover_range(s.get("circ_mv"), cfg)
-        if not (lo <= tr_f <= hi):
-            continue
-        # 量比: 当日涨停(涨幅≥limit_up_pct)豁免量比校验 (一字涨停无量不误杀)
+            fails.append("换手率缺失")
+        else:
+            tr_f = float(tr)
+            lo, hi = _turnover_range(s.get("circ_mv"), cfg)
+            if lo <= tr_f <= hi:
+                passes += 1
+            else:
+                fails.append("换手率%.1f%%∉[%s,%s]" % (tr_f, lo, hi))
+        # G2 量比: 当日涨停(涨幅≥limit_up_pct)豁免量比校验 (一字涨停无量不误杀)
         pct = s.get("pct_chg")
         is_limit_up = pct is not None and not pd.isna(pct) and float(pct) >= limit_up_pct
         vr = s.get("vol_ratio")
         if vr is None or pd.isna(vr):
             vr = _calc_vol_ratio_fallback(daily_map, code, latest_date)
-        if not is_limit_up and (vr is None or float(vr) <= cfg["vol_ratio_min"]):
-            continue
-        # 单日成交额
+        if is_limit_up or (vr is not None and float(vr) > cfg["vol_ratio_min"]):
+            passes += 1
+        else:
+            fails.append("量比≤%s" % cfg["vol_ratio_min"])
+        # G3 单日成交额
         amt = day_amt.get(code, 0)
-        if amt < cfg["amount_min"]:
-            continue
-        # 主力资金方向 (缺失跳过)
+        if amt >= cfg["amount_min"]:
+            passes += 1
+        else:
+            fails.append("成交额%.0f万<%s万" % (amt / 1e4, cfg["amount_min"] / 1e4))
+        # G4 主力资金方向 (缺失计失败, 与 G1 同口径)
         net3 = None
         if mflow_map and code in mflow_map:
             rows = sorted(mflow_map[code], key=lambda x: x["trade_date"])[-3:]
             nets = [r["buy_sm_amount"] - r["sell_sm_amount"] for r in rows]
             if nets:
                 net3 = sum(nets)
-        if net3 is not None and net3 <= 0:
+        if net3 is not None and net3 > 0:
+            passes += 1
+        else:
+            fails.append("主力资金3日净流入≤0")
+        # 4 门中 ≥3 门达标 → 通过; 否则剔除并记录具体失败门
+        if passes < 3:
+            if removed_log is not None:
+                removed_log.append({
+                    "ts_code": code, "name": s.get("name", ""),
+                    "reason": "资金面%d/4门达标: %s" % (passes, " | ".join(fails)),
+                })
             continue
         cap_details[code] = {
-            "turnover": round(tr_f, 2),
+            "turnover": round(tr_f, 2) if tr_f is not None else None,
             "vol_ratio": round(float(vr), 2) if vr is not None else None,
             "amount": round(amt, 0),
             "net_inflow_3d": net3,
             "limit_up": is_limit_up,
+            "fail_gates": fails,
         }
         # 龙虎榜信号标注 (缺失跳过不误杀; 仅标注, 否决/加分在评分阶段)
         if lhb_map and code in lhb_map:
@@ -2715,6 +2828,12 @@ def recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
         lr = latest_idx[code]
         m = members[members["ts_code"] == code].iloc[0]
         br = basic_idx.get(code, {})
+        turnover = float(br.get("turnover_rate")) if br is not None and pd.notna(br.get("turnover_rate")) else None
+        if turnover is None:
+            # 换手率兜底 (2026-08-29): 官方值缺失时用 成交量/流通股本 估算, 避免 L4 误杀
+            turnover = _calc_turnover_fallback(lr.get("vol"), lr.get("close"),
+                                               br.get("circ_mv") if br else None,
+                                               br.get("total_share") if br else None)
         rows.append({
             "ts_code": code,
             "name": str(m.get("name", "")),
@@ -2724,7 +2843,7 @@ def recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
             "vol": int(lr["vol"]) if pd.notna(lr.get("vol")) else 0,
             "pe_ttm": float(br.get("pe_ttm")) if br is not None and pd.notna(br.get("pe_ttm")) else None,
             "circ_mv": float(br.get("circ_mv")) if br is not None and pd.notna(br.get("circ_mv")) else None,
-            "turnover_rate": float(br.get("turnover_rate")) if br is not None and pd.notna(br.get("turnover_rate")) else None,
+            "turnover_rate": turnover,
             "vol_ratio": float(br.get("volume_ratio")) if br is not None and pd.notna(br.get("volume_ratio")) else None,
         })
     stocks_df = pd.DataFrame(rows)
@@ -2783,19 +2902,20 @@ def recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
         _LAST_EARLY_CANDIDATE_LOG = candidate_log
         return []
 
-    # ---- 第四层: 资金面达标校验 (复用原版, 允许 early 微调阈值) ----
-    print("\n[第四层] 资金面达标校验...")
+    # ---- 第四层: 资金面达标校验 (4 门中 ≥3 门通过, 2026-08-29 放宽) ----
+    print("\n[第四层] 资金面达标校验 (换手/量比/成交额/主力资金 4门中≥3门)...")
     mflow_map = fetch_moneyflow_batch(latest_date, daily_map, n_days=3, codes=codes)
     lhb_map = fetch_lhb(latest_date)
     cap_cfg = dict(cfg["capital"])
     cap_cfg.update(early_cfg.get("capital_overrides", {}) or {})
     eff_cap_cfg = dict(cfg); eff_cap_cfg["capital"] = cap_cfg
     before_df = stocks_df
+    cap_removed_log = []
     stocks_df, cap_details = screen_capital(stocks_df, daily_map, latest_date, mflow_map, cfg=eff_cap_cfg,
-                                            lhb_map=lhb_map)
-    if len(stocks_df) < len(before_df):
-        cap_removed = before_df[~before_df["ts_code"].isin(set(stocks_df["ts_code"]))]
-        _log_rows(cap_removed, "L4资金面", "换手率区间/量比/成交额/主力资金 未全部达标")
+                                            lhb_map=lhb_map, removed_log=cap_removed_log)
+    for r in cap_removed_log:
+        candidate_log.append({"ts_code": r["ts_code"], "name": r.get("name", ""),
+                              "stage": "L4资金面", "reason": r["reason"]})
     print(f"  资金面达标: {len(before_df)} -> {len(stocks_df)} 只")
     if stocks_df.empty:
         print("  ⚠️ 资金面无一达标, 终止")
@@ -3043,7 +3163,7 @@ def recommend_early_stocks(industry_df, daily_map, latest_date, in_list_records,
 
 
 def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, member_codes=None,
-                     out_list_names=None, review_data=None):
+                     out_list_names=None, review_data=None, reserve_records=None):
     """主推荐流程 v3.2 —— 五层漏斗筛选 + 综合评分
     输入:
       industry_df: 含 ts_code/name/industry/list_date
@@ -3082,10 +3202,20 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         _LAST_MARKET_STATUS = None
         return []
 
-    # 汇总三档位入选板块: 名称集合 + 成分股名单
+    # 汇总三档位入选板块: 名称集合 + 成分股名单 (核心池 = RPS5/10/20 ≥ 95)
+    # 双阈值分层 v8: 弹性备选池(reserve_records, RPS20∈[90,95)) 并入候选池,
+    #   但备选池个股必须通过"更强阿尔法门槛"(L2 弹性备选强化过滤), 不满足直接剔除。
     in_list_names = {str(rec.get("name") or "").strip() for rec in in_list_records if rec.get("name")}
+    reserve_names = set()
+    reserve_codes = set()
+    if reserve_records:
+        reserve_names = {str(rec.get("name") or "").strip() for rec in reserve_records if rec.get("name")}
+        reserve_codes = _extract_member_codes(reserve_records)
     if member_codes is None:
         member_codes = _extract_member_codes(in_list_records)
+        # 备选池成分股并入候选池 (仅作"备选", 不入核心池共振计数)
+        if reserve_codes:
+            member_codes.update(reserve_codes)
     if not member_codes:
         print("  ⚠️ 入选板块无成分股名单, 回退按行业名匹配")
     print(f"  入选板块: {len(in_list_names)} 个 | 成分股: {len(member_codes)} 只")
@@ -3182,6 +3312,12 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         lr = latest_idx[code]
         m = members[members["ts_code"] == code].iloc[0]
         br = basic_idx.get(code, {})
+        turnover = float(br.get("turnover_rate")) if br is not None and pd.notna(br.get("turnover_rate")) else None
+        if turnover is None:
+            # 换手率兜底 (2026-08-29): 官方值缺失时用 成交量/流通股本 估算, 避免 L4 误杀
+            turnover = _calc_turnover_fallback(lr.get("vol"), lr.get("close"),
+                                               br.get("circ_mv") if br else None,
+                                               br.get("total_share") if br else None)
         rows.append({
             "ts_code": code,
             "name": str(m.get("name", "")),
@@ -3191,7 +3327,7 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
             "vol": int(lr["vol"]) if pd.notna(lr.get("vol")) else 0,
             "pe_ttm": float(br.get("pe_ttm")) if br is not None and pd.notna(br.get("pe_ttm")) else None,
             "circ_mv": float(br.get("circ_mv")) if br is not None and pd.notna(br.get("circ_mv")) else None,
-            "turnover_rate": float(br.get("turnover_rate")) if br is not None and pd.notna(br.get("turnover_rate")) else None,
+            "turnover_rate": turnover,
             "vol_ratio": float(br.get("volume_ratio")) if br is not None and pd.notna(br.get("volume_ratio")) else None,
         })
     stocks_df = pd.DataFrame(rows)
@@ -3201,11 +3337,20 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         return []
 
     # 板块共振计数 (第二层核心)
-    # sector_names  = 去重后的板块名(前端展示所属热点板块)
-    # sector_count  = 同源合并后的"真实共振板块数" (算力/AI服务器同组只计1, 防题材重复虚高)
+    # sector_names  = 核心入选板块(去重, 前端展示所属热点板块)
+    # sector_count  = 核心板块同源合并后的"真实共振板块数" (算力/AI服务器同组只计1)
+    # reserve_sector_names = 弹性备选板块(90≤RPS20<95, 双阈值分层 v8)
+    #   核心池个股: 按 core sector_count 共振过滤 (板块强已有贝塔保障)
+    #   备选池个股: 板块强度不足 → 必须用个股阿尔法弥补: RPS20≥95 + 放量30% + 创新高/突破平台
+    reserve_sector_map = build_member_sector_map(reserve_records) if reserve_records else {}
     stocks_df["sector_names"] = stocks_df["ts_code"].apply(
         lambda c: list(dict.fromkeys(sector_map.get(c, []))))
     stocks_df["sector_count"] = stocks_df["sector_names"].apply(_merge_same_source_sectors)
+    stocks_df["reserve_sector_names"] = stocks_df["ts_code"].apply(
+        lambda c: list(dict.fromkeys(reserve_sector_map.get(c, []))))
+    # 弹性备选标记: 有备选板块归属 且 无核心板块归属 → 纯弹性备选个股
+    stocks_df["is_reserve"] = (stocks_df["reserve_sector_names"].apply(len) > 0) & \
+                              (stocks_df["sector_names"].apply(len) == 0)
     # 全调出剔除: 个股所属板块全部在当日 RPS 调出列表 → 剔除候选池 (板块已结束强势, 个股无逻辑支撑)
     if out_list_names:
         ol = set(out_list_names)
@@ -3217,13 +3362,21 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         removed = before - len(stocks_df)
         if removed:
             print(f"  全调出板块剔除: {before} -> {len(stocks_df)} 只 (所属板块全部调出 {removed} 只)")
+    # ---- 双阈值分层过滤 (v8): 核心池按共振, 备选池按个体阿尔法强化 ----
     min_sc = CONFIG["pool"]["min_sector_count"]
     before = len(stocks_df)
-    low_res = stocks_df[stocks_df["sector_count"] < min_sc]
+    # 核心池个股: 必须满足核心共振 ≥ min_sc
+    core_mask = ~stocks_df["is_reserve"] & (stocks_df["sector_count"] >= min_sc)
+    low_res = stocks_df[~stocks_df["is_reserve"] & (stocks_df["sector_count"] < min_sc)]
     if len(low_res):
-        _log_rows(low_res, "L2共振不足", f"真实共振板块数<{min_sc}")
-    stocks_df = stocks_df[stocks_df["sector_count"] >= min_sc]
-    print(f"  板块共振过滤: {before} -> {len(stocks_df)} 只 (每股须属 ≥{min_sc} 个真实共振板块)")
+        _log_rows(low_res, "L2共振不足", f"核心板块共振数<{min_sc}")
+    # 备选池个股: 不按核心共振一刀切, 走阿尔法强化通道 (RPS20≥95 且 量比≥1.3 且 涨幅未过高)
+    #   RPS20 映射在此后马上构建, 先在候选保留, L2 后统一执行 _filter_reserve_alpha
+    reserve_keep = stocks_df["is_reserve"]
+    stocks_df = stocks_df[core_mask | reserve_keep]
+    removed = before - len(stocks_df)
+    if removed:
+        print(f"  核心共振过滤: {before} -> {len(stocks_df)} 只 (备选池 {int(reserve_keep.sum())} 只已保留待阿尔法强化)")
     if stocks_df.empty:
         print("  ⚠️ 无股票属于入选板块成分股, 终止")
         return []
@@ -3236,6 +3389,41 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         weak = stocks_df["rps20"].notna() & (stocks_df["rps20"] < rps20_soft)
         if weak.any():
             print(f"  ⚠️ RPS20 软过滤: {int(weak.sum())} 只个股 RPS20<{rps20_soft} → 板块热度分减半")
+    # ---- 双阈值分层核心 (v8): 弹性备选池阿尔法强化过滤 ----
+    # 备选池板块(RPS20∈[90,95)) 强度不足 → 备选池个股必须用"个股阿尔法"弥补:
+    #   ① 个股 RPS20 ≥ 95 (比板块更强的自身动能)
+    #   ② 量能放大 ≥30% (vol_ratio ≥1.3, 资金真实进场)
+    #   ③ 创半年新高/突破平台 (close ≥ 近120日最高收盘, 突破形态确认)
+    # 任一不满足 → 直接剔除 (不强塞进推荐列表, 解决"90太宽噪音多"矛盾)
+    if reserve_records:
+        reserve_alpha_pass = pd.Series(True, index=stocks_df.index)
+        r_cfg = CONFIG["score"].get("reserve_alpha") or {}
+        rps20_min = r_cfg.get("rps20_min", 95)
+        vr_min = r_cfg.get("vol_ratio_min", 1.3)
+        # ① 个股 RPS20 ≥ rps20_min
+        r20 = stocks_df["rps20"]
+        cond1 = r20.notna() & (r20 >= rps20_min)
+        # ② 量比 ≥ vr_min (量能放大30%)
+        vr = stocks_df["vol_ratio"]
+        cond2 = vr.notna() & (vr >= vr_min)
+        # ③ 创半年新高/突破平台 (用预建日线索引求近120日最高收盘)
+        def _is_halfyear_high(code):
+            df = _DAILY_BY_CODE.get(code)
+            if df is None or len(df) < 20:
+                return False
+            closes = [float(c) for c in df["close"].tolist()]
+            if not closes:
+                return False
+            window = closes[-120:]
+            return closes[-1] >= max(window) and closes[-1] > 0
+        cond3 = stocks_df["ts_code"].apply(_is_halfyear_high)
+        fail_mask = stocks_df["is_reserve"] & ~(cond1 & cond2 & cond3)
+        if fail_mask.any():
+            _log_rows(stocks_df[fail_mask], "L2弹性备选阿尔法", "备选池个股未达阿尔法强化: 个股RPS20≥95 或 量比≥1.3 或 未创半年新高")
+            print(f"  ⛔ 弹性备选阿尔法强化: 剔除 {int(fail_mask.sum())} 只 (备选池个股须个股RPS20≥{rps20_min} + 量比≥{vr_min} + 创半年新高)")
+            stocks_df = stocks_df[~fail_mask]
+        else:
+            print(f"  ✅ 弹性备选阿尔法强化: {int((stocks_df['is_reserve'] & (cond1 & cond2 & cond3)).sum())} 只通过 (个股RPS20≥{rps20_min} + 量比≥{vr_min} + 创半年新高)")
 
     # ============ 第三层: 基本面排雷 (硬性一票否决) ============
     print("\n[第三层] 基本面排雷 (硬性一票否决)...")
@@ -3257,17 +3445,19 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         _LAST_CANDIDATE_LOG = candidate_log
         return []
 
-    # ============ 第四层: 资金面达标校验 (全部核心项必达) ============
-    print("\n[第四层] 资金面达标校验 (换手区间/量比/成交额/主力资金 全必达)...")
+    # ============ 第四层: 资金面达标校验 (4 门中 ≥3 门通过, 2026-08-29 放宽) ============
+    print("\n[第四层] 资金面达标校验 (换手/量比/成交额/主力资金 4门中≥3门)...")
     _t2 = datetime.now()
     mflow_map = fetch_moneyflow_batch(latest_date, daily_map, n_days=3, codes=codes)
     lhb_map = fetch_lhb(latest_date)
     print(f"  主力资金: 候选股 {len(mflow_map)} 只 ({(datetime.now()-_t2).total_seconds():.1f}s)")
     before_df = stocks_df
-    stocks_df, cap_details = screen_capital(stocks_df, daily_map, latest_date, mflow_map, lhb_map=lhb_map)
-    if len(stocks_df) < len(before_df):
-        cap_removed = before_df[~before_df["ts_code"].isin(set(stocks_df["ts_code"]))]
-        _log_rows(cap_removed, "L4资金面", "换手率区间/量比/成交额/主力资金 未全部达标")
+    cap_removed_log = []
+    stocks_df, cap_details = screen_capital(stocks_df, daily_map, latest_date, mflow_map, lhb_map=lhb_map,
+                                            removed_log=cap_removed_log)
+    for r in cap_removed_log:
+        candidate_log.append({"ts_code": r["ts_code"], "name": r.get("name", ""),
+                              "stage": "L4资金面", "reason": r["reason"]})
     print(f"  资金面达标: {len(before_df)} -> {len(stocks_df)} 只")
     if stocks_df.empty:
         print("  ⚠️ 资金面无一达标, 终止")
@@ -3315,6 +3505,11 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         rps20_soft = CONFIG["pool"].get("rps20_soft")
         if rps20 is not None and rps20_soft and float(rps20) < rps20_soft:
             score_sector = int(score_sector * 0.5)
+        # 双阈值分层 v8: 弹性备选池个股(板块贝塔弱) → 板块热度分按 reserve_alpha.sector_deduct_ratio 降权
+        #   备选股靠"个股阿尔法"撑分数, 不能借板块热度分虚高排到核心池前面
+        if s.get("is_reserve"):
+            r_cfg2 = CONFIG["score"].get("reserve_alpha") or {}
+            score_sector = int(score_sector * float(r_cfg2.get("sector_deduct_ratio", 0.5)))
         score_fund = score_fundamental_funnel(s, fina_row)
         # L3 软约束: PE-TTM<0 → 基本面分强制上限 pe_neg_cap (不否决但大幅压低)
         pe = s.get("pe_ttm")
@@ -3397,6 +3592,9 @@ def recommend_stocks(industry_df, daily_map, latest_date, in_list_records, membe
         elif total >= 70:
             tags = ("短线观察" + (" + " + tags) if tags else "短线观察")
         extra_tags = []
+        # 双阈值分层 v8: 弹性备选池个股 → 打【弹性备选】标签 (前端橙色标识, 提示板块贝塔弱/靠个股阿尔法)
+        if s.get("is_reserve"):
+            extra_tags.append("弹性备选")
         if stale_flag:
             extra_tags.append("财报陈旧")
         if tech.get("overbought"):
@@ -3665,6 +3863,7 @@ def save_early_recommendations(rec_list, latest_date, prev_date=""):
 
 
 if __name__ == "__main__":
+    logger.info("===== recommend 开始 =====")
     # 独立运行: 复用 rps_calc 的 daily_map / industry_df
     trade_days = rps_calc.get_trade_days(n=80)
     industry_df = rps_calc.get_stock_industry()

@@ -21,6 +21,25 @@ class TestTools(unittest.TestCase):
         self.assertEqual(sd.to_ts_code("000001"), "000001.SZ")
         self.assertEqual(sd.to_ts_code("601020.SH"), "601020.SH")
         self.assertEqual(sd.to_ts_code("1.601020"), "601020.SH")
+        self.assertEqual(sd.to_ts_code("0.000001"), "000001.SZ")
+        self.assertEqual(sd.to_ts_code("601020.sz"), "601020.SZ")
+        # 非法输入 → None (不抛异常, 由调用方降级 502)
+        for bad in ("a.b.c", "..", "", None, "abc", "123", "601020.SH.1",
+                    "601020.SS", "12.345", "  "):
+            self.assertIsNone(sd.to_ts_code(bad), "非法输入应返回 None: %r" % (bad,))
+
+    def test_invalid_code_no_crash(self):
+        # H3 回归: 非法 code 不再让 em_secid/tx_prefix 抛 ValueError
+        for bad in ("a.b.c", "..", "", "601020.SH.1", "601020.SS", "abc"):
+            self.assertIsNone(sd.em_secid(bad), "em_secid(%r) 应返回 None" % bad)
+            self.assertIsNone(sd.tx_prefix(bad), "tx_prefix(%r) 应返回 None" % bad)
+            # 各 fetch 入口应安全返回 None/[] 而非异常
+            self.assertIsNone(sd.fetch_realtime(bad))
+            self.assertIsNone(sd.fetch_kline(bad))
+            self.assertEqual(sd.fetch_fund_flow(bad), [])
+            self.assertEqual(sd.fetch_news(bad), [])
+            self.assertIsNone(sd.fetch_f10(bad))
+            self.assertIsNone(sd.build_detail_payload(bad))
 
     def test_fmt_wan(self):
         self.assertEqual(sd._fmt_wan(4.72e8), "4.72亿")
@@ -511,6 +530,78 @@ class TestRealtimeExtra(unittest.TestCase):
         self.assertEqual(rt["circ_mv"], 8.5e9, "流通市值")
         self.assertAlmostEqual(rt["amplitude"], round((22.23 - 21.5) / 21.91 * 100, 2), places=2)
         self.assertIn("marketStatus", rt)
+
+
+class TestAiAnalysis(unittest.TestCase):
+    """AI 综合总分析 (fetch_ai_analysis) 回归测试"""
+
+    def _mk_bear_bars(self, n=70):
+        """持续下跌 K 线 (close 100→31), 构造空头排列/跌破布林下轨场景"""
+        bars = []
+        c = 100.0
+        for i in range(n):
+            bars.append({
+                "date": "202608%02d" % (i % 28 + 1),
+                "close": c, "high": c + 0.5, "low": c - 0.5,
+                "open": c + 0.2, "volume": 10000,
+            })
+            c -= 1.0
+        return {"bars": bars}
+
+    @mock.patch.object(sd, "fetch_score",
+                       return_value={"totalScore": 0, "beatStock": "--", "factors": []})
+    @mock.patch.object(sd, "_val_level_pb", return_value="偏高")
+    @mock.patch.object(sd, "_val_level_pe", return_value=("高估", 0))
+    @mock.patch.object(sd, "_pe_history_percentile", return_value=0.95)
+    @mock.patch.object(sd, "fetch_value", return_value={"peHistory": []})
+    @mock.patch.object(sd, "_sector_membership", return_value=[])
+    @mock.patch.object(sd, "fetch_backtest",
+                       return_value={"days": 20, "riseRate": "--", "avgIncrease": "--"})
+    @mock.patch.object(sd, "fetch_fund_flow",
+                       return_value=[{"main": -1e7, "small": 1e6, "date": "2026080%d" % i}
+                                     for i in range(1, 8)])
+    @mock.patch.object(sd, "fetch_kline")
+    @mock.patch.object(sd, "fetch_realtime")
+    def test_sell_branch_buy_zone(self, rt, kl, ff, bt, sec, val, ph, vp, vs, score):
+        """回归 2026-08-29: 减仓/卖出分支此前未赋 buy_zone 导致 UnboundLocalError,
+        个股详情总评接口 500 (301413.SZ 实测触发). 修复后应返回非空 buyZone."""
+        rt.return_value = {
+            "name": "测试股", "price": 31.0, "changePercent": -6.0,
+            "pe_ttm": 100.0, "pb": 8.0, "totalMarket": 2e9, "circ_mv": 1e9,
+            "marketStatus": "交易中", "volumeRatio": 0.5, "turnover": 0.4,
+        }
+        kl.return_value = self._mk_bear_bars()
+        r = sd.fetch_ai_analysis("301413.SZ")
+        self.assertIsNotNone(r, "卖出分支不应返回 None")
+        self.assertEqual(r["action"]["recommend"], "卖出")
+        self.assertEqual(r["action"]["buyZone"], "卖出/减仓信号, 暂不买入")
+        self.assertIsNone(r["action"]["stopLoss"])
+
+    @mock.patch.object(sd, "fetch_score",
+                       return_value={"totalScore": 0, "beatStock": "--", "factors": []})
+    @mock.patch.object(sd, "_val_level_pb", return_value="偏高")
+    @mock.patch.object(sd, "_val_level_pe", return_value=("高估", 0))
+    @mock.patch.object(sd, "_pe_history_percentile", return_value=0.95)
+    @mock.patch.object(sd, "fetch_value", return_value={"peHistory": []})
+    @mock.patch.object(sd, "_sector_membership", return_value=[])
+    @mock.patch.object(sd, "fetch_backtest",
+                       return_value={"days": 20, "riseRate": "--", "avgIncrease": "--"})
+    @mock.patch.object(sd, "fetch_fund_flow",
+                       return_value=[{"main": -1e7, "small": 1e6, "date": "2026080%d" % i}
+                                     for i in range(1, 8)])
+    @mock.patch.object(sd, "fetch_kline")
+    @mock.patch.object(sd, "fetch_realtime")
+    def test_hold_branch_buy_zone(self, rt, kl, ff, bt, sec, val, ph, vp, vs, score):
+        """观望分支 (原 else 路径) 仍应正常: 说明修复未破坏其他分支"""
+        rt.return_value = {
+            "name": "测试股", "price": 31.0, "changePercent": 0.5,
+            "pe_ttm": 30.0, "pb": 2.0, "totalMarket": 2e9, "circ_mv": 1e9,
+            "marketStatus": "交易中", "volumeRatio": 1.5, "turnover": 3.0,
+        }
+        kl.return_value = self._mk_bear_bars()
+        r = sd.fetch_ai_analysis("301413.SZ")
+        self.assertIsNotNone(r)
+        self.assertIn(r["action"]["buyZone"], ("卖出/减仓信号, 暂不买入", "等待信号明朗", "--"))
 
 
 if __name__ == "__main__":

@@ -101,7 +101,7 @@ class TestCalcFullRpsHistory(unittest.TestCase):
 
 
 class TestMaybeRunWeeklyReview(unittest.TestCase):
-    """每周复盘周日触发逻辑 (2026-08-23): 只在周日(weekday=6)运行1次, 失败不阻断"""
+    """每周复盘触发逻辑 (V2.0 需求文档: 每周五收盘后自动生成, 周日兜底): 周五(weekday=4)/周日(weekday=6)运行, 其余跳过, 失败不阻断"""
 
     @staticmethod
     def _fake_weekly(raise_err=False):
@@ -116,6 +116,16 @@ class TestMaybeRunWeeklyReview(unittest.TestCase):
                     raise RuntimeError("weekly boom")
         return FakeWeekly
 
+    def test_friday_runs(self):
+        """周五收盘后自动生成 (V2.0 需求文档更新时机)"""
+        import sys
+        fake = self._fake_weekly()
+        with mock.patch.object(rc, "datetime") as mdt, \
+             mock.patch.dict(sys.modules, {"weekly_review": fake}):
+            mdt.now.return_value.weekday.return_value = 4  # 周五
+            rc._maybe_run_weekly_review()
+        self.assertEqual(fake.calls, 1)
+
     def test_sunday_runs(self):
         import sys
         fake = self._fake_weekly()
@@ -125,13 +135,14 @@ class TestMaybeRunWeeklyReview(unittest.TestCase):
             rc._maybe_run_weekly_review()
         self.assertEqual(fake.calls, 1)
 
-    def test_non_sunday_skip(self):
+    def test_non_trigger_day_skip(self):
         import sys
         fake = self._fake_weekly()
-        with mock.patch.object(rc, "datetime") as mdt, \
-             mock.patch.dict(sys.modules, {"weekly_review": fake}):
-            mdt.now.return_value.weekday.return_value = 0  # 周一
-            rc._maybe_run_weekly_review()
+        for wd in (0, 1, 2, 3, 5):  # 周一~周四 / 周六
+            with mock.patch.object(rc, "datetime") as mdt, \
+                 mock.patch.dict(sys.modules, {"weekly_review": fake}):
+                mdt.now.return_value.weekday.return_value = wd
+                rc._maybe_run_weekly_review()
         self.assertEqual(fake.calls, 0)
 
     def test_exception_non_blocking(self):
@@ -142,6 +153,51 @@ class TestMaybeRunWeeklyReview(unittest.TestCase):
             mdt.now.return_value.weekday.return_value = 6
             rc._maybe_run_weekly_review()  # 异常应被捕获, 不抛出
         self.assertEqual(fake.calls, 1)
+
+
+class TestAtomicWriteJson(unittest.TestCase):
+    """atomic_write_json 原子落盘 (2026-08-30 新增): 写 tmp + os.replace, 半写文件防护"""
+
+    def test_write_and_readback(self):
+        """正常写入: 内容正确且不残留 .tmp"""
+        import json as _json
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p = rc.Path(td) / "a" / "b.json"  # 嵌套目录自动创建
+            self.assertTrue(rc.atomic_write_json(p, {"x": 1}, indent=2))
+            self.assertEqual(_json.loads(p.read_text(encoding="utf-8")), {"x": 1})
+            self.assertFalse((rc.Path(str(p) + ".tmp")).exists())
+
+    def test_overwrite(self):
+        """覆盖写: 更新内容生效"""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p = rc.Path(td) / "d.json"
+            rc.atomic_write_json(p, {"v": 1})
+            rc.atomic_write_json(p, {"v": 2, "w": [1, 2]})
+            import json as _json
+            self.assertEqual(_json.loads(p.read_text(encoding="utf-8")), {"v": 2, "w": [1, 2]})
+
+    def test_allow_nan_kwarg(self):
+        """kwargs 透传: allow_nan=False 时 NaN 写入应抛 ValueError 且不留 .tmp"""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p = rc.Path(td) / "n.json"
+            with self.assertRaises(ValueError):
+                rc.atomic_write_json(p, {"v": float("nan")}, allow_nan=False)
+            self.assertFalse(p.exists(), "失败时不落半写文件")
+            self.assertFalse((rc.Path(str(p) + ".tmp")).exists(), "失败时清理 .tmp")
+
+    def test_failure_cleans_tmp(self):
+        """写入异常(模拟)时清理 .tmp 并抛错"""
+        import tempfile
+        with tempfile.TemporaryDirectory() as td:
+            p = rc.Path(td) / "f.json"
+            with mock.patch("builtins.open", side_effect=OSError("disk full")):
+                with self.assertRaises(OSError):
+                    rc.atomic_write_json(p, {"x": 1})
+            self.assertFalse(p.exists())
+            self.assertFalse((rc.Path(str(p) + ".tmp")).exists())
 
 
 if __name__ == "__main__":

@@ -153,10 +153,56 @@ class TestBuildPrediction(unittest.TestCase):
         self.assertTrue(-9.0 <= p["stop_loss"] <= -3.0)
 
     def test_gain_range(self):
-        """预期涨幅区间 = 中值 ± (中值*0.45)"""
+        """预期涨幅区间: 按中值分档缩放, 高预期给更宽区间
+        gain≥3→[g-3,g+3.5]; 1.5-3→[max(0,g-2),g+3.5]; 0-1.5→[0,g+3.5]; 负→[g-2,g+1.5]
+        """
         p = predict.build_prediction(base_features(), market_ok())
         g = p["expected_gain"]
-        self.assertEqual(p["gain_range"], [round(g * 0.55, 1), round(g * 1.45, 1)])
+        if g >= 3.0:
+            expected = [round(g - 3.0, 1), round(g + 3.5, 1)]
+        elif g >= 1.5:
+            expected = [round(max(0.0, g - 2.0), 1), round(g + 3.5, 1)]
+        elif g > 0:
+            expected = [round(0.0, 1), round(g + 3.5, 1)]
+        else:
+            expected = [round(g - 2.0, 1), round(g + 1.5, 1)]
+        self.assertEqual(p["gain_range"], expected)
+
+    def test_gain_range_positive_floor(self):
+        """正预期下限: gain≥3→[g-3,g+3.5]; 1.5-3→[max(0,g-2),g+3.5]; 0-1.5→[0,g+3.5]"""
+        self.assertEqual(predict._gain_range(5.0), [2.0, 8.5])
+        self.assertEqual(predict._gain_range(2.0), [0.0, 5.5])
+        self.assertEqual(predict._gain_range(0.5), [0.0, 4.0])
+
+    def test_gain_range_negative(self):
+        """负预期区间偏下: gain=-1.5 → [-3.5, 0.0]"""
+        self.assertEqual(predict._gain_range(-1.5), [-3.5, 0.0])
+
+    def test_expected_gain_thresholds(self):
+        """7 档分档: 极高6.0/高5.0/中高4.0/中3.0/中低2.0/低1.0/极低-1.0 (无加成)"""
+        self.assertEqual(predict._expected_gain(80), 6.0)
+        self.assertEqual(predict._expected_gain(75), 5.0)
+        self.assertEqual(predict._expected_gain(70), 4.0)
+        self.assertEqual(predict._expected_gain(66), 3.0)
+        self.assertEqual(predict._expected_gain(63), 2.0)
+        self.assertEqual(predict._expected_gain(60), 1.0)
+        self.assertEqual(predict._expected_gain(40), -1.0)
+
+    def test_expected_gain_confidence_boost(self):
+        """置信度加成: 高+1.0 / 中+0 / 低-0.5"""
+        # 高置信 + 70%概率 → 4.0 + 1.0 = 5.0
+        self.assertEqual(predict._expected_gain(70, confidence="高"), 5.0)
+        # 低置信 + 68%概率 → 4.0 + (-0.5) = 3.5
+        self.assertEqual(predict._expected_gain(68, confidence="低"), 3.5)
+        # 中置信 + 66%概率 → 3.0 + 0 = 3.0
+        self.assertEqual(predict._expected_gain(66), 3.0)
+
+    def test_expected_gain_sector_boost(self):
+        """板块共振加成: sector_count=2→+0.3, 3→+0.6, 4→上限+0.9"""
+        # 高置信 + sector_count=2 + 72% → 5.0 + 1.0 + 0.3 = 6.3
+        self.assertEqual(predict._expected_gain(72, confidence="高", sector_count=2), 6.3)
+        # 高置信 + sector_count=4 + 72% → 5.0 + 1.0 + min(0.9, 0.9) = 6.9
+        self.assertEqual(predict._expected_gain(72, confidence="高", sector_count=4), 6.9)
 
     def test_logic_present(self):
         """预测逻辑: 2~3 条核心支撑理由, 且含板块共振依据"""
@@ -188,6 +234,22 @@ class TestRecordPredictions(unittest.TestCase):
             self.assertIn("20260807", data)
             self.assertEqual(len(data["20260807"]), 1)
             self.assertEqual(data["20260807"][0]["code"], "000001.SZ")
+            # H5: 未传 tag → 记录 tag 为 None (默认值兼容)
+            self.assertIsNone(data["20260807"][0]["tag"])
+
+    def test_tag_field(self):
+        """H5: record_predictions 支持 tag 参数, 写入每条预测记录 (超跌/动量分维度复盘)"""
+        with tempfile.TemporaryDirectory() as td:
+            log = Path(td) / "log.json"
+            recs = [
+                {"ts_code": "300123.SZ", "name": "安培龙", "price": 15.0,
+                 "prediction": {"up_prob": 60, "expected_gain": 25.0, "confidence": "中"},
+                 "sector_count": 1, "technical": {"hit_count": 3}, "capital": {}},
+            ]
+            n = predict.record_predictions(recs, "20260828", log, tag="REBOUND")
+            self.assertEqual(n, 1)
+            data = json.loads(log.read_text(encoding="utf-8"))
+            self.assertEqual(data["20260828"][0]["tag"], "REBOUND")
 
     def test_trim_to_30_dates(self):
         with tempfile.TemporaryDirectory() as td:
@@ -260,37 +322,59 @@ class TestCalibration(unittest.TestCase):
             predict._load_calib = orig
 
     def test_small_gap_no_calibration(self):
-        """误差 ≤3pp → 不校准 (避免过度修正)"""
-        orig = self._patch(self._calib(hit=60, avg=62))
+        """误差 ≤3pp → 不校准 (避免过度修正)
+        hit=0.60 (60%), avg=62 (62%), gap=2pp ≤3 → 不校准"""
+        orig = self._patch(self._calib(hit=0.60, avg=62))
         try:
             self.assertEqual(predict.calibrate_prob(80), 80)
         finally:
             predict._load_calib = orig
 
     def test_big_gap_compresses(self):
-        """avg=82 vs hit=50, gap=32 → k=0.68; 80 → 55+25*0.68=72"""
-        orig = self._patch(self._calib(hit=50, avg=82))
+        """hit=0.50 (50%), avg=82 (82%), gap=32pp; anchor=max(45,min(65,60))=60, k=max(0.7,1-32/80)=0.7; 80→60+20*0.7=74"""
+        orig = self._patch(self._calib(hit=0.50, avg=82))
         try:
-            self.assertEqual(predict.calibrate_prob(80), 72)
+            self.assertEqual(predict.calibrate_prob(80), 74)
         finally:
             predict._load_calib = orig
 
     def test_compression_ratio(self):
-        """越接近基准55压缩越少, 越高概率压缩越多 (仍保持排序)"""
-        orig = self._patch(self._calib(hit=50, avg=82))
+        """保留排序: 高概率压缩后仍高于低概率, 且保留大部分原始差异"""
+        orig = self._patch(self._calib(hit=0.50, avg=82))
         try:
             hi = predict.calibrate_prob(88)
             lo = predict.calibrate_prob(60)
             self.assertGreater(hi, lo)
             self.assertLessEqual(hi, 88)
+            # 保留至少 70% 原始差异: 88-60=28 → 校准后应≥20
+            self.assertGreaterEqual(hi - lo, 20)
         finally:
             predict._load_calib = orig
 
     def test_never_below_floor(self):
-        """校准后概率不跌破 PROB_MIN+5=35"""
-        orig = self._patch(self._calib(hit=30, avg=90))
+        """校准后概率不跌破 PROB_MIN=30"""
+        orig = self._patch(self._calib(hit=0.30, avg=90))
         try:
-            self.assertGreaterEqual(predict.calibrate_prob(30), 35)
+            self.assertGreaterEqual(predict.calibrate_prob(30), predict.PROB_MIN)
+        finally:
+            predict._load_calib = orig
+
+    def test_preserves_differentiation(self):
+        """关键: 校准后仍保留股票间差异化 (保留≥70%原始差异)
+        生产数据: hit=0.40 (40%), avg=66 (66%), gap=26pp
+        anchor=max(45,min(65,50))=50, k=max(0.7,1-26/80)=0.7
+        raw=80 → 50+30*0.7=71
+        raw=60 → 50+10*0.7=57
+        raw=55 → 50+5*0.7=53.5 → 54"""
+        orig = self._patch(self._calib(hit=0.40, avg=66))
+        try:
+            hi = predict.calibrate_prob(80)
+            mid = predict.calibrate_prob(60)
+            lo = predict.calibrate_prob(55)
+            self.assertGreater(hi, mid, "高概率应保持高于中概率")
+            self.assertGreater(mid, lo, "中概率应保持高于低概率")
+            # 保留至少 70% 原始差异: 80-55=25 → 校准后应≥17
+            self.assertGreaterEqual(hi - lo, 17)
         finally:
             predict._load_calib = orig
 
@@ -356,6 +440,58 @@ class TestCalcAccuracy(unittest.TestCase):
             dm, dates = self._make_daily_map()
             log.write_text("{}", encoding="utf-8")
             self.assertIsNone(predict.calc_prediction_accuracy(dm, dates[-1], log, review))
+
+    def test_horizon_gain_3d_5d(self):
+        # V2.0 (需求 3.9): 持有3日/5日周期收益, 数据充足时全部计算
+        with tempfile.TemporaryDirectory() as td:
+            log = Path(td) / "log.json"
+            review = Path(td) / "review.json"
+            # 6 个交易日, 价格逐步上行
+            base = datetime.strptime("20260813", "%Y%m%d")
+            dates = sorted([(base - timedelta(days=i)).strftime("%Y%m%d") for i in range(6)])
+            dm = {}
+            for j, date in enumerate(dates):
+                dm[date] = pd.DataFrame([
+                    {"ts_code": "000001.SZ", "close": 10.0 + j, "pct_chg": 1.0},
+                ])
+            log.write_text(json.dumps({
+                dates[0]: [{"code": "000001.SZ", "price": 10.0, "up_prob": 70,
+                            "confidence": "高", "sector_count": 2}]
+            }), encoding="utf-8")
+            rev = predict.calc_prediction_accuracy(dm, dates[-1], log, review)
+            self.assertIsNotNone(rev)
+            item = rev["all"][0]
+            # 次日 = dates[1] 收盘 11 → +10%; 3日 = dates[3] 收盘 13 → +30%; 5日 = dates[5] 收盘 15 → +50%
+            self.assertAlmostEqual(item["gain"], 10.0)
+            self.assertAlmostEqual(item["gain3"], 30.0)
+            self.assertAlmostEqual(item["gain5"], 50.0)
+            self.assertAlmostEqual(rev["summary"]["avg_gain3"], 30.0)
+            self.assertAlmostEqual(rev["summary"]["avg_gain5"], 50.0)
+            self.assertEqual(rev["summary"]["horizon3_n"], 1)
+            self.assertEqual(rev["summary"]["horizon5_n"], 1)
+
+    def test_horizon_gain_insufficient_none(self):
+        # V2.0 (需求 3.9): 数据不足时 gain3/gain5 为 None, 且不污染均值
+        with tempfile.TemporaryDirectory() as td:
+            log = Path(td) / "log.json"
+            review = Path(td) / "review.json"
+            dm, dates = self._make_daily_map()  # 仅 4 个交易日
+            # dates[2] 的预测: 次日(idx+1=3)可验证, 3日/5日(idx+5)数据不足
+            log.write_text(json.dumps({
+                dates[2]: [{"code": "000001.SZ", "price": 10.0, "up_prob": 60,
+                            "confidence": "中", "sector_count": 1}],
+            }), encoding="utf-8")
+            rev = predict.calc_prediction_accuracy(dm, dates[-1], log, review)
+            self.assertIsNotNone(rev)
+            self.assertEqual(rev["summary"]["samples"], 1)
+            item = rev["all"][0]
+            self.assertIsNotNone(item["gain"])
+            self.assertIsNone(item["gain3"])
+            self.assertIsNone(item["gain5"])
+            self.assertIsNone(rev["summary"]["avg_gain3"])
+            self.assertIsNone(rev["summary"]["avg_gain5"])
+            self.assertEqual(rev["summary"]["horizon3_n"], 0)
+            self.assertEqual(rev["summary"]["horizon5_n"], 0)
 
 
 class TestCloseIndex(unittest.TestCase):

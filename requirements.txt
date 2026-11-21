@@ -5,3 +5,14 @@ fastapi>=0.95.0
 uvicorn>=0.21.0
 requests>=2.28.0
 akshare>=1.14.0
+# === 2026-09-04 补全: 项目实际依赖 ===
+# BaoStock 备份金融数据源(财务指标/日K/交易日历, 免费免token, F10/同花顺失败时兜底)
+baostock>=0.8.8
+# SFTP 部署(_upload_file.py)与远端执行(_ssh_run.py)
+paramiko>=3.0.0
+# AKShare 同花顺财务 stock_financial_analysis_indicator 必需
+lxml>=4.6.0
+# AKShare 同花顺 xlsx 导出/读取接口
+openpyxl>=3.0.0
+# 单元测试
+pytest>=7.0.0

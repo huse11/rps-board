@@ -19,9 +19,24 @@ __pycache__/
 *.pyo
 .env
 
-# IDE
+# IDE / AI 工作目录
 .vscode/
 .idea/
+.trae/
+
+# 阿里云部署脚本（含服务器连接逻辑, 不进公开仓库）
+scripts/deploy/
+deploy_ai_analysis.bat
+cron_rps.sh.new
+_smoke_render.js
+
+# 根目录运行时数据文件（误放根目录的 json 输出）
+daily_review.json
+review_sentiment_history.json
+
+# static/ 下运行时生成的数据（全部不推, 保持仓库纯净）
+static/*.json
+static/*.md
 
 # 验证脚本
 verify.py
@@ -39,6 +54,11 @@ _*.py
 _*.html
 _*.json
 _*.txt
+# P1-4 归档脚本（scripts 子目录下的 _*.py 也忽略）
+scripts/**/_*.py
+# 临时/历史备份目录（含旧版本代码，不进版本）
+tmp_*/
+archive/
 push_api2.py
 push_main.py
 dispatch.py

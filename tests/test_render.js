@@ -184,13 +184,13 @@ test('fmtReviewSector: 精简板块条目带RPS/排名/达标率, 兼容旧RPS5'
 });
 
 test('fmtReviewTone: v2六档带色(浅色主题白底深字), 空值--', () => {
-    assert.ok(R.fmtReviewTone('全面强').includes('#059669'));
-    assert.ok(R.fmtReviewTone('结构性强').includes('#059669'));
-    assert.ok(R.fmtReviewTone('中性偏强').includes('#0284c7'));
-    assert.ok(R.fmtReviewTone('中性').includes('#0284c7'));
-    assert.ok(R.fmtReviewTone('中性偏弱').includes('#d97706'));
-    assert.ok(R.fmtReviewTone('弱').includes('#dc2626'));
-    assert.ok(R.fmtReviewTone('强').includes('#059669'));
+    assert.ok(R.fmtReviewTone('全面强').includes('#0ea960'));
+    assert.ok(R.fmtReviewTone('结构性强').includes('#0ea960'));
+    assert.ok(R.fmtReviewTone('中性偏强').includes('#165dff'));
+    assert.ok(R.fmtReviewTone('中性').includes('#165dff'));
+    assert.ok(R.fmtReviewTone('中性偏弱').includes('#ff7d00'));
+    assert.ok(R.fmtReviewTone('弱').includes('#e53e3e'));
+    assert.ok(R.fmtReviewTone('强').includes('#0ea960'));
     assert.equal(R.fmtReviewTone(''), '--');
 });
 
@@ -202,12 +202,12 @@ test('fmtReviewWarnings: [{text,level}]分级着色, 无预警绿色', () => {
     ]);
     assert.ok(warn.includes('批量调出预警'));
     assert.ok(warn.includes('动量衰减预警'));
-    assert.ok(warn.includes('#d97706'), 'warning橙色');
-    assert.ok(warn.includes('#dc2626'), 'danger红色');
-    assert.ok(warn.includes('#64748b'), 'hint灰色');
+    assert.ok(warn.includes('#ff7d00'), 'warning橙色');
+    assert.ok(warn.includes('#e53e3e'), 'danger红色');
+    assert.ok(warn.includes('#86909c'), 'hint灰色');
     const none = R.fmtReviewWarnings([]);
     assert.ok(none.includes('无风险信号'));
-    assert.ok(none.includes('#059669'));
+    assert.ok(none.includes('#0ea960'));
 });
 
 test('fmtReviewPhase: 主标签+附加信号带色 + 统计数字', () => {
@@ -274,6 +274,177 @@ test('buildReviewHtml: 无数据兜底提示', () => {
     assert.ok(R.buildReviewHtml({}).includes('暂无复盘数据'));
 });
 
+// ===== V2.0 每日复盘新增模块渲染 (需求 3.1-3.10 / 4.1-4.5) =====
+
+test('fmtReviewSectorChips: 板块chip带data-sector可点击, 超长截断', () => {
+    const html = R.fmtReviewSectorChips(['黄金', '半导体']);
+    assert.ok(html.includes('data-sector="黄金"'));
+    assert.ok(html.includes('rv-chip'));
+    assert.ok(html.includes('#165dff'), 'chip蓝色');
+    const many = R.fmtReviewSectorChips(['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'], 8);
+    assert.ok(many.includes('等9个'));
+    assert.equal(R.fmtReviewSectorChips([]), '');
+    assert.equal(R.fmtReviewSectorChips(null), '');
+});
+
+test('fmtRiskLevelV2: 四级风险着色(low绿/mid灰/high橙/critical深红)', () => {
+    assert.ok(R.fmtRiskLevelV2({ level_v2: 'low', level_v2_text: '低风险' }).includes('#0ea960'));
+    assert.ok(R.fmtRiskLevelV2({ level_v2: 'mid' }).includes('#86909c'));
+    assert.ok(R.fmtRiskLevelV2({ level_v2: 'high' }).includes('#ff7d00'));
+    assert.ok(R.fmtRiskLevelV2({ level_v2: 'critical' }).includes('#d90000'));
+    assert.equal(R.fmtRiskLevelV2({}), '');
+    assert.equal(R.fmtRiskLevelV2(null), '');
+});
+
+test('fmtAbnormalSignals: 逐条级别着色 + 标题/等级/描述', () => {
+    const html = R.fmtAbnormalSignals({ signals: [
+        { type: 'breadth', title: '涨跌停比失衡', level: 'high', level_text: '高风险', desc: '涨停少跌停多' },
+        { type: 'risk', title: '批量调出', level: 'critical', level_text: '极高风险', desc: '多个主线板块调出' }
+    ] });
+    assert.ok(html.includes('涨跌停比失衡'));
+    assert.ok(html.includes('高风险'));
+    assert.ok(html.includes('#ff7d00'), 'high橙色');
+    assert.ok(html.includes('#d90000'), 'critical深红');
+    assert.equal(R.fmtAbnormalSignals(null), '');
+    assert.equal(R.fmtAbnormalSignals({ signals: [] }), '');
+});
+
+test('fmtYesterdayCheck: 昨日观点/跟踪板块晋级着色/准确率', () => {
+    const html = R.fmtYesterdayCheck({
+        has_data: true, yesterday_date: '20260826', phase_check: '震荡期(数量回落)',
+        track_checked: [{ name: '黄金', verdict: '晋级' }, { name: '半导体', verdict: '调出' }],
+        hit_rate: 60, summary: '主线延续, 观点基本验证'
+    });
+    assert.ok(html.includes('20260826'));
+    assert.ok(html.includes('震荡期'));
+    assert.ok(html.includes('黄金(晋级)'));
+    assert.ok(html.includes('半导体(调出)'));
+    assert.ok(html.includes('60%'));
+    assert.ok(html.includes('#0ea960'), '晋级绿色');
+    // hit_rate 转义: 即使后端字段意外含 HTML 也不裸露/注入 (2026-08-30 修复)
+    const esc = R.fmtYesterdayCheck({ has_data: true, yesterday_date: '20260826', hit_rate: '<b>99</b>' });
+    assert.ok(!esc.includes('<b>99</b>'), 'hit_rate 被转义');
+    assert.ok(esc.includes('&lt;b&gt;99&lt;/b&gt;%'), 'hit_rate 转义后仍带%');
+    const empty = R.fmtYesterdayCheck({ has_data: false, note: '暂无昨日数据' });
+    assert.ok(empty.includes('暂无昨日数据'));
+    assert.equal(R.fmtYesterdayCheck(null), '');
+});
+
+test('fmtCoreTargets: 板块chip + 个股链接data-stock', () => {
+    const html = R.fmtCoreTargets({ targets: [
+        { sector: '通信线缆及配套', stocks: [{ name: '长飞光纤', code: '601869.SH' }] }
+    ] });
+    assert.ok(html.includes('data-sector="通信线缆及配套"'));
+    assert.ok(html.includes('data-stock="601869.SH"'));
+    assert.ok(html.includes('长飞光纤'));
+    const empty = R.fmtCoreTargets({ targets: [], note: '暂无映射' });
+    assert.ok(empty.includes('暂无映射'));
+    assert.equal(R.fmtCoreTargets(null), '');
+});
+
+test('fmtPositionGuide: 总仓位/主线/试错 成数 + 操作方向', () => {
+    const html = R.fmtPositionGuide({ phase: '发酵期', total: 6, mainline: 3, trial: 2, direction: '加仓主线', reason: '情绪发酵期' });
+    assert.ok(html.includes('总仓位'));
+    assert.ok(html.includes('6成'));
+    assert.ok(html.includes('3成'));
+    assert.ok(html.includes('2成'));
+    assert.ok(html.includes('加仓主线'));
+    assert.equal(R.fmtPositionGuide(null), '');
+});
+
+test('fmtMarketBreadth: 涨跌家数/涨停/连板/成交额', () => {
+    const html = R.fmtMarketBreadth({ up_count: 3500, down_count: 1500, limit_up: 80, zt_count: 80, max_lianban: '5', total_amount: 12000, source: '东财' });
+    assert.ok(html.includes('3500'));
+    assert.ok(html.includes('1500'));
+    assert.ok(html.includes('80'));
+    assert.ok(html.includes('5'));
+    assert.ok(html.includes('12000'));
+    assert.equal(R.fmtMarketBreadth({}), '');
+});
+
+test('fmtStyleOutlook: 未归类占比/风格切换/明日要点', () => {
+    const html = R.fmtStyleOutlook({
+        unclassified: { count: 2, total: 10, pct: 20, names: ['种子', '黄金'] },
+        ratio_ok: false, switch: true, switch_desc: '科技→周期切换',
+        tomorrow_points: ['关注种子晋级', '警惕高位股退潮']
+    });
+    assert.ok(html.includes('未归类'));
+    assert.ok(html.includes('20%'));
+    assert.ok(html.includes('科技→周期切换'));
+    assert.ok(html.includes('关注种子晋级'));
+    assert.equal(R.fmtStyleOutlook(null), '');
+});
+
+test('buildReviewHtml: V2.0 新增模块卡片全部渲染', () => {
+    const data = {
+        update_date: '20260827', total_industries: 208,
+        market: { tone: '中性', high5: 9, high10: 8, high20: 10, diff5: 0, high_score_count_pct: 4.9, note: '' },
+        market_breadth: { up_count: 3500, down_count: 1500, limit_up: 80, zt_count: 80, max_lianban: '5', total_amount: 12000, source: '东财' },
+        core_conclusion: { text: '今日情绪处于震荡期，主线确认(2个核心)，板块轮动平稳；建议仓位4成，重点跟踪黄金的晋级情况。', phase: '震荡期', mainline: '主线确认(2个核心)', position: 4, focus: '黄金', rotation: '板块轮动平稳' },
+        position_guide: { phase: '震荡期', total: 4, mainline: 2, trial: 1, direction: '观望, 轻仓试错', reason: '情绪震荡期' },
+        resonance: { core: [{ name: '黄金', RPS: 100, rank: 1, ratio: 80 }], tough: [], pulse: [], diverge: [] },
+        tier: { tier1: [{ name: '黄金', ratio: 80 }], tier2: [{ name: '种子', ratio: 50 }, { name: '铅锌', ratio: 40 }, { name: '钟表珠宝', ratio: 30 }, { name: '非金属材料Ⅲ', ratio: 20 }] },
+        core_targets: { targets: [{ sector: '黄金', stocks: [{ name: '中金黄金', code: '600489.SH' }] }], note: '' },
+        rotation: { new_in: [], rank_jump: [], out_count: 0, repeat: [] },
+        health: { expand: [], mature: [], mature_fatigue: [], seed_high: [], seed_pulse: [], unified: [{ name: '黄金', ratio: 80, tags: ['成熟主线', '扩散健康'], ratio_chg: 5.2 }] },
+        risk: { warnings: [], level: 'safe', level_v2: 'low', level_v2_text: '低风险', track_groups: [{ track: '周期', count: 2 }], out_total: 2, main_out_total: 1, advice: ['控制仓位', '关注主线分歧'] },
+        abnormal_signals: { signals: [{ type: 'breadth', title: '涨跌停比失衡', level: 'high', level_text: '高风险', desc: '涨停少跌停多' }], note: '' },
+        watch: { seed_high: [], seed_pulse: [], critical: [], diverge_watch: [], diverge_dropped: [] },
+        yesterday_check: { has_data: true, yesterday_date: '20260826', phase_check: '震荡期(数量回落)', track_checked: [{ name: '黄金', verdict: '晋级' }], hit_rate: 60, summary: '主线延续' },
+        sentiment: { main: '震荡期', signal: [], seed_n: 0, out_n: 1, core_n: 1, high_n: 12 },
+        style: { rps5: { 科技: { count: 3, pct: 27.3 } } },
+        style_outlook: { unclassified: { count: 1, total: 10, pct: 10, names: ['种子'] }, ratio_ok: false, switch: false, switch_desc: '', tomorrow_points: ['关注种子晋级'] },
+        milestones: { mainline_confirm_date: '20260820', first_tideout_date: '20260822', emotion_ice_date: '20260824' },
+        consistency: { conflict: false, warning: '' }
+    };
+    const html = R.buildReviewHtml(data);
+    for (const sec of ['一句话核心结论', '仓位指引', '昨日复盘验证', '核心标的映射', '异常信号高亮']) {
+        assert.ok(html.includes(sec), '缺少V2.0卡片: ' + sec);
+    }
+    assert.ok(html.includes('建议仓位'), '核心结论含仓位');
+    assert.ok(html.includes('4成'), '仓位指引成数');
+    assert.ok(html.includes('中金黄金'), '核心标的个股');
+    assert.ok(html.includes('data-sector="黄金"'), '板块chip可点击');
+    assert.ok(html.includes('data-stock="600489.SH"'), '个股链接可点击');
+    assert.ok(html.includes('涨跌停比失衡'), '异常信号内容');
+    assert.ok(html.includes('批量调出赛道归类'), '风险赛道归类');
+    assert.ok(html.includes('操作建议'), '风险操作建议');
+    assert.ok(html.includes('低风险'), 'V2风险等级');
+    assert.ok(html.includes('<details'), '梯队折叠块');
+    assert.ok(html.includes('合并板块分类'), '健康度合并板块');
+    assert.ok(html.includes('未归类'), '进阶观察风格outlook');
+    assert.ok(html.includes('3500'), '市场广度涨跌家数');
+    assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});
+
+test('reviewChartSentimentHistory: V2.0 双轴 + 里程碑拐点 + 完整纵坐标', () => {
+    const hist = [
+        { date: '20260818', phase: '震荡期', high_n: 18 },
+        { date: '20260819', phase: '震荡期', high_n: 17 },
+        { date: '20260820', phase: '发酵期', high_n: 16 },
+        { date: '20260821', phase: '震荡期', high_n: 17 },
+        { date: '20260822', phase: '冰点期', high_n: 5 }
+    ];
+    const html = R.reviewChartSentimentHistory(hist, {
+        mainline_confirm_date: '20260820', first_tideout_date: '20260821', emotion_ice_date: '20260822'
+    });
+    assert.ok(html.includes('冰点期'), '左轴完整纵坐标(五档全名)');
+    assert.ok(html.includes('启动期'));
+    assert.ok(html.includes('高潮期'));
+    assert.ok(html.includes('主线确认'), '里程碑拐点标签');
+    assert.ok(html.includes('首次退潮'));
+    assert.ok(html.includes('情绪冰点'));
+    assert.ok(html.includes('#e53e3e'), '主线确认红色');
+    assert.ok(html.includes('#ff7d00'), '首次退潮橙色');
+    assert.ok(html.includes('#165dff'), '情绪冰点蓝色');
+    assert.ok(html.includes('高分板块数'), '图例说明双轴');
+    // 无里程碑兼容
+    const plain = R.reviewChartSentimentHistory(hist);
+    assert.ok(plain.includes('情绪周期历史'));
+    assert.ok(!plain.includes('主线确认'));
+    assert.equal(R.reviewChartSentimentHistory([]), '');
+});
+
 // ===== 日度推荐「预测化」格式化 =====
 test('fmtPredUpProb: 空值显示 --', () => {
     assert.equal(R.fmtPredUpProb(null), '--');
@@ -290,15 +461,36 @@ test('fmtPredUpProb: 三档配色(≥68强红/58-67中橙/<58弱灰)', () => {
 
 test('fmtPredGain: 中值+区间, 空值兜底', () => {
     const html = R.fmtPredGain({ expected_gain: 7.0, gain_range: [3.9, 10.2] });
-    assert.ok(html.includes('7.0%'));
+    assert.ok(html.includes('+7.0%'));
     assert.ok(html.includes('3.9~10.2'));
+    assert.ok(html.includes('class="pos"'));
     assert.equal(R.fmtPredGain(null), '--');
     assert.equal(R.fmtPredGain({}), '--');
 });
 
-test('fmtPredGain: 无区间时按中值±45%兜底', () => {
+test('fmtPredGain: 无区间时按分档兜底 (g=6.0 ≥3 → [g-3, g+3.5] = [3.0, 9.5])', () => {
     const html = R.fmtPredGain({ expected_gain: 6.0 });
-    assert.ok(html.includes('3.3~8.7'));
+    assert.ok(html.includes('3.0~9.5'));
+});
+
+test('fmtPredGain: 新7档区间兜底全覆盖', () => {
+    // g≥3 → [g-3, g+3.5]
+    assert.ok(R.fmtPredGain({ expected_gain: 5.0 }).includes('2.0~8.5'));
+    assert.ok(R.fmtPredGain({ expected_gain: 4.0 }).includes('1.0~7.5'));
+    assert.ok(R.fmtPredGain({ expected_gain: 3.0 }).includes('0.0~6.5'));
+    // 1.5≤g<3 → [max(0,g-2), g+3.5]
+    assert.ok(R.fmtPredGain({ expected_gain: 2.0 }).includes('0.0~5.5'));
+    // 0<g<1.5 → [0, g+3.5]
+    assert.ok(R.fmtPredGain({ expected_gain: 1.0 }).includes('0.0~4.5'));
+    // g≤0 → [g-2, g+1.5]
+    assert.ok(R.fmtPredGain({ expected_gain: -1.0 }).includes('-3.0~0.5'));
+});
+
+test('fmtPredGain: 负预期红色带符号 (g=-1.5 → [-3.5, 0.0])', () => {
+    const html = R.fmtPredGain({ expected_gain: -1.5, gain_range: [-3.5, 0.0] });
+    assert.ok(html.includes('class="neg"'));
+    assert.ok(html.includes('-1.5%'));
+    assert.ok(html.includes('-3.5~0.0'));
 });
 
 test('fmtPredStop: 负值红色, 空值兜底', () => {
@@ -333,7 +525,7 @@ test('buildPredictionBox: 完整预测内容渲染', () => {
         }
     };
     const html = R.buildPredictionBox(s);
-    assert.ok(html.includes('预测（3日内）'), '预测周期');
+    assert.ok(html.includes('预测（3个交易日）'), '预测周期 horizon=3');
     assert.ok(html.includes('72%'), '上涨概率');
     assert.ok(html.includes('止损位'), '止损位');
     assert.ok(html.includes('置信度'), '置信度');
@@ -342,6 +534,40 @@ test('buildPredictionBox: 完整预测内容渲染', () => {
     assert.ok(html.includes('动量'), '六维概率');
     assert.ok(html.includes('基于历史动量统计'), '依据');
     assert.ok(!html.includes('undefined'), '不得渲染undefined');
+});
+
+test('buildPredictionBox: horizon=1 显示「次日」', () => {
+    const s = { prediction: { horizon: 1, up_prob: 62, expected_gain: 2.0,
+        gain_range: [0.0, 5.5], stop_loss: -5.0, confidence: '中' } };
+    const html = R.buildPredictionBox(s);
+    assert.ok(html.includes('预测（次日）'), 'horizon=1 → 次日');
+});
+
+test('buildPredictionBox: 负预期 红色+符号', () => {
+    const s = { prediction: { horizon: 1, up_prob: 40, expected_gain: -1.5,
+        gain_range: [-3.5, 0.0], confidence: '低' } };
+    const html = R.buildPredictionBox(s);
+    assert.ok(html.includes('-1.5%'), '负预期中值显示');
+    assert.ok(html.includes('-3.5~0.0'), '负预期区间');
+    assert.ok(html.includes('class="neg"'), '负预期红色样式');
+});
+
+test('fmtEarlyDetail / fmtWeeklyEarlyDetail: 详情内渲染预测块', () => {
+    const s = {
+        sectors: ['半导体'], sector_count: 1, score_sector: 18, score_fundamental: 12,
+        score_capital: 20, score_technical: 10, score_total: 60,
+        early: { rps50: 78, chg10: 8.2, ma60_dev: 3.1 },
+        capital: { turnover: 7.5, vol_ratio: 1.8 }, technical: { hit_count: 4, hits: ['均线多头'] },
+        fundamental: { net_profit: 5e8, debt_to_assets: 35 },
+        prediction: { horizon: 1, up_prob: 68, expected_gain: 3.5, gain_range: [1.5, 7.0],
+            confidence: '高', logic: ['多维共振'] }
+    };
+    const earlyHtml = R.fmtEarlyDetail(s);
+    assert.ok(earlyHtml.includes('预测（次日）'), '早期详情: 预测块次日标题');
+    assert.ok(earlyHtml.includes('+3.5%'), '早期详情: 新区间中值+号');
+    assert.ok(earlyHtml.includes('1.5~7.0'), '早期详情: 新区间下限~上限');
+    const wkHtml = R.fmtWeeklyEarlyDetail(Object.assign({}, s, { chg8_week: 22.5 }));
+    assert.ok(wkHtml.includes('预测（次日）'), '周度早期详情: 预测块');
 });
 
 // ===== 复盘图表 (纯SVG手绘) =====
@@ -556,11 +782,11 @@ test('复盘深色主题: 面板/卡片深色 + 图表浅色文字', () => {
     assert.ok(html.includes('background:#ffffff'), '面板白底');
     assert.ok(html.includes('#f8fafc'), '卡片浅灰蓝背景');
     // 深色文字 (白底可读)
-    assert.ok(html.includes('#64748b'), '图表标签中灰');
+    assert.ok(html.includes('#86909c'), '图表标签中灰');
     assert.ok(html.includes('#334155'), '图表数值/章节文字深色');
-    // 金融配色: 红涨绿健康
-    assert.ok(html.includes('#dc2626'), '金融红');
-    assert.ok(html.includes('#059669'), '金融绿');
+    // 金融配色: 红涨绿健康 (V2.0 规范色)
+    assert.ok(html.includes('#e53e3e'), '金融红');
+    assert.ok(html.includes('#0ea960'), '金融绿');
     assert.ok(!html.includes('background:#0b1120'), '不再深色面板');
 });
 
@@ -1142,36 +1368,69 @@ test('buildReviewHtml: 消息面卡片无数据降级', () => {
 
 // ---------- 每周复盘渲染 (2026-08-23) ----------
 
-test('buildWeeklyReviewHtml: 六大板块齐全', () => {
+test('buildWeeklyReviewHtml: 十一大卡片齐全 (V2.0)', () => {
     const data = {
         week_id: '2026W34', update_date: '20260821', days: 5,
-        tone: { series: [{ date: '20260817', high_n: 20 }, { date: '20260818', high_n: 22 },
-                          { date: '20260819', high_n: 25 }, { date: '20260820', high_n: 24 },
-                          { date: '20260821', high_n: 28 }],
-                first: 20, last: 28, avg: 23.8, diff: 8, tone: '周度偏强', note: '周均高分板块24个(首日20→末日28, +8), 周内热度走高' },
-        mainlines: [{ name: '有色金属', days_on: 5, rps5: 95.0, rank: 1 }],
-        rotation: { sustained: [{ name: '有色金属', days_on: 5, rps5: 95 }],
-                    new_in: [{ name: '半导体', days_on: 1, rps5: 92 }],
-                    dropped: [{ name: '乳制品', days_on: 2 }] },
-        sentiment: { series: [{ date: '20260818', phase: '冰点期' }, { date: '20260821', phase: '启动期' }],
-                     start_phase: '冰点期', end_phase: '启动期', trend: '情绪从冰点期到启动期(升温)', phase_change: '升温' },
+        core_conclusion: { text: '本周情绪维持震荡期, 黄金、疫苗为持续硬核主线; 市场热度小幅抬升, 周期风格占优' },
+        tone: { rps5_series: [{ date: '20260817', high_n: 20 }, { date: '20260818', high_n: 22 },
+                              { date: '20260819', high_n: 25 }, { date: '20260820', high_n: 24 },
+                              { date: '20260821', high_n: 28 }],
+                rps10_series: [{ date: '20260817', high_n: 10 }, { date: '20260821', high_n: 14 }],
+                rps20_series: [{ date: '20260817', high_n: 6 }, { date: '20260821', high_n: 8 }],
+                tone: '周度偏强', note: '周均高分板块24个(首日20→末日28, +8), 周内热度走高',
+                threshold_note: '日均高分≥10个' },
+        market_breadth: { up_ratio: 0.55, down_ratio: 0.45, week_amount_yi: 85000, amount_chg: 5.2,
+                          avg_limit_up: 45, avg_limit_down: 8, max_board: 6, note: '周市场广度正常' },
+        position_guide: { total: 6, mainline: 4, trial: 2, direction: '加仓', note: '震荡期主线+试错' },
+        mainlines: [{ name: '有色金属', days_on: 5, rps5: 95.0, rps10: 93.0, rps20: 92.0,
+                      ratio: 60.5, chg: 3.2, style: '周期', strength: '硬核主线', level: 'hard' }],
+        rotation: { summary: '本周资金持续流入有色金属赛道; 从航运、乳制品流出, 周期风格整体占优',
+                    sustained: [{ name: '有色金属', days_on: 5, style: '周期', resonance: true }],
+                    new_in: [{ name: '半导体', days_on: 1, first_date: '20260821', repeat_n: 2, style: '成长' }],
+                    dropped: [{ name: '乳制品', days_on: 2, exit_date: '20260820', risk_level: '中风险', risk: '短期主线', style: '消费' }],
+                    high_freq: [{ name: '航运', flips: 3 }] },
+        abnormal_risks: { signals: [{ title: '量价背离', level: 'high', level_text: '高风险', desc: '周成交额环比放大20%但高分板块不增' }] },
+        sentiment: { series: [{ date: '20260817', phase: '震荡期', phase_rule: '高分5-10个' },
+                              { date: '20260818', phase: '启动期', phase_rule: '高分>10个' },
+                              { date: '20260821', phase: '发酵期', phase_rule: '高分>15个' }],
+                     milestones: { start_date: '20260818', start_label: '情绪启动日',
+                                   peak_date: '20260820', peak_label: '情绪高点日' },
+                     trend: '情绪从震荡期到发酵期(升温)', summary: '本周情绪整体处于震荡期, 周中无明显大级别拐点' },
         news: { has_news: true, stock_count: 16, hit_count: 3, score_sum: 4, env: '偏暖',
+                range_note: '统计窗口: 2026-08-17~2026-08-21',
+                score_basis: '消息面评分满分50分; 0-15分偏冷, 15-25分中性, 25分以上偏暖',
+                weekly_fund: { main_week_net_yi: 120.5, main_verdict: '净流入', north_ratio: 0.58 },
                 official_pos_list: [{ name: '兴业银锡', count: 1, headline: '业绩预增' }],
                 official_neg_list: [], rumor_list: [], tags_count: {}, note: '' },
-        watch: { critical: [{ name: 'X', rps5: 89.5 }], seed_high: [{ name: 'Y', ratio: 80 }],
-                 potential: [{ name: 'P', rps5: 88.5 }], diverge_watch: [{ name: 'Z', drop_days: 2 }] }
+        rec_accuracy: { has_data: true, week_samples: 20, week_hit_rate: 0.6, week_avg_gain: 1.6,
+                        avg_gain3: 2.1, avg_gain5: 2.8, horizon3_n: 18, horizon5_n: 15,
+                        benchmark: { basis: 'vs 上证指数', bench_name: '上证指数', bench_gain: 0.3, excess: 1.3 },
+                        by_confidence: { 高: { samples: 8, hit_rate: 0.75, avg_gain: 2.4 },
+                                         中: { samples: 7, hit_rate: 0.57, avg_gain: 1.2 } },
+                        best: [{ name: '山东黄金', sector: '黄金', gain: 8.5 }],
+                        worst: [{ name: '乳制品龙头', sector: '乳制品', gain: -2.1 }] },
+        last_week_check: { has_data: true, prev_week_id: '2026W33', prev_date: '20260814',
+                           items: [{ name: '黄金', expected: '重点跟踪', verdict: '晋级' }],
+                           summary: '上周周度观点准确率 67%', hit_rate: 67 },
+        core_targets: { targets: [{ sector: '黄金', stocks: [{ name: '山东黄金', code: '600547.SH' }, { name: '赤峰黄金', code: '600988.SH' }] }] },
+        watch: { focus: [{ name: '黄金', reason: '主线分歧核心板块', rule: '若下周RPS5重回90以上, 视为分歧结束, 主线回归' }],
+                 observe: [{ name: '低位银行', reason: '低位企稳' }],
+                 avoid: [{ name: '航运', reason: '本周衰退的高位主线板块' }] }
     };
     const html = R.buildWeeklyReviewHtml(data);
-    for (const sec of ['一、本周定调', '二、本周主线', '三、本周轮动',
-        '四、本周情绪演变', '五、消息面周度快照', '六、下周关注']) {
+    for (const sec of ['本周一句话核心结论', '一、本周定调', '二、周度仓位指引', '三、本周主线(在榜≥3天)',
+        '四、本周轮动', '五、周度异常风险信号', '六、本周情绪演变', '七、消息面周度快照',
+        '八、本周推荐准确率', '九、上周复盘·结果验证闭环', '十、主线核心龙头映射', '十一、下周关注']) {
         assert.ok(html.includes(sec), '缺少章节: ' + sec);
     }
     assert.ok(html.includes('周度偏强'), '周度强度');
     assert.ok(html.includes('有色金属'), '本周主线');
     assert.ok(html.includes('本周新晋'), '轮动新晋');
-    assert.ok(html.includes('升温'), '情绪演变');
+    assert.ok(html.includes('发酵期'), '情绪演变');
     assert.ok(html.includes('兴业银锡'), '消息面快照');
-    assert.ok(html.includes('临界晋级池'), '下周关注');
+    assert.ok(html.includes('★ 重点跟踪'), '下周关注重点');
+    assert.ok(html.includes('超额收益'), '基准对比');
+    assert.ok(html.includes('硬核主线'), '主线强度');
     assert.ok(!html.includes('undefined'), '不得渲染undefined');
 });
 
@@ -1179,6 +1438,124 @@ test('buildWeeklyReviewHtml: 空数据兜底', () => {
     assert.ok(R.buildWeeklyReviewHtml(null).includes('暂无周度复盘数据'));
     assert.ok(R.buildWeeklyReviewHtml({}).includes('暂无周度复盘数据'));
     assert.ok(R.buildWeeklyReviewHtml({ week_id: '2026W34' }).includes('本周定调'));
+});
+
+// ---------- 每周复盘 V2.0 渲染函数聚焦测试 ----------
+
+test('fmtWeekTone: 三周期并列条形图 + 强度 + 阈值标注', () => {
+    const html = R.fmtWeekTone({
+        rps5_series: [{ date: '20260817', high_n: 20 }, { date: '20260821', high_n: 28 }],
+        rps10_series: [{ date: '20260817', high_n: 10 }],
+        rps20_series: [{ date: '20260817', high_n: 6 }],
+        tone: '周度偏强', note: '周内热度走高', threshold_note: '日均高分≥10个'
+    });
+    assert.ok(html.includes('每日RPS5≥90板块数'), 'RPS5 条形图');
+    assert.ok(html.includes('每日RPS10≥90板块数'), 'RPS10 条形图');
+    assert.ok(html.includes('每日RPS20≥90板块数'), 'RPS20 条形图');
+    assert.ok(html.includes('周度偏强'), '周度强度');
+    assert.ok(html.includes('判定阈值: 日均高分≥10个'), '阈值标注');
+    assert.strictEqual(R.fmtWeekTone(null), '');
+});
+
+test('fmtWeekMainlines: ≥5条折叠 + 强度分级 + hover提示', () => {
+    const mk = (n, lv, s) => ({ name: '板块' + n, days_on: 4, rps5: 95, rps10: 93, rps20: 92,
+        ratio: 60, chg: 2.5, style: '周期', strength: s, level: lv });
+    const mains = [mk(1, 'hard', '硬核主线'), mk(2, 'short', '短期主线'), mk(3, 'decay', '动量衰减'),
+        mk(4, 'hard', '硬核主线'), mk(5, 'short', '短期主线'), mk(6, 'hard', '硬核主线')];
+    const html = R.fmtWeekMainlines(mains);
+    assert.ok(html.includes('板块1') && html.includes('板块6'), '完整列表');
+    assert.ok(html.includes('展开全部'), '折叠触发');
+    assert.ok(html.includes('【三周期共振】'), '共振标识');
+    assert.ok(html.includes('title="当周RPS5≥90的交易日数量"'), '在榜hover提示');
+    assert.ok(html.includes('title="板块内RPS50≥90个股数/板块总成分股数'), '周扩散hover提示');
+    assert.ok(html.includes('title="硬核=三周期共振(RPS5/10/20同时在榜)'), '强度hover提示');
+    assert.ok(R.fmtWeekMainlines([]).includes('无持续性主线'), '空列表兜底');
+    assert.ok(R.fmtWeekMainlines(null).includes('无持续性主线'), 'null兜底');
+});
+
+test('fmtWeekRotation: 持续/新晋/衰退三类 + 高频轮动 + 一句话总结', () => {
+    const html = R.fmtWeekRotation({
+        summary: '本周资金持续流入有色金属; 从航运流出, 周期风格整体占优',
+        sustained: [{ name: '有色金属', days_on: 5, style: '周期', resonance: true }],
+        new_in: [{ name: '半导体', days_on: 1, first_date: '20260821', repeat_n: 2, style: '成长' }],
+        dropped: [{ name: '乳制品', days_on: 2, exit_date: '20260820', risk_level: '中风险', risk: '短期主线', style: '消费' }],
+        high_freq: [{ name: '航运', flips: 3 }]
+    });
+    assert.ok(html.includes('持续主线') && html.includes('本周新晋') && html.includes('本周衰退'), '三类齐全');
+    assert.ok(html.includes('【三周期共振】'), '持续主线共振标识');
+    assert.ok(html.includes('首次上榜20260821 · 在榜1天 · 反复轮动2次'), '新晋时间节点');
+    assert.ok(html.includes('中风险'), '衰退风险分级');
+    assert.ok(!html.includes('<b style') && !html.includes('&lt;b'), '风险/共振标签结构化渲染, 不再内嵌被转义成源码的 HTML');
+    assert.ok(html.includes('⚠ 高频轮动·谨慎追高'), '高频轮动标记');
+    assert.strictEqual(R.fmtWeekRotation(null), '无明显轮动');
+});
+
+test('reviewChartWeekSentiment: SVG + 拐点标注 + 阶段色点', () => {
+    const html = R.reviewChartWeekSentiment({
+        series: [{ date: '20260817', phase: '冰点期', high_n: 5 },
+                 { date: '20260818', phase: '启动期', high_n: 12 },
+                 { date: '20260821', phase: '发酵期', high_n: 20 }],
+        milestones: { start_date: '20260818', start_label: '情绪启动日', peak_date: '20260821', peak_label: '情绪高点日' }
+    });
+    assert.ok(html.includes('<svg'), 'SVG 渲染');
+    assert.ok(html.includes('退潮期') && html.includes('高潮期'), '左轴六档情绪阶段');
+    // 图上用短标签(避免左上角重叠), 图例保留全称
+    assert.ok(html.includes('>启动日</text>'), '图上短标签-启动日');
+    assert.ok(html.includes('>高点日</text>'), '图上短标签-高点日');
+    assert.ok(html.includes('▲ 情绪启动日'), '图例全称-启动日');
+    assert.ok(html.includes('▲ 情绪高点日'), '图例全称-高点日');
+    assert.ok(html.includes('灰柱=高分板块数'), '图例说明');
+    assert.strictEqual(R.reviewChartWeekSentiment({ series: [] }), '');
+});
+
+test('fmtWeekSentiment: 组合图 + 逐日判定规则小字 + 周总结高亮', () => {
+    const html = R.fmtWeekSentiment({
+        series: [{ date: '20260817', phase: '震荡期', phase_rule: '高分5-10个' }],
+        trend: '情绪从震荡期到发酵期(升温)',
+        summary: '本周情绪整体处于震荡期, 周中无明显大级别拐点'
+    });
+    assert.ok(html.includes('本周情绪组合'), '组合图');
+    assert.ok(html.includes('高分5-10个'), '判定规则小字');
+    assert.ok(html.includes('周情绪总结: 本周情绪整体处于震荡期'), '周总结');
+    assert.ok(R.fmtWeekSentiment({}).includes('无情绪历史数据'), '空数据兜底');
+});
+
+test('fmtWeekMarketBreadth: 周涨跌占比/成交额环比/涨跌停/连板', () => {
+    const html = R.fmtWeekMarketBreadth({
+        up_ratio: 0.55, down_ratio: 0.45, week_amount_yi: 85000, amount_chg: -3.2,
+        avg_limit_up: 45, avg_limit_down: 8, max_board: 6, note: '周市场广度正常'
+    });
+    assert.ok(html.includes('全市场周上涨占比') && html.includes('55%'), '上涨占比');
+    assert.ok(html.includes('下跌占比') && html.includes('45%'), '下跌占比');
+    assert.ok(html.includes('周两市累计成交') && html.includes('85000'), '周成交额');
+    assert.ok(html.includes('环比-3.2%'), '环比(缩量绿)');
+    assert.ok(html.includes('周均涨停') && html.includes('45'), '涨停家数');
+    assert.ok(html.includes('周最高连板') && html.includes('6</b>板'), '最高连板');
+    assert.strictEqual(R.fmtWeekMarketBreadth(null), '');
+});
+
+test('fmtLastWeekCheck: 验证闭环 + 三态着色 + 无数据兜底', () => {
+    const html = R.fmtLastWeekCheck({
+        has_data: true, prev_week_id: '2026W33', prev_date: '20260814',
+        items: [{ name: '黄金', expected: '重点跟踪', verdict: '晋级' }],
+        summary: '上周周度观点准确率 67%', hit_rate: 67
+    });
+    assert.ok(html.includes('2026W33'), '上周周标识');
+    assert.ok(html.includes('晋级'), '验证结论');
+    assert.ok(html.includes('验证总结'), '验证总结');
+    assert.ok(R.fmtLastWeekCheck({ has_data: false }).includes('暂无上周复盘数据'), '无数据兜底');
+    assert.strictEqual(R.fmtLastWeekCheck(null), '');
+});
+
+test('fmtWeekWatch: 三类优先级 + 跟踪规则', () => {
+    const html = R.fmtWeekWatch({
+        focus: [{ name: '黄金', reason: '主线分歧核心板块', rule: '若下周RPS5重回90以上, 视为分歧结束' }],
+        observe: [{ name: '低位银行', reason: '低位企稳' }],
+        avoid: [{ name: '航运', reason: '本周衰退的高位主线板块' }]
+    });
+    assert.ok(html.includes('★ 重点跟踪') && html.includes('普通观察') && html.includes('⚠ 风险回避'), '三类齐全');
+    assert.ok(html.includes('跟踪规则: 若下周RPS5重回90以上'), '跟踪规则');
+    assert.strictEqual(R.fmtWeekWatch(null), '暂无关注标的');
 });
 
 test('浏览器全局导出: IIFE root 必须暴露全部渲染函数(回归: 每周复盘加载失败修复)', () => {
@@ -1194,12 +1571,14 @@ test('浏览器全局导出: IIFE root 必须暴露全部渲染函数(回归: �
     const root = sandbox.window;
     for (const f of ['buildWeeklyReviewHtml', 'fmtReviewNews', 'fmtSignedNum',
         'fmtDrillRps', 'fmtDrillRankChange', 'fmtDrillStatus', 'fmtDrillPct', 'fmtDrillNum',
-        'buildDrillBreadcrumb', 'buildDrillLevel1Html', 'buildDrillLevel2Html', 'buildDrillLevel3Html']) {
+        'buildDrillBreadcrumb', 'buildDrillLevel1Html', 'buildDrillLevel2Html', 'buildDrillLevel3Html',
+        'fmtWeekTone', 'fmtWeekMainlines', 'fmtWeekRotation', 'fmtWeekSentiment',
+        'fmtWeekMarketBreadth', 'fmtLastWeekCheck', 'fmtWeekWatch', 'reviewChartWeekSentiment']) {
         assert.strictEqual(typeof root[f], 'function', 'root.' + f + ' 未暴露, 浏览器将报 is not defined');
     }
     const html = root.buildWeeklyReviewHtml({
-        week_id: '2026W34', tone: { tone: '周度中性', note: 'x', series: [] },
-        mainlines: [{ name: 'A', days_on: 3, rps5: 95, rank: 2 }],
+        week_id: '2026W34', tone: { tone: '周度中性', note: 'x', rps5_series: [] },
+        mainlines: [{ name: 'A', days_on: 3, rps5: 95, strength: '短期主线', level: 'short' }],
         rotation: {}, sentiment: {}, news: null, watch: {}
     });
     assert.ok(html.includes('本周定调') && html.includes('A'), '浏览器作用域渲染正常');
