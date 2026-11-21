@@ -494,6 +494,92 @@ async def api_recommend_rebound():
                             status_code=500, headers=NO_CACHE_HEADERS)
 
 
+# ============================================================
+# App 版本检查接口 (自动更新机制)
+# 优先查 GitHub Releases API, 失败时 fallback 本地 static/app/version.json
+# ============================================================
+GITHUB_REPO = "huse11/rps-board"
+LOCAL_VERSION_FILE = STATIC_DIR / "app" / "version.json"
+
+
+@app.get("/api/version")
+async def api_version():
+    """
+    返回最新版本信息. 查询顺序:
+    1. GitHub Releases API (api.github.com/repos/huse11/rps-board/releases/latest)
+    2. 本地 static/app/version.json (fallback, GitHub 访问失败时)
+    """
+    import json as _json
+    import urllib.request
+    import urllib.error
+
+    # 先尝试 GitHub Releases API
+    try:
+        url = f"https://api.github.com/repos/{GITHUB_REPO}/releases/latest"
+        req = urllib.request.Request(url, headers={
+            "Accept": "application/vnd.github.v3+json",
+            "User-Agent": "rps-board-app-updater",
+        })
+        with urllib.request.urlopen(req, timeout=5) as resp:
+            release = _json.loads(resp.read().decode("utf-8"))
+
+        # GitHub Release tag_name 约定格式: "v3" 或 "v1.2" 或 "v1.2-3"
+        tag = release.get("tag_name", "")
+        version_name = tag.lstrip("v")
+
+        # 从 release body 或 assets 找 APK 下载链接
+        apk_url = ""
+        for asset in release.get("assets", []):
+            name = asset.get("name", "").lower()
+            if name.endswith(".apk"):
+                apk_url = asset.get("browser_download_url", "")
+                break
+        if not apk_url:
+            # fallback: releases/latest/download/<filename> 约定
+            apk_url = f"https://github.com/{GITHUB_REPO}/releases/latest/download/rps-board.apk"
+
+        # 尝试从 tag 里提取 versionCode (最后一段数字)
+        import re as _re
+        version_code = 0
+        m = _re.search(r"(\d+)\s*$", tag.replace("-", " "))
+        if m:
+            version_code = int(m.group(1))
+
+        return JSONResponse({
+            "ok": True,
+            "source": "github",
+            "versionCode": version_code,
+            "versionName": version_name,
+            "url": apk_url,
+            "note": release.get("body", "")[:300] or release.get("name", ""),
+            "repo": f"https://github.com/{GITHUB_REPO}",
+            "published_at": release.get("published_at", ""),
+            "tag_name": tag,
+        }, headers=NO_CACHE_HEADERS)
+
+    except Exception:
+        pass  # GitHub 查不到 → fallback 本地
+
+    # Fallback: 读本地 version.json
+    if LOCAL_VERSION_FILE.exists():
+        try:
+            with open(LOCAL_VERSION_FILE, "r", encoding="utf-8") as f:
+                data = _json.load(f)
+            data.setdefault("source", "local")
+            data.setdefault("ok", True)
+            return JSONResponse(data, headers=NO_CACHE_HEADERS)
+        except Exception as e:
+            pass
+
+    # 都不行 → 返回空
+    return JSONResponse({
+        "ok": False,
+        "source": "none",
+        "error": "无法获取版本信息",
+        "repo": f"https://github.com/{GITHUB_REPO}",
+    }, status_code=502, headers=NO_CACHE_HEADERS)
+
+
 if __name__ == "__main__":
     print("=" * 50)
     print("板块 RPS 监测看板 - Web 服务器")

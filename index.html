@@ -925,6 +925,7 @@
 
 <div style="text-align:center;color:#94a3b8;font-size:10px;padding:12px 0 24px;">
     数据来源：Tushare Pro | 每日收盘后更新 | RPS = 百分位排名
+    <br><a href="https://github.com/huse11/rps-board" target="_blank" style="color:#64748b;text-decoration:none;">★ 开源仓库 huse11/rps-board · GitHub</a>
 </div>
 
 <!-- 成分股弹窗 -->
@@ -2542,7 +2543,7 @@ function loadDetailRealtime(code) {
         .catch(err => {
             document.getElementById('detailHeader').innerHTML =
                 '<div class="loading" style="color:#dc2626;">⚠️ 行情加载失败：' + (err.message || '') +
-                '<br>个股详情依赖服务器动态接口（阿里云 47.99.178.225:8000 部署）, GitHub Pages 静态页不支持。</div>';
+                '<br>个股详情依赖后端动态接口, GitHub Pages 静态页不支持。请访问 <a href="https://github.com/huse11/rps-board" target="_blank" style="color:#dc2626;">GitHub 仓库</a> 查看部署说明。</div>';
         });
 }
 
@@ -2843,7 +2844,7 @@ function loadDetailReview(code) {
         _dCache.review = { ai: ai };
         if (!ai) {
             body.innerHTML = '<div class="muted" style="padding:24px 16px;text-align:center;line-height:1.8;">' +
-                '⚠️ AI 综合分析加载失败。<br>个股详情依赖服务器动态接口（阿里云 47.99.178.225:8000 部署），静态页面不支持。</div>';
+                '⚠️ AI 综合分析加载失败。<br>个股详情依赖后端动态接口, 静态页面不支持。请访问 <a href="https://github.com/huse11/rps-board" target="_blank" style="color:#dc2626;">GitHub 仓库</a> 查看部署说明。</div>';
             return;
         }
         body.innerHTML = fmtDetailAiAnalysis(ai) || '<div class="muted" style="padding:20px;text-align:center;">暂无综合评测数据</div>';
